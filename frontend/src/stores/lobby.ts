@@ -18,5 +18,14 @@ export const useLobbyStore = defineStore('lobby', {
     updatePlayers(players: string[]) {
       this.players = players
     },
+    initFromLocalStorage() {
+      const savedName = localStorage.getItem('playerName')
+      if (savedName) {
+        this.name = savedName
+      }
+    },
+    setLocalStorage(newName: string) {
+      localStorage.setItem('playerName', newName)
+    },
   },
 })

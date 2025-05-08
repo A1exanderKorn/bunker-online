@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import HomeView from './components/LobbyForm.vue'
+
 </script>
 
 <template>

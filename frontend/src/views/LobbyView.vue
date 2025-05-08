@@ -75,7 +75,7 @@ watchEffect(() => {
 })
 
 function startGame(){
-
+  socket.value?.emit('startGame')
 }
 </script>
 
