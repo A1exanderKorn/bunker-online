@@ -16,3 +16,14 @@ defineProps<{
   customClass?: string
 }>()
 </script>
+
+<style lang="css" scoped>
+  .base-button{
+    font: bold;
+    background-color: burlywood;
+    font-size: 26px;
+    font: bold;
+    width: 300px;
+  }
+
+</style>

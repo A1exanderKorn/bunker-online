@@ -3,12 +3,15 @@ import { ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { io, Socket } from 'socket.io-client'
 import { useLobbyStore } from '@/stores/lobby'
+import LobbyButton from '@/components/LobbyButton.vue'
+import GameProcess from '@/components/GameProcess.vue'
 
 const store = useLobbyStore()
 const route = useRoute()
 
 const code = ref<string>(store.lobbyCode)
 const name = ref<string>(store.name)
+const gameStarted = ref<boolean>(false)
 const nameEntered = ref<boolean>(store.name?true:false)
 const players = ref<string[]>([])
 const socket = ref<Socket | null>(null)
@@ -45,7 +48,7 @@ const connectSocket = (playerName: string, lobbyCode: string) => {
 
   socket.value.on('gameStarted', () => {
     console.log('Игра началась!')
-    // Тут будет переход на страницу игры
+    
   })
 }
 
@@ -80,37 +83,69 @@ function startGame(){
 </script>
 
 <template>
-  <div class="lobby-container">
+  <div class="main-block">
     <h1>Лобби: {{ code }}</h1>
 
-    <div v-if="!nameEntered" class="name-entry">
-      <input v-model="name" placeholder="Введите ваше имя" />
-      <button @click="handleNameSubmit">Войти</button>
+    <div v-if="!nameEntered" class="buttons-set">
+      <input class="name-input" v-model="name" placeholder="Введите ваше имя" />
+      <LobbyButton @click="handleNameSubmit" text="Войти" custom-class="confirm-button"/>
     </div>
 
-    <div v-else class="lobby-info">
+    <div v-else class="buttons-set">
       <h2>Игроки:</h2>
-      <ul>
-        <li v-for="player in players" :key="player">{{ player }}</li>
+      <ul class="player-list">
+        <li class="player-list-item" v-for="player in players" :key="player">{{ player }}</li>
       </ul>
-
-      <button v-if="isHost" @click="startGame">Начать игру</button>
+      <LobbyButton v-if="isHost" @click="startGame" customClass="confirm-button" text="Начать игру"/>
     </div>
   </div>
+
+  <GameProcess></GameProcess>
+
+
+
 </template>
 
-<style scoped>
-.lobby-container {
-  text-align: center;
-  padding: 20px;
-}
-.name-entry {
-  margin-top: 20px;
-}
-.lobby-info {
-  margin-top: 20px;
-}
-button {
-  margin-top: 20px;
-}
+<style>
+  .name-entry {
+    margin-top: 20px;
+  }
+  button {
+    margin-top: 20px;
+  }
+
+  .main-block{
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    height: auto;
+    justify-content: space-between;
+    gap: 50px;
+    width: 400px;
+    align-items: center;
+    font-size: 18px;
+  }
+
+  .buttons-set{
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .buttons-set > *{
+    width: 200px;
+    height: 40px;
+    margin: auto;
+    border-radius: 8px;
+  }
+
+  .player-list{
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 40px;
+  }
+
 </style>

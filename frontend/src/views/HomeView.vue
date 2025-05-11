@@ -1,18 +1,17 @@
 <template>
-  <div class="p-4 text-center">
-    <h1 class="text-2xlmb-4">Добро пожаловать!</h1>
-    <div v-if="!nameSet">
-      <input type="text" v-model="name" placeholder="Введите имя" class="border p-2" />
-      <LobbyForm @click="confirmName" customClass="ml-2 px-4 py-2 bg-blue-500 text-white" text="ОК"/>
+  <div class="main-block">
+    <h1 class="title-text">Добро пожаловать!</h1>
+    <div class="buttons-set" v-if="!nameSet">
+      <input class="name-input" type="text" v-model="name" placeholder="Введите имя" />
+      <LobbyButton @click="confirmName" customClass="confirm-button" text="ОК"/>
     </div>
 
-    <div v-else>
-      <LobbyForm @click="createLobby" customClass="px-4 py-2 bg-green-500 text-white mr-4" text="Создать игру"></LobbyForm>
-      <LobbyForm @click="joinMode = !joinMode" customClass="px-4 py-2 bg-yellow-400 text-white" text="Присоединиться к игре"></LobbyForm>
-      <div v-if="joinMode" class="mt-4">
-        <input v-model="code" placeholder="Введите код лобби" class="border p-2" />
-        <LobbyForm @click="joinLobby" customClass="ml-2 px-4 py-2 bg-blue-500 text-white" text="Войти"></LobbyForm>
-      </div>
+    <div class="buttons-set" v-else>
+      <LobbyButton @click="createLobby" customClass="base-button" text="Создать игру"/>
+      <LobbyButton @click="joinMode = !joinMode" customClass="base-button" text="Присоединиться к игре"/>
+  
+      <input v-if="joinMode" v-model="code" placeholder="Введите код лобби" class="name-input" />
+      <LobbyButton v-if="joinMode" @click="joinLobby" customClass="confirm-button" text="Войти"/>
     </div>
   </div>
 </template>
@@ -22,7 +21,8 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLobbyStore } from '@/stores/lobby'
 import { connectSocket } from '@/services/socket'
-import LobbyForm from '@/components/LobbyForm.vue'
+import LobbyForm from '@/components/LobbyButton.vue'
+import LobbyButton from '@/components/LobbyButton.vue'
 
 const store = useLobbyStore()
 
@@ -67,3 +67,45 @@ function generateLobbyCode() {
   return code
 }
 </script>
+
+<style>
+  .main-block{
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    height: 100%;
+    justify-content: space-between;
+    gap: 50px;
+    width: 500px;
+    align-items: center;
+    font-size: 26px;
+  }
+  .buttons-set{
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 26px;
+  }
+  .buttons-set > *{
+    width: 300px;
+    height: 40px;
+    margin: auto;
+    border-radius: 8px;
+  }
+  .confirm-button{
+    font: bold;
+    font-size: 26px;
+    background-color: aquamarine;
+    min-width: 300px; 
+  }
+  .name-input{
+    min-width: 300px; 
+    border: solid 2px rgb(130, 234, 255);
+    font-size: 26px;
+    
+  }
+  .title-text{
+    color: coral;
+  }
+</style>
