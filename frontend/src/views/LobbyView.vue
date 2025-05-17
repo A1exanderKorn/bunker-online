@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import { ref, watchEffect } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { io, Socket } from 'socket.io-client'
 import { useLobbyStore } from '@/stores/lobby'
 import LobbyButton from '@/components/LobbyButton.vue'
 import GameProcess from '@/components/GameProcess.vue'
+import { usePlayerStore } from '@/stores/player'
 
 const store = useLobbyStore()
 const route = useRoute()
@@ -12,10 +13,12 @@ const route = useRoute()
 const code = ref<string>(store.lobbyCode)
 const name = ref<string>(store.name)
 const gameStarted = ref<boolean>(false)
-const nameEntered = ref<boolean>(store.name?true:false)
+const nameEntered = ref<boolean>(store.name ? true : false)
 const players = ref<string[]>([])
 const socket = ref<Socket | null>(null)
+const playerStore = usePlayerStore()
 
+const selfId = computed(() => playerStore.id)
 const isHost = ref<boolean>(false)
 
 const connectSocket = (playerName: string, lobbyCode: string) => {
@@ -32,11 +35,11 @@ const connectSocket = (playerName: string, lobbyCode: string) => {
 
   socket.value.on('connect', () => {
     console.log('Подключено к серверу')
-    
+    playerStore.setId(socket.value?.id ?? '')
   })
 
   socket.value.on('updatePlayers', (playerList: string[]) => {
-    console.log("update players: ", playerList)
+    console.log('update players: ', playerList)
     players.value = playerList
 
     if (players.value.length > 0 && players.value[0] === name.value) {
@@ -48,7 +51,7 @@ const connectSocket = (playerName: string, lobbyCode: string) => {
 
   socket.value.on('gameStarted', () => {
     console.log('Игра началась!')
-    
+    gameStarted.value = true
   })
 }
 
@@ -77,18 +80,19 @@ watchEffect(() => {
   }
 })
 
-function startGame(){
+function startGame() {
   socket.value?.emit('startGame')
 }
 </script>
 
 <template>
-  <div class="main-block">
+  <GameProcess v-if="gameStarted"></GameProcess>
+  <div v-else class="main-block">
     <h1>Лобби: {{ code }}</h1>
 
     <div v-if="!nameEntered" class="buttons-set">
       <input class="name-input" v-model="name" placeholder="Введите ваше имя" />
-      <LobbyButton @click="handleNameSubmit" text="Войти" custom-class="confirm-button"/>
+      <LobbyButton @click="handleNameSubmit" text="Войти" custom-class="confirm-button" />
     </div>
 
     <div v-else class="buttons-set">
@@ -96,56 +100,57 @@ function startGame(){
       <ul class="player-list">
         <li class="player-list-item" v-for="player in players" :key="player">{{ player }}</li>
       </ul>
-      <LobbyButton v-if="isHost" @click="startGame" customClass="confirm-button" text="Начать игру"/>
+      <LobbyButton
+        v-if="isHost"
+        @click="startGame"
+        customClass="confirm-button"
+        text="Начать игру"
+      />
     </div>
   </div>
 
-  <GameProcess></GameProcess>
-
-
-
+  <!-- <GameProcess></GameProcess> -->
 </template>
 
 <style>
-  .name-entry {
-    margin-top: 20px;
-  }
-  button {
-    margin-top: 20px;
-  }
+.name-entry {
+  margin-top: 20px;
+}
+button {
+  margin-top: 20px;
+}
 
-  .main-block{
-    display: flex;
-    flex-direction: column;
-    margin: auto;
-    height: auto;
-    justify-content: space-between;
-    gap: 50px;
-    width: 400px;
-    align-items: center;
-    font-size: 18px;
-  }
+.main-block {
+  display: flex;
+  flex-direction: column;
+  margin: auto;
+  height: auto;
+  justify-content: space-between;
+  gap: 50px;
+  width: 400px;
+  align-items: center;
+  font-size: 18px;
+}
 
-  .buttons-set{
-    display: flex;
-    width: 100%;
-    flex-direction: column;
-    gap: 20px;
-  }
-  .buttons-set > *{
-    width: 200px;
-    height: 40px;
-    margin: auto;
-    border-radius: 8px;
-  }
+.buttons-set {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 20px;
+}
+.buttons-set > * {
+  width: 200px;
+  height: 40px;
+  margin: auto;
+  border-radius: 8px;
+}
 
-  .player-list{
-    height: fit-content;
-    display: flex;
-    flex-direction: column;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 40px;
-  }
-
+.player-list {
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 40px;
+}
 </style>
