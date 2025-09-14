@@ -4,8 +4,10 @@ import { useRoute } from 'vue-router'
 import { io, Socket } from 'socket.io-client'
 import { useLobbyStore } from '@/stores/lobby'
 import LobbyButton from '@/components/LobbyButton.vue'
-import GameProcess from '@/components/GameProcess.vue'
-import { usePlayerStore } from '@/stores/player'
+import GameProcess from '@/components/GameTable.vue'
+import GameTable from '@/components/GameTable.vue'
+import { usePlayerStore, type Biology, type Characteristic } from '@/stores/player'
+import { useGameStateStore } from '@/stores/gameState'
 
 const store = useLobbyStore()
 const route = useRoute()
@@ -17,6 +19,7 @@ const nameEntered = ref<boolean>(store.name ? true : false)
 const players = ref<string[]>([])
 const socket = ref<Socket | null>(null)
 const playerStore = usePlayerStore()
+const gameStateStore = useGameStateStore()
 
 const selfId = computed(() => playerStore.id)
 const isHost = ref<boolean>(false)
@@ -49,10 +52,23 @@ const connectSocket = (playerName: string, lobbyCode: string) => {
     }
   })
 
-  socket.value.on('gameStarted', () => {
+  socket.value.on('gameStarted', (payload) => {
     console.log('Игра началась!')
     gameStarted.value = true
+    gameStateStore.setPlayers(payload.players)
   })
+
+  socket.value.on('yourCharacteristics', (data: {
+          characteristics: Characteristic[],
+          biology: Biology
+        }) => {
+    playerStore.setPlayerData(data)
+  })
+
+  socket.value.on('characteristicsUpdated', (payload) => {
+  console.log('Обновлены характеристики', payload)
+  gameStateStore.setPlayers(payload.players)
+})
 }
 
 const handleNameSubmit = () => {
@@ -86,7 +102,7 @@ function startGame() {
 </script>
 
 <template>
-  <GameProcess v-if="gameStarted"></GameProcess>
+  <GameTable v-if="gameStarted" :players="gameStateStore.players" :socket="socket" />
   <div v-else class="main-block">
     <h1>Лобби: {{ code }}</h1>
 

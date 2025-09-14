@@ -1,16 +1,12 @@
 <script setup lang="ts">
+import type { Characteristic } from '@/stores/player';
 import { computed } from 'vue'
 
 const props = defineProps<{
   player: {
     id: string
     nickname: string
-    characteristics: {
-      type: string
-      value: string
-      coef: number
-      isVisible: boolean
-    }[]
+    characteristics: Characteristic[]
     biology: {
       sex: string
       age: number

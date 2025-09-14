@@ -1,6 +1,6 @@
 <template>
   <div class="info-panel">
-    <!-- Add your content here -->
+    Первый раунд: вскрываемся, господа
   </div>
 </template>
 

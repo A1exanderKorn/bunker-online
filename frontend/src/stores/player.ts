@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia'
 
-interface Characteristic {
+export interface Characteristic {
   type: string
   value: string
   coef: number
+  hint: string
   isVisible: boolean
 }
 
-interface Biology {
+export interface Biology {
   sex: 'М' | 'Ж' | 'Андроид' | 'Гермафродит'
   age: number
   experience: number
