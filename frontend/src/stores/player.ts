@@ -1,21 +1,5 @@
 import { defineStore } from 'pinia'
-
-export interface Characteristic {
-  type: string
-  value: string
-  coef: number
-  hint: string
-  isVisible: boolean
-}
-
-export interface Biology {
-  sex: 'М' | 'Ж' | 'Андроид' | 'Гермафродит'
-  age: number
-  experience: number
-  coef: number
-  infertile?: boolean
-  isVisible: boolean
-}
+import type { Biology, Characteristic } from "../../../server/index"
 
 export const usePlayerStore = defineStore('player', {
   state: () => ({

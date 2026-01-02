@@ -6,8 +6,11 @@ import { useLobbyStore } from '@/stores/lobby'
 import LobbyButton from '@/components/LobbyButton.vue'
 import GameProcess from '@/components/GameTable.vue'
 import GameTable from '@/components/GameTable.vue'
-import { usePlayerStore, type Biology, type Characteristic } from '@/stores/player'
+import { usePlayerStore } from '@/stores/player'
+import type { Characteristic, Biology } from "../../../server/index"
 import { useGameStateStore } from '@/stores/gameState'
+import GameStageMessage from '@/components/GameStageMessage.vue'
+import { describe } from 'node:test'
 
 const store = useLobbyStore()
 const route = useRoute()
@@ -99,10 +102,26 @@ watchEffect(() => {
 function startGame() {
   socket.value?.emit('startGame')
 }
+function pauseGame() {
+  
+}
+
+const description = ref<string>('Описание')
+const stage = ref<string>('Стейдж')
+const timer = ref<number>(30)
 </script>
 
 <template>
-  <GameTable v-if="gameStarted" :players="gameStateStore.players" :socket="socket" />
+  <div v-if="gameStarted">
+    <GameStageMessage :description="description" :stage="stage" :timer="timer" />
+    <GameTable  :players="gameStateStore.players" :socket="socket" />
+    <LobbyButton
+        v-if="isHost"
+        @click="pauseGame"
+        customClass="confirm-button"
+        text="Пауза"
+      />
+  </div>
   <div v-else class="main-block">
     <h1>Лобби: {{ code }}</h1>
 
@@ -129,36 +148,39 @@ function startGame() {
 </template>
 
 <style>
-.name-entry {
-  margin-top: 20px;
-}
-button {
-  margin-top: 20px;
-}
-
 .main-block {
   display: flex;
   flex-direction: column;
   margin: auto;
-  height: auto;
-  justify-content: space-between;
-  gap: 50px;
+  height: 100%;
+  justify-content: center;
+  gap: 30px;
   width: 400px;
   align-items: center;
-  font-size: 18px;
+  font-size: 24px;
 }
 
 .buttons-set {
   display: flex;
-  width: 100%;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
+  width: 100%;
 }
-.buttons-set > * {
-  width: 200px;
-  height: 40px;
-  margin: auto;
-  border-radius: 8px;
+
+.name-input {
+  border: solid 2px #82eaff;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 22px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.title-text {
+  color: coral;
+  text-align: center;
+  font-size: 28px;
+  font-weight: bold;
 }
 
 .player-list {

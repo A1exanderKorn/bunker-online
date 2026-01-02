@@ -7,12 +7,18 @@ import { generateBiology, generateCharacteristics, loadCharacteristicsFromExcel,
 export interface ExcelRow { 
   Категория: string;
   Название: string; 
-  КФ: number 
+  КФ: number;
+  Подсказка: string; 
 }
 
+export type GameStage = 'discussionAll' | 'firstVoting' | 'secondVoting' | 'discussionSingle' | 'end'
+
 export interface gameState {
-  players: Player[]
-  revealed: Record<string, string[]>
+  players: Player[],
+  revealed: Record<string, string[]>,
+  stage: GameStage,
+  currentTurnPlayerId?: string,
+  turnDeadline?: number
 }
 
 const app = express()
@@ -39,6 +45,7 @@ export interface Biology {
   coef: number
   infertile?: boolean
   isVisible: boolean
+  hint?: string
 }
 
 export interface Player {
@@ -46,6 +53,7 @@ export interface Player {
   name: string
   characteristics?: Characteristic[]
   biology?: Biology
+  isAlive: boolean
 }
 
 const lobbies: Record<string, gameState> = {}
@@ -65,10 +73,10 @@ io.on('connection', (socket) => {
   socket.join(lobbyCode)
 
   if (!lobbies[lobbyCode]) {
-    lobbies[lobbyCode] = { players: [], revealed: {} }
+    lobbies[lobbyCode] = { players: [], revealed: {}, stage: 'discussionAll', currentTurnPlayerId: '', 'turnDeadline': 30 }
   }
 
-  lobbies[lobbyCode].players.push({ id: socket.id, name })
+  lobbies[lobbyCode].players.push({ id: socket.id, name, isAlive: true })
   lobbies[lobbyCode].revealed[socket.id] = []
 
   console.log(`${name} подключился к лобби ${lobbyCode}`)
@@ -125,15 +133,30 @@ io.on('connection', (socket) => {
         })
       }
 
-      lobby.players = shuffleArray(lobby.players)
+      lobby.players = shuffleArray(lobby.players) //todo - добавить решафл нормально
+      lobby.currentTurnPlayerId = lobby.players[0].id
+      lobby.turnDeadline = 30
+      lobby.stage = "discussionAll"
 
       io.to(lobbyCode).emit('gameStarted', {
         players: lobby.players.map(p => ({
           id: p.id,
           name: p.name,
           characteristics: [], // все скрыты
-          biology: undefined
+          biology: undefined,
+          isAlive: true
         }))
+      })
+
+      let arrayOfAlive = lobby.players.map((p) => {
+        p.isAlive === true
+      })
+
+      io.to(lobbyCode).emit('setGameStage', {
+        gameStage: {
+          stage: lobby.stage,
+          timer: lobby.turnDeadline,
+        }
       })
       
       console.log(`🎮 Игра в лобби ${lobbyCode} началась!`)
@@ -144,6 +167,8 @@ io.on('connection', (socket) => {
       }
     }
   })
+
+  
 
   socket.on('revealCharacteristic', ({ playerId, characteristicType }) => {
     const lobby = lobbies[lobbyCode]
@@ -175,6 +200,16 @@ io.on('connection', (socket) => {
         biology: p.biology?.isVisible ? p.biology : undefined
       }))
     })
+
+    // if(lobby[get])
+
+    io.to(lobbyCode).emit('setGameStage', {
+      
+    })
+  })
+
+  socket.on('registerVote', ({ playerId }) => {
+    //todo
   })
 })
 

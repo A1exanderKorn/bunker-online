@@ -17,10 +17,14 @@ export function generateBiology(existing: Biology[]): Biology {
   const hasHerm = existing.some(b => b.sex === 'Гермафродит')
 
   const rand = Math.random() * 100
-
+  let hint = undefined
   let sex: 'М' | 'Ж' | 'Андроид' | 'Гермафродит'
-  if (rand <= 1.75 && !hasHerm) sex = 'Гермафродит'
-  else if (rand <= 1.75 + 2.75 && !hasAndroid) sex = 'Андроид'
+  if (rand <= 1.75 && !hasHerm) {
+    sex = 'Гермафродит'
+  }
+  else if (rand <= 1.75 + 2.75 && !hasAndroid) {
+    sex = 'Андроид'
+  }
   else sex = Math.random() < 0.5 ? 'М' : 'Ж'
 
   let age = Math.floor(Math.random() * (85 - 19 + 1)) + 19
@@ -46,13 +50,15 @@ export function generateBiology(existing: Biology[]): Biology {
     coef = 1.15
     age = Math.floor(Math.random() * (20))
     experience = age
+    hint = 'Обнуляет проблемы со здоровьем и фобии'
   }
   if(sex === 'Гермафродит'){
     coef = 1.25
     age = Math.floor(Math.random() * (15)) + 25
     experience = Math.floor((Math.random() * (age - 16.5)) * 2) / 2
+    hint = 'Выступает в роли и мужчины, и женщины'
   }
-  return { sex, age, experience, coef, infertile, isVisible: false }
+  return { sex, age, experience, coef, infertile, isVisible: false, hint }
 }
 
 export function parseExcelRow(row: any): Characteristic {

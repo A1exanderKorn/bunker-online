@@ -69,43 +69,39 @@ function generateLobbyCode() {
 </script>
 
 <style>
-  .main-block{
-    display: flex;
-    flex-direction: column;
-    margin: auto;
-    height: 100%;
-    justify-content: space-between;
-    gap: 50px;
-    width: 500px;
-    align-items: center;
-    font-size: 26px;
-  }
-  .buttons-set{
-    display: flex;
-    width: 100%;
-    flex-direction: column;
-    gap: 10px;
-    font-size: 26px;
-  }
-  .buttons-set > *{
-    width: 300px;
-    height: 40px;
-    margin: auto;
-    border-radius: 8px;
-  }
-  .confirm-button{
-    font: bold;
-    font-size: 26px;
-    background-color: aquamarine;
-    min-width: 300px; 
-  }
-  .name-input{
-    min-width: 300px; 
-    border: solid 2px rgb(130, 234, 255);
-    font-size: 26px;
-    
-  }
-  .title-text{
-    color: coral;
-  }
+  .main-block {
+  display: flex;
+  flex-direction: column;
+  margin: auto;
+  height: 100%;
+  justify-content: center;
+  gap: 30px;
+  width: 400px;
+  align-items: center;
+  font-size: 24px;
+}
+
+.buttons-set {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  align-items: center;
+}
+
+.name-input {
+  border: solid 2px #82eaff;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 22px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.title-text {
+  color: coral;
+  text-align: center;
+  font-size: 28px;
+  font-weight: bold;
+}
 </style>
