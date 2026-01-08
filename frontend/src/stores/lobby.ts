@@ -1,10 +1,29 @@
 import { defineStore } from 'pinia'
 
+export type Player = {
+  id: string
+  nickname: string
+  characteristics: {
+    type: string
+    value: string
+    coef: number
+    isVisible: boolean
+  }[]
+  biology: {
+    sex: string
+    age: number
+    experience: number
+    coef: number
+    infertile: boolean
+    isVisible: boolean
+  }
+}
+
 export const useLobbyStore = defineStore('lobby', {
   state: () => ({
     name: '',
     lobbyCode: '',
-    players: [] as string[],
+    players: [] as Player[],
     isHost: false,
   }),
   actions: {
@@ -15,7 +34,7 @@ export const useLobbyStore = defineStore('lobby', {
       this.lobbyCode = code
       this.isHost = isHost
     },
-    updatePlayers(players: string[]) {
+    updatePlayers(players: Player[]) {
       this.players = players
     },
     initFromLocalStorage() {

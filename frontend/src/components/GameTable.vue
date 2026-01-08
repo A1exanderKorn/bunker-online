@@ -17,7 +17,7 @@ function getValue(p: PublicPlayerData, type: string) {
     if(playerStore.id == p.id){
       return `${playerStore.biology?.sex}, ${playerStore.biology?.age}` + (playerStore.biology?.infertile ? ', Бесплоден' : '')
     }
-    return p.biology ? (`${p.biology.sex}, ${p.biology.age}` + (playerStore.biology?.infertile ? ', Бесплоден' : '')) : null
+    return p.biology ? (`${p.biology.sex}, ${p.biology.age}` + (p.biology.infertile ? ', Бесплоден' : '')) : null
   }
   if(playerStore.id == p.id){
     return playerStore.characteristics.find(c => c.type === type)?.value

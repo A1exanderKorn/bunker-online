@@ -4,13 +4,12 @@ import { useRoute } from 'vue-router'
 import { io, Socket } from 'socket.io-client'
 import { useLobbyStore } from '@/stores/lobby'
 import LobbyButton from '@/components/LobbyButton.vue'
-import GameProcess from '@/components/GameTable.vue'
 import GameTable from '@/components/GameTable.vue'
 import { usePlayerStore } from '@/stores/player'
-import type { Characteristic, Biology } from "../../../server/index"
+import type { Characteristic, Biology } from '../../../server/index'
 import { useGameStateStore } from '@/stores/gameState'
 import GameStageMessage from '@/components/GameStageMessage.vue'
-import { describe } from 'node:test'
+import type { Player } from '@/stores/lobby'
 
 const store = useLobbyStore()
 const route = useRoute()
@@ -19,7 +18,7 @@ const code = ref<string>(store.lobbyCode)
 const name = ref<string>(store.name)
 const gameStarted = ref<boolean>(false)
 const nameEntered = ref<boolean>(store.name ? true : false)
-const players = ref<string[]>([])
+const players = ref<Player[]>([])
 const socket = ref<Socket | null>(null)
 const playerStore = usePlayerStore()
 const gameStateStore = useGameStateStore()
@@ -46,9 +45,21 @@ const connectSocket = (playerName: string, lobbyCode: string) => {
 
   socket.value.on('updatePlayers', (playerList: string[]) => {
     console.log('update players: ', playerList)
-    players.value = playerList
 
-    if (players.value.length > 0 && players.value[0] === name.value) {
+    players.value = playerList.map((nickname) => ({
+      id: '',
+      nickname,
+      characteristics: [],
+      biology: {
+        sex: '',
+        age: 0,
+        experience: 0,
+        coef: 0,
+        infertile: false,
+        isVisible: false,
+      },
+    }))
+    if (players.value.length > 0 && players.value[0].nickname === name.value) {
       isHost.value = true
     } else {
       isHost.value = false
@@ -61,17 +72,17 @@ const connectSocket = (playerName: string, lobbyCode: string) => {
     gameStateStore.setPlayers(payload.players)
   })
 
-  socket.value.on('yourCharacteristics', (data: {
-          characteristics: Characteristic[],
-          biology: Biology
-        }) => {
-    playerStore.setPlayerData(data)
-  })
+  socket.value.on(
+    'yourCharacteristics',
+    (data: { characteristics: Characteristic[]; biology: Biology }) => {
+      playerStore.setPlayerData(data)
+    },
+  )
 
   socket.value.on('characteristicsUpdated', (payload) => {
-  console.log('Обновлены характеристики', payload)
-  gameStateStore.setPlayers(payload.players)
-})
+    console.log('Обновлены характеристики', payload)
+    gameStateStore.setPlayers(payload.players)
+  })
 }
 
 const handleNameSubmit = () => {
@@ -102,9 +113,7 @@ watchEffect(() => {
 function startGame() {
   socket.value?.emit('startGame')
 }
-function pauseGame() {
-  
-}
+function pauseGame() {}
 
 const description = ref<string>('Описание')
 const stage = ref<string>('Стейдж')
@@ -114,13 +123,8 @@ const timer = ref<number>(30)
 <template>
   <div v-if="gameStarted">
     <GameStageMessage :description="description" :stage="stage" :timer="timer" />
-    <GameTable  :players="gameStateStore.players" :socket="socket" />
-    <LobbyButton
-        v-if="isHost"
-        @click="pauseGame"
-        customClass="confirm-button"
-        text="Пауза"
-      />
+    <GameTable :players="gameStateStore.players" :socket="socket" />
+    <LobbyButton v-if="isHost" @click="pauseGame" customClass="confirm-button" text="Пауза" />
   </div>
   <div v-else class="main-block">
     <h1>Лобби: {{ code }}</h1>
@@ -133,7 +137,9 @@ const timer = ref<number>(30)
     <div v-else class="buttons-set">
       <h2>Игроки:</h2>
       <ul class="player-list">
-        <li class="player-list-item" v-for="player in players" :key="player">{{ player }}</li>
+        <li class="player-list-item" v-for="player in players" :key="player.nickname">
+          {{ player.nickname }}
+        </li>
       </ul>
       <LobbyButton
         v-if="isHost"
@@ -143,8 +149,6 @@ const timer = ref<number>(30)
       />
     </div>
   </div>
-
-  <!-- <GameProcess></GameProcess> -->
 </template>
 
 <style>
