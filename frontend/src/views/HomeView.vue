@@ -92,6 +92,7 @@ function generateLobbyCode() {
   width: 400px;
   align-items: center;
   font-size: 24px;
+  color: var(--text);
 }
 
 .buttons-set {
@@ -103,22 +104,24 @@ function generateLobbyCode() {
 }
 
 .name-input {
-  border: solid 2px #82eaff;
-  border-radius: 6px;
-  padding: 6px;
-  font-size: 22px;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  font-size: 20px;
   width: 100%;
   box-sizing: border-box;
+  background: var(--surface);
+  color: var(--text);
 }
 
 .title-text {
-  color: coral;
+  color: var(--accent);
   text-align: center;
-  font-size: 28px;
-  font-weight: bold;
+  font-size: 32px;
+  font-weight: 800;
 }
 .join-error {
-  color: #ff6b6b;
+  color: var(--danger);
   font-size: 15px;
   margin: 0;
   text-align: center;

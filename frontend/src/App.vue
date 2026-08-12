@@ -1,45 +1,46 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterView } from 'vue-router'
+import { useThemeStore } from '@/stores/theme'
+
+const theme = useThemeStore()
+const icon = computed(() =>
+  theme.mode === 'system' ? '🖥' : theme.effective === 'dark' ? '🌙' : '☀️',
+)
+const label = computed(() =>
+  theme.mode === 'system' ? 'Системная' : theme.mode === 'dark' ? 'Тёмная' : 'Светлая',
+)
 </script>
 
 <template>
-  <RouterView />
+  <div class="app-shell">
+    <button class="theme-toggle btn btn--ghost btn--sm" @click="theme.cycle()" :title="'Тема: ' + label">
+      <span class="theme-icon">{{ icon }}</span>
+      <span class="theme-label">{{ label }}</span>
+    </button>
+    <RouterView />
+  </div>
 </template>
 
-<style>
-body {
-  font-family: sans-serif;
-  background-color: #545454;
-  margin: 0;
-  padding: 0;
+<style scoped>
+.app-shell {
+  min-height: 100vh;
+  position: relative;
 }
-
-button {
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 20px;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
-  transition: background-color 0.2s, transform 0.1s;
+.theme-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+  backdrop-filter: blur(6px);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
 }
-
-button:hover {
-  transform: scale(1.03);
+.theme-icon {
+  font-size: 15px;
 }
-
-.base-button {
-  background-color: #f0c987;
-  color: #333;
-}
-
-.confirm-button {
-  background-color: #2ecc71;
-  color: white;
-}
-
-.danger-button {
-  background-color: #e74c3c;
-  color: white;
+@media (max-width: 480px) {
+  .theme-label {
+    display: none;
+  }
 }
 </style>

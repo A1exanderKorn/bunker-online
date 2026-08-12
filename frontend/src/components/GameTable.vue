@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { BIOLOGY_CATEGORY, type Biology, type PublicPlayer } from '@shared/types'
@@ -10,8 +10,18 @@ import { BIOLOGY_CATEGORY, type Biology, type PublicPlayer } from '@shared/types
  * может раскрывать по одной характеристике — но только в свой ход.
  */
 const game = useGameStore()
-const { publicPlayers, myId, isVoting, amAlive, voteTally, votedIds, myVote, turn } =
+const { publicPlayers, myId, isVoting, amAlive, voteTally, votedIds, votesByTarget, myVote, turn, settings } =
   storeToRefs(game)
+
+function isVoterTurn(p: PublicPlayer): boolean {
+  return turn.value.currentVoterId === p.id
+}
+
+/** Имена тех, кто отдал голос за игрока p (II.4). */
+function votersFor(p: PublicPlayer): string[] {
+  const ids = votesByTarget.value[p.id] ?? []
+  return ids.map((id) => publicPlayers.value.find((x) => x.id === id)?.name ?? '?')
+}
 
 // Порядок строк характеристик (биология между «Здоровье» и «Хобби»).
 const rows: string[] = ['Профессия', 'Здоровье', BIOLOGY_CATEGORY, 'Хобби', 'Фобия', 'Багаж', 'Факт']
@@ -75,13 +85,22 @@ function tryReveal(p: PublicPlayer, type: string) {
 }
 
 function canVoteFor(p: PublicPlayer): boolean {
-  return isVoting.value && amAlive.value && p.isAlive && !isMe(p)
+  if (!isVoting.value || !amAlive.value || !p.isAlive || isMe(p)) return false
+  // В поочерёдном режиме голосовать можно только в свою очередь.
+  if (settings.value.voteMode === 'sequential' && !game.isMyVoteTurn) return false
+  return true
 }
 function hasVoted(p: PublicPlayer): boolean {
   return votedIds.value.includes(p.id)
 }
 
 const displayPlayers = computed(() => publicPlayers.value)
+
+// II.4: на телефоне — тап по счётчику голосов показывает, кто проголосовал.
+const openVoters = ref<string | null>(null)
+function toggleVoters(id: string) {
+  openVoters.value = openVoters.value === id ? null : id
+}
 </script>
 
 <template>
@@ -93,7 +112,7 @@ const displayPlayers = computed(() => publicPlayers.value)
       :class="{
         self: isMe(p),
         dead: !p.isAlive,
-        current: isCurrent(p),
+        current: isCurrent(p) || isVoterTurn(p),
         offline: !p.connected,
       }"
     >
@@ -105,10 +124,21 @@ const displayPlayers = computed(() => publicPlayers.value)
         </div>
         <div class="head-right">
           <span v-if="isCurrent(p)" class="turn-badge">🎯 ходит</span>
+          <span v-else-if="isVoterTurn(p)" class="turn-badge">🗳 голосует</span>
           <span v-if="!p.isAlive" class="dead-badge">исключён</span>
-          <span v-if="voteTally[p.id]" class="vote-count">{{ voteTally[p.id] }} 🗳</span>
+          <span
+            v-if="voteTally[p.id]"
+            class="vote-count"
+            :title="'Голосовали: ' + votersFor(p).join(', ')"
+            @click="toggleVoters(p.id)"
+            >{{ voteTally[p.id] }} 🗳</span
+          >
         </div>
       </header>
+
+      <div v-if="openVoters === p.id && voteTally[p.id]" class="voters-pop">
+        Голосовали: {{ votersFor(p).join(', ') }}
+      </div>
 
       <ul class="char-list">
         <li
@@ -117,12 +147,16 @@ const displayPlayers = computed(() => publicPlayers.value)
           class="char-row"
           :class="{
             revealed: isRevealed(p, type),
+            'mine-revealed': isMe(p) && isRevealed(p, type),
             clickable: canReveal(p, type),
             locked: isMe(p) && !isRevealed(p, type) && !canReveal(p, type),
           }"
           @click="tryReveal(p, type)"
         >
-          <span class="char-type">{{ type === BIOLOGY_CATEGORY ? 'Биология' : type }}</span>
+          <span class="char-type">
+            {{ type === BIOLOGY_CATEGORY ? 'Биология' : type }}
+            <span v-if="isMe(p) && isRevealed(p, type)" class="revealed-tick" title="Вы вскрыли эту характеристику">✓</span>
+          </span>
           <span class="char-value">
             <template v-if="isRevealed(p, type) || isMe(p)">
               {{ getValue(p, type) ?? '—' }}
@@ -131,9 +165,8 @@ const displayPlayers = computed(() => publicPlayers.value)
               <span class="hidden-dot">••••</span>
             </template>
           </span>
-          <span v-if="canReveal(p, type)" class="reveal-cue" title="Нажмите, чтобы вскрыть">🔓</span>
           <span
-            v-else-if="getHint(p, type) && (isRevealed(p, type) || isMe(p))"
+            v-if="getHint(p, type) && (isRevealed(p, type) || isMe(p))"
             class="char-hint"
             :title="getHint(p, type) ?? ''"
             >ⓘ</span
@@ -164,21 +197,22 @@ const displayPlayers = computed(() => publicPlayers.value)
   width: 100%;
 }
 .player-card {
-  background: #f5f5f7;
-  border: 2px solid #d8d8de;
-  border-radius: 14px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.1s;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--dur), box-shadow var(--dur), transform var(--dur-fast);
 }
 .player-card.self {
-  border-color: #82b1ff;
-  background: #eef4ff;
+  border-color: var(--card-self-border);
+  background: var(--card-self);
 }
 .player-card.current {
-  border-color: #ffb300;
+  border-color: var(--warn);
   box-shadow: 0 0 0 3px rgba(255, 179, 0, 0.35);
 }
 .player-card.dead {
@@ -205,7 +239,7 @@ const displayPlayers = computed(() => publicPlayers.value)
 .player-name {
   font-weight: 700;
   font-size: 16px;
-  color: #222;
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -249,6 +283,7 @@ const displayPlayers = computed(() => publicPlayers.value)
   border-radius: 10px;
   padding: 1px 8px;
   font-weight: 700;
+  cursor: pointer;
 }
 
 .char-list {
@@ -265,34 +300,52 @@ const displayPlayers = computed(() => publicPlayers.value)
   align-items: start;
   gap: 6px;
   padding: 6px 8px;
-  border-radius: 8px;
-  background: #ececf0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
   font-size: 13px;
   min-height: 34px;
 }
 .char-row.revealed {
-  background: #e3f3e6;
+  background: color-mix(in srgb, var(--success) 16%, var(--surface));
+}
+.char-row.mine-revealed {
+  background: color-mix(in srgb, var(--success) 24%, var(--surface));
+  border-left: 3px solid var(--success);
+  padding-left: 5px;
+}
+.revealed-tick {
+  color: #2e9e4f;
+  font-weight: 800;
+  margin-left: 3px;
+}
+.voters-pop {
+  background: var(--surface-3);
+  color: var(--text);
+  font-size: 12px;
+  border-radius: 8px;
+  padding: 5px 10px;
+  margin: 2px 0;
 }
 .char-row.clickable {
   cursor: pointer;
-  background: #fff4d6;
-  outline: 1px dashed #e0a800;
+  background: color-mix(in srgb, var(--warn) 20%, var(--surface));
+  outline: 1px dashed var(--warn);
 }
 .char-row.clickable:hover {
-  background: #ffe9a8;
+  background: color-mix(in srgb, var(--warn) 34%, var(--surface));
 }
 .char-row.locked {
   opacity: 0.85;
 }
 .char-type {
-  color: #666;
+  color: var(--text-muted);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   padding-top: 2px;
 }
 .char-value {
-  color: #1a1a1a;
+  color: var(--text);
   font-weight: 600;
   overflow-wrap: break-word;
   word-break: normal;
@@ -301,7 +354,7 @@ const displayPlayers = computed(() => publicPlayers.value)
 }
 .hidden-dot {
   letter-spacing: 3px;
-  color: #999;
+  color: var(--text-faint);
 }
 .char-hint {
   cursor: help;
@@ -325,13 +378,18 @@ const displayPlayers = computed(() => publicPlayers.value)
   width: 100%;
   font-size: 14px;
   padding: 8px;
-  background: #f0c987;
-  color: #333;
+  background: var(--accent);
+  color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: filter var(--dur-fast);
+}
+.vote-button:hover {
+  filter: brightness(1.06);
 }
 .vote-button.voted {
-  background: #2ecc71;
+  background: var(--success);
   color: #fff;
 }
 .voted-mark {

@@ -1,4 +1,4 @@
-import type { Biology, Characteristic, Player, Sex } from '../shared/types'
+import type { Biology, Characteristic, CharacteristicCategory, Player, Sex } from '../shared/types'
 import { CATEGORY_ORDER } from './config'
 import { rowsByCategory, type ExcelRow } from './data'
 
@@ -105,11 +105,12 @@ function pickWithBias<T extends { coef: number }>(
   return filtered[0].candidate
 }
 
-/** Раздаёт одному игроку биологию и полный набор характеристик. */
+/** Раздаёт одному игроку биологию и полный набор характеристик по заданной программе категорий. */
 function dealToPlayer(
   usedValues: Set<string>,
   biologies: Biology[],
   targetCoef: number,
+  categoryProgram: CharacteristicCategory[],
 ): {
   biology: Biology
   characteristics: Characteristic[]
@@ -118,10 +119,11 @@ function dealToPlayer(
   const characteristics: Characteristic[] = []
   let currentCoef = biology.coef
 
-  for (const category of CATEGORY_ORDER) {
+  for (const category of categoryProgram) {
     const available = rowsByCategory(category)
       .map(parseRow)
       .filter((c) => !usedValues.has(c.value))
+    if (available.length === 0) continue
 
     const chosen = pickWithBias(available, currentCoef, characteristics.length, targetCoef)
     usedValues.add(chosen.value)
@@ -132,13 +134,37 @@ function dealToPlayer(
   return { biology, characteristics }
 }
 
+/** Настройки раздачи, влияющие на набор категорий. */
+export interface DealOptions {
+  targetCoef?: number
+  /** III.3: добавить второй «Багаж» (8-я характеристика). */
+  extraBaggage?: boolean
+  /** III.4: не раздавать «Фобию». */
+  noPhobias?: boolean
+}
+
+/** Строит программу категорий с учётом багажа/фобий. */
+function buildCategoryProgram(opts: DealOptions): CharacteristicCategory[] {
+  let program = [...CATEGORY_ORDER]
+  if (opts.noPhobias) program = program.filter((c) => c !== 'Фобия')
+  if (opts.extraBaggage) {
+    // Второй «Багаж» сразу после первого.
+    const idx = program.lastIndexOf('Багаж')
+    if (idx >= 0) program.splice(idx + 1, 0, 'Багаж')
+    else program.push('Багаж')
+  }
+  return program
+}
+
 /** Раздаёт характеристики всем игрокам (мутирует объекты игроков). */
-export function dealCharacteristics(players: Player[], targetCoef = 0.5): void {
+export function dealCharacteristics(players: Player[], opts: DealOptions = {}): void {
+  const targetCoef = opts.targetCoef ?? 0.5
+  const program = buildCategoryProgram(opts)
   const used = new Set<string>()
   const biologies: Biology[] = []
 
   for (const player of players) {
-    const { biology, characteristics } = dealToPlayer(used, biologies, targetCoef)
+    const { biology, characteristics } = dealToPlayer(used, biologies, targetCoef, program)
     biologies.push(biology)
     player.biology = biology
     player.characteristics = characteristics

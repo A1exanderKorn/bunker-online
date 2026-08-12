@@ -10,6 +10,7 @@ import GameTable from '@/components/GameTable.vue'
 import GameStageMessage from '@/components/GameStageMessage.vue'
 import LobbySettingsPanel from '@/components/LobbySettingsPanel.vue'
 import BunkerInfoPanel from '@/components/BunkerInfoPanel.vue'
+import ActionCardsPanel from '@/components/ActionCardsPanel.vue'
 
 const route = useRoute()
 const session = useSessionStore()
@@ -23,12 +24,15 @@ const {
   isHost,
   isVoting,
   isEnded,
+  isReview,
   isMyTurn,
+  isMyVoteTurn,
   roster,
   lastResult,
   survivorIds,
   publicPlayers,
   amSurvivor,
+  settings,
   error,
 } = storeToRefs(game)
 
@@ -45,8 +49,12 @@ function join() {
   nameEntered.value = true
 }
 
+const copied = ref(false)
 function copyCode() {
-  navigator.clipboard?.writeText(code.value).catch(() => {})
+  navigator.clipboard?.writeText(code.value).then(() => {
+    copied.value = true
+    setTimeout(() => (copied.value = false), 1500)
+  }).catch(() => {})
 }
 
 onMounted(() => {
@@ -64,6 +72,9 @@ const eliminatedName = computed(() => {
   const id = lastResult.value?.eliminatedId
   return id ? (roster.value.find((p) => p.id === id)?.name ?? '') : ''
 })
+
+// I.3: кнопка активна, только если в этот ход уже что-то вскрыто.
+const canEndTurn = computed(() => game.turn.revealedThisTurn >= 1)
 
 const survivorNames = computed(() =>
   survivorIds.value
@@ -97,6 +108,10 @@ const survivorNames = computed(() =>
       <ul class="survivors-list">
         <li v-for="n in survivorNames" :key="n">{{ n }}</li>
       </ul>
+      <button v-if="isHost" class="btn btn--primary new-game-btn" @click="game.newGame()">
+        🔄 Новая игра
+      </button>
+      <p v-else class="hint">Ждём, пока хост начнёт новую игру…</p>
     </div>
     <GameTable />
   </div>
@@ -105,7 +120,16 @@ const survivorNames = computed(() =>
   <div v-else-if="started" class="game-screen">
     <GameStageMessage :stage="stage" :timer="timer" :isPaused="isPaused" />
 
+    <!-- П.1: стадия ознакомления -->
+    <div v-if="isReview" class="review-bar fade-in">
+      <span>Ознакомьтесь со своими характеристиками ниже.</span>
+      <button v-if="isHost" class="btn btn--success" @click="game.beginRounds()">Начать раунды</button>
+      <span v-else class="hint">Ждём хоста…</span>
+    </div>
+
     <BunkerInfoPanel class="info-mb" />
+
+    <ActionCardsPanel class="info-mb" />
 
     <div v-if="lastResult" class="result-banner">
       <template v-if="lastResult.tie">Ничья — назначено переголосование</template>
@@ -115,7 +139,19 @@ const survivorNames = computed(() =>
 
     <!-- Кнопка завершения хода для игрока в его ход -->
     <div v-if="isMyTurn" class="my-turn-controls">
-      <LobbyButton @click="game.endTurn()" customClass="confirm-button" text="Завершить ход" />
+      <button
+        class="btn btn--success"
+        :disabled="!canEndTurn"
+        :title="canEndTurn ? '' : 'Сначала вскройте характеристику'"
+        @click="game.endTurn()"
+      >
+        Завершить ход
+      </button>
+    </div>
+
+    <!-- Поочерёдное голосование: подсказка текущему голосующему -->
+    <div v-if="isMyVoteTurn" class="vote-turn-hint fade-in">
+      🗳 Ваша очередь — выберите, за кого голосуете (кнопка на карточке игрока)
     </div>
 
     <GameTable />
@@ -140,8 +176,12 @@ const survivorNames = computed(() =>
   <!-- Экран лобби (до старта) -->
   <div v-else class="lobby-screen">
     <div class="lobby-head">
-      <h1>Лобби: {{ code }}</h1>
-      <button class="copy-btn" @click="copyCode" title="Скопировать код">📋 копировать код</button>
+      <h1>
+        Лобби:
+        <button class="code-copy" @click="copyCode" :title="copied ? 'Скопировано!' : 'Нажмите, чтобы скопировать'">
+          {{ code }} <span class="copy-ic">{{ copied ? '✓' : '📋' }}</span>
+        </button>
+      </h1>
     </div>
     <p v-if="error" class="error">{{ error }}</p>
 
@@ -183,7 +223,54 @@ const survivorNames = computed(() =>
   max-width: 90%;
   align-items: center;
   font-size: 24px;
-  color: #eee;
+  color: var(--text);
+}
+.review-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: color-mix(in srgb, var(--info) 12%, var(--surface));
+  border: 1px solid var(--info);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+.code-copy {
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  font-size: inherit;
+  font-weight: 800;
+  padding: 2px 12px;
+  cursor: pointer;
+  transition: filter var(--dur-fast);
+  letter-spacing: 2px;
+}
+.code-copy:hover {
+  filter: brightness(1.1);
+}
+.copy-ic {
+  font-size: 0.7em;
+  letter-spacing: 0;
+}
+.new-game-btn {
+  margin-top: 18px;
+  font-size: 17px;
+  padding: 12px 28px;
+}
+.vote-turn-hint {
+  text-align: center;
+  background: color-mix(in srgb, var(--warn) 14%, var(--surface));
+  border: 1px solid var(--warn);
+  color: var(--text);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  font-weight: 600;
 }
 .game-screen {
   padding: 16px;
@@ -201,12 +288,14 @@ const survivorNames = computed(() =>
   align-items: center;
 }
 .name-input {
-  border: solid 2px #82eaff;
-  border-radius: 6px;
-  padding: 6px;
-  font-size: 22px;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  font-size: 20px;
   width: 100%;
   box-sizing: border-box;
+  background: var(--surface);
+  color: var(--text);
 }
 
 /* Лобби до старта */
@@ -214,7 +303,7 @@ const survivorNames = computed(() =>
   max-width: 1100px;
   margin: 0 auto;
   padding: 20px 16px;
-  color: #eee;
+  color: var(--text);
 }
 .lobby-head {
   display: flex;
@@ -230,8 +319,11 @@ const survivorNames = computed(() =>
 .copy-btn {
   font-size: 14px;
   padding: 6px 12px;
-  background: #3a3a44;
-  color: #eee;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
 }
 .lobby-body {
   display: grid;
@@ -255,8 +347,9 @@ const survivorNames = computed(() =>
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #2b2b33;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 8px 12px;
 }
 .pl-name {
@@ -264,14 +357,14 @@ const survivorNames = computed(() =>
 }
 .host-tag {
   font-size: 11px;
-  background: #ffd479;
+  background: var(--warn);
   color: #3a2b00;
   border-radius: 6px;
   padding: 1px 6px;
 }
 .off-tag {
   font-size: 11px;
-  background: #7a3b3b;
+  background: var(--danger);
   color: #fff;
   border-radius: 6px;
   padding: 1px 6px;
@@ -281,7 +374,7 @@ const survivorNames = computed(() =>
 }
 .hint {
   font-size: 16px;
-  color: #ccc;
+  color: var(--text-muted);
 }
 
 /* Игровые контролы */
@@ -297,35 +390,37 @@ const survivorNames = computed(() =>
   justify-content: center;
   margin-bottom: 12px;
 }
+
 .result-banner {
-  background: #2c2c2c;
-  color: #ffd479;
-  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  border-radius: var(--radius-sm);
   padding: 10px 16px;
   text-align: center;
   font-weight: bold;
   margin-bottom: 12px;
 }
 .error {
-  color: #ff6b6b;
+  color: var(--danger);
   font-size: 18px;
 }
 
 /* Финальный экран */
 .end-screen {
   text-align: center;
-  color: #eee;
+  color: var(--text);
   margin-bottom: 20px;
 }
 .end-screen h1.win {
-  color: #2ecc71;
+  color: var(--success);
 }
 .end-screen h1.lose {
-  color: #e74c3c;
+  color: var(--danger);
 }
 .survivors-title {
   font-size: 18px;
-  color: #ffd479;
+  color: var(--accent);
 }
 .survivors-list {
   list-style: none;
@@ -336,9 +431,9 @@ const survivorNames = computed(() =>
   flex-wrap: wrap;
 }
 .survivors-list li {
-  background: #2b2b33;
-  border: 1px solid #444;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 6px 14px;
   font-weight: 600;
 }

@@ -16,6 +16,9 @@ export const MAX_PLAYERS = 16
 /** Сколько секунд хранить отключившегося игрока перед удалением (для реконнекта). */
 export const RECONNECT_GRACE_MS = 60_000
 
+/** I.4: доп. время (сек) после авто-вскрытия по истечении таймера хода. */
+export const TURN_GRACE_SECONDS = 15
+
 /** Порядок раздачи категорий характеристик. */
 export const CATEGORY_ORDER: CharacteristicCategory[] = [
   'Профессия',

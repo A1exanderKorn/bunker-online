@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import type {
+  ActionCard,
   Biology,
+  BunkerState,
   Characteristic,
   GameStage,
   LobbySettings,
@@ -39,7 +41,11 @@ export const useGameStore = defineStore('game', {
       round: 0,
       revealsThisTurn: 0,
       revealedThisTurn: 0,
+      currentVoterId: null,
     } as TurnState,
+
+    bunker: { catastrophe: '', years: 0, threats: [] } as BunkerState,
+    actionCards: [] as ActionCard[],
 
     roster: [] as RosterPlayer[],
     publicPlayers: [] as PublicPlayer[],
@@ -49,6 +55,7 @@ export const useGameStore = defineStore('game', {
 
     voteTally: {} as Record<string, number>,
     votedIds: [] as string[],
+    votesByTarget: {} as Record<string, string[]>,
     myVote: '' as string,
     lastResult: null as VoteResultPayload | null,
 
@@ -62,9 +69,18 @@ export const useGameStore = defineStore('game', {
     isVoting: (state) => state.stage === 'vote1' || state.stage === 'vote2',
     isEnded: (state) => state.stage === 'end',
     amAlive: (state) => state.roster.find((p) => p.id === state.myId)?.isAlive ?? true,
+    isReview: (state) => state.stage === 'review',
     isMyTurn: (state) => state.stage === 'reveal' && state.turn.currentPlayerId === state.myId,
+    isMyVoteTurn: (state) =>
+      (state.stage === 'vote1' || state.stage === 'vote2') &&
+      state.settings.voteMode === 'sequential' &&
+      state.turn.currentVoterId === state.myId,
     currentPlayerName: (state) => {
       const id = state.turn.currentPlayerId
+      return id ? (state.roster.find((p) => p.id === id)?.name ?? '') : ''
+    },
+    currentVoterName: (state) => {
+      const id = state.turn.currentVoterId
       return id ? (state.roster.find((p) => p.id === id)?.name ?? '') : ''
     },
     revealsLeftThisTurn: (state) =>
@@ -99,8 +115,32 @@ export const useGameStore = defineStore('game', {
         this.publicPlayers = payload.players
         this.settings = payload.settings
         this.turn = payload.turn
+        this.bunker = payload.bunker
+        this.actionCards = payload.actionCards
         this.lastResult = null
         this.survivorIds = []
+      })
+
+      socket.on('bunkerUpdated', (payload) => {
+        this.bunker = payload.bunker
+      })
+
+      socket.on('newGameStarted', () => {
+        // Сброс к лобби, но сохраняем подключение/идентичность.
+        this.started = false
+        this.stage = 'lobby'
+        this.publicPlayers = []
+        this.myCharacteristics = []
+        this.myBiology = null
+        this.turn = { currentPlayerId: null, round: 0, revealsThisTurn: 0, revealedThisTurn: 0, currentVoterId: null }
+        this.voteTally = {}
+        this.votedIds = []
+        this.votesByTarget = {}
+        this.myVote = ''
+        this.lastResult = null
+        this.survivorIds = []
+        this.bunker = { catastrophe: '', years: 0, threats: [] }
+        this.actionCards = []
       })
 
       socket.on('yourCharacteristics', (payload) => {
@@ -144,6 +184,7 @@ export const useGameStore = defineStore('game', {
       socket.on('votesUpdated', (payload) => {
         this.voteTally = payload.tally
         this.votedIds = payload.voted
+        this.votesByTarget = payload.votesByTarget
       })
 
       socket.on('voteResult', (payload) => {
@@ -170,6 +211,12 @@ export const useGameStore = defineStore('game', {
     // ── Действия игрока (эмиты на сервер) ──
     startGame() {
       getSocket()?.emit('startGame')
+    },
+    beginRounds() {
+      getSocket()?.emit('beginRounds')
+    },
+    newGame() {
+      getSocket()?.emit('newGame')
     },
     reveal(characteristicType: Characteristic['type'] | 'Биология') {
       getSocket()?.emit('revealCharacteristic', { characteristicType })

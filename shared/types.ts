@@ -77,43 +77,145 @@ export interface LobbySettings {
   /** Целевой средний коэффициент набора характеристик (баланс псевдорандома). */
   targetCoef: number
   /**
-   * Сколько характеристик вскрывает каждый игрок в первом раунде
-   * (до первого голосования). Классически — 1 (профессия).
-   */
-  revealsBeforeFirstVote: number
-  /** Сколько характеристик вскрывается в каждом последующем раунде. */
-  revealsPerRound: number
-  /**
    * Сколько игроков остаётся в конце (проходят в бункер).
    * Классически — половина от начального состава.
    * 0 => вычисляется автоматически как половина.
    */
   survivorsCount: number
+
+  /** Режим голосования (III.2). */
+  voteMode: VoteMode
+  /** Секунды на обоснование+голос одного игрока в поочерёдном режиме. */
+  sequentialVoteSeconds: number
+  /** III.3: доп. багаж — 8-я характеристика (второй «Багаж»). */
+  extraBaggage: boolean
+  /** III.4: без фобий — категория «Фобия» не раздаётся. */
+  noPhobias: boolean
+
+  /** III.5: показывать ли угрозы (можно отключить). */
+  threatsEnabled: boolean
+
+  /**
+   * Пошаговая программа раундов (II.5). Последовательность шагов:
+   * вскрытие N характеристик либо голосование. Если список закончился,
+   * а игра не завершена — повторяется последний цикл (вскрытие+голосование).
+   */
+  roundSteps: RoundStep[]
+}
+
+export type VoteMode = 'simultaneous' | 'sequential'
+
+export const VOTE_MODE_LABELS: Record<VoteMode, string> = {
+  simultaneous: 'Одновременное',
+  sequential: 'Поочерёдное',
+}
+
+/**
+ * Один шаг игровой программы.
+ * reveal-шаг = каждый игрок вскрывает ровно 1 характеристику.
+ * «2 мирных раунда» = два отдельных reveal-шага подряд.
+ */
+export interface RoundStep {
+  /** Тип шага: вскрытие (1 хар-ка) или голосование. */
+  kind: 'reveal' | 'vote'
+  /** Раскрыть ли угрозу в начале этого шага (только если threatsEnabled). */
+  revealThreat: boolean
 }
 
 export const DEFAULT_SETTINGS: LobbySettings = {
   turnSeconds: 60,
   voteSeconds: 60,
   targetCoef: 0.5,
-  revealsBeforeFirstVote: 1,
-  revealsPerRound: 1,
   survivorsCount: 0,
+  voteMode: 'simultaneous',
+  sequentialVoteSeconds: 30,
+  extraBaggage: false,
+  noPhobias: false,
+  threatsEnabled: true,
+  roundSteps: [],
 }
 
 /** Ограничения для валидации настроек на сервере. */
 export const SETTINGS_LIMITS = {
   turnSeconds: { min: 10, max: 600 },
   voteSeconds: { min: 10, max: 600 },
+  sequentialVoteSeconds: { min: 10, max: 300 },
   targetCoef: { min: 0, max: 1.5 },
-  revealsBeforeFirstVote: { min: 1, max: 6 },
-  revealsPerRound: { min: 1, max: 6 },
   survivorsCount: { min: 0, max: 16 },
+  maxSteps: 40,
 } as const
+
+/** Количество характеристик на игрока (7 базовых; +1 при extraBaggage, -1 при noPhobias). */
+export function characteristicsCount(s: Pick<LobbySettings, 'extraBaggage' | 'noPhobias'>): number {
+  return 7 + (s.extraBaggage ? 1 : 0) - (s.noPhobias ? 1 : 0)
+}
+
+/**
+ * Генерирует программу раундов по умолчанию (логика из ТЗ):
+ *   2 вскрытия → голосование → while(не осталась половина){ 1 вскрытие+угроза → голосование }
+ * playerCount и survivors задают, сколько циклов голосования нужно (сколько исключений).
+ */
+export function defaultRoundSteps(playerCount: number, survivors: number): RoundStep[] {
+  const eliminations = Math.max(0, playerCount - survivors)
+  const steps: RoundStep[] = []
+  if (eliminations <= 0) return steps
+  // Первый цикл: 2 мирных раунда вскрытия → голосование.
+  steps.push({ kind: 'reveal', revealThreat: false })
+  steps.push({ kind: 'reveal', revealThreat: false })
+  steps.push({ kind: 'vote', revealThreat: false })
+  // Остальные исключения: 1 вскрытие+угроза → голосование.
+  for (let i = 1; i < eliminations; i++) {
+    steps.push({ kind: 'reveal', revealThreat: true })
+    steps.push({ kind: 'vote', revealThreat: false })
+  }
+  return steps
+}
+
+/** Суммарное число вскрытий (накопительно) после каждого шага — для наглядной таблицы. */
+export function cumulativeReveals(steps: RoundStep[]): number[] {
+  let acc = 0
+  return steps.map((s) => {
+    if (s.kind === 'reveal') acc += 1
+    return acc
+  })
+}
+
+/** Сколько игроков останется после каждого шага (каждое голосование = -1). */
+export function remainingPlayers(steps: RoundStep[], playerCount: number): number[] {
+  let left = playerCount
+  return steps.map((s) => {
+    if (s.kind === 'vote') left = Math.max(0, left - 1)
+    return left
+  })
+}
+
+// ─── Бункер: катастрофы, угрозы, условия (III.5) ───────────────────
+
+/** Стартовое состояние бункера, видное всем. */
+export interface BunkerState {
+  /** Катастрофа (показывается сразу). */
+  catastrophe: string
+  /** Сколько лет нужно провести в бункере (1–15, рандом на старте). */
+  years: number
+  /** Раскрытые по ходу игры угрозы (в порядке появления). */
+  threats: string[]
+}
+
+// ─── Карты действия (заглушка, функционал позже) ───────────────
+
+/** Карта действия игрока (пока только отображение). */
+export interface ActionCard {
+  id: string
+  title: string
+  description: string
+  used: boolean
+}
 
 // ─── Стадии игры ────────────────────────────────────────────────────────────
 
 export type GameStage =
   | 'lobby' // ожидание игроков
+  | 'review' // ознакомление со своими характеристиками перед раундами
   | 'reveal' // раунд вскрытия характеристик (по ходам)
   | 'vote1' // первый круг голосования
   | 'vote2' // второй круг (переголосование при ничьей)
@@ -122,6 +224,7 @@ export type GameStage =
 /** Человекочитаемые названия стадий для UI. */
 export const STAGE_LABELS: Record<GameStage, string> = {
   lobby: 'Ожидание игроков',
+  review: 'Ознакомление с характеристиками',
   reveal: 'Вскрытие характеристик',
   vote1: 'Голосование',
   vote2: 'Переголосование',
@@ -132,7 +235,7 @@ export const STAGE_LABELS: Record<GameStage, string> = {
 
 /** Состояние текущего хода (кто ходит и сколько вскрытий осталось в раунде). */
 export interface TurnState {
-  /** id игрока, чей сейчас ход (null — ход никого не активен, напр. голосование). */
+  /** id игрока, чей сейчас ход (null — ход никого не активен, напр. одновременное голосование). */
   currentPlayerId: string | null
   /** Номер текущего раунда вскрытия (с 1). */
   round: number
@@ -140,6 +243,8 @@ export interface TurnState {
   revealsThisTurn: number
   /** Сколько уже вскрыл в текущем ходу. */
   revealedThisTurn: number
+  /** Поочерёдное голосование: чей сейчас голос (null — не активно). */
+  currentVoterId: string | null
 }
 
 export interface GameStartedPayload {
@@ -147,6 +252,13 @@ export interface GameStartedPayload {
   stage: GameStage
   settings: LobbySettings
   turn: TurnState
+  bunker: BunkerState
+  /** Собственные карты действия игрока (заглушка). */
+  actionCards: ActionCard[]
+}
+
+export interface BunkerUpdatedPayload {
+  bunker: BunkerState
 }
 
 export interface StageChangedPayload {
@@ -172,6 +284,8 @@ export interface VotesUpdatedPayload {
   tally: Record<string, number>
   /** id живых игроков, которые уже проголосовали */
   voted: string[]
+  /** targetId -> список voterId, отдавших голос за этого игрока (II.4). */
+  votesByTarget: Record<string, string[]>
 }
 
 export interface VoteResultPayload {
@@ -219,6 +333,9 @@ export interface ServerToClientEvents {
   ) => void
   settingsUpdated: (payload: SettingsPayload) => void
   gameStarted: (payload: GameStartedPayload) => void
+  /** Сброс к лобби для новой игры (П.8). */
+  newGameStarted: (payload: Record<string, never>) => void
+  bunkerUpdated: (payload: BunkerUpdatedPayload) => void
   yourCharacteristics: (payload: YourCharacteristicsPayload) => void
   charactersUpdated: (payload: { players: PublicPlayer[] }) => void
   stageChanged: (payload: StageChangedPayload) => void
@@ -236,6 +353,10 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   updateSettings: (payload: SettingsPayload) => void
   startGame: () => void
+  /** Хост: начать раунды вскрытия (после стадии ознакомления). */
+  beginRounds: () => void
+  /** Хост: начать новую игру — всех в лобби, тасуем порядок (хост тот же). */
+  newGame: () => void
   revealCharacteristic: (payload: RevealPayload) => void
   endTurn: () => void
   vote: (payload: VotePayload) => void

@@ -1,28 +1,239 @@
-@import './base.css';
+/**
+ * Дизайн-система «Бункер». Токены через CSS-переменные, две темы
+ * (light/dark) переключаются атрибутом data-theme на <html>.
+ * По умолчанию — системная (prefers-color-scheme).
+ */
 
+:root {
+  /* Радиусы, тени, переходы */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.18);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.28);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 0.15s;
+  --dur: 0.25s;
+
+  /* Акценты (общие для тем) */
+  --accent: #ff7a45;
+  --accent-strong: #f2551f;
+  --accent-soft: rgba(255, 122, 69, 0.14);
+  --success: #2ecc71;
+  --danger: #e74c3c;
+  --warn: #ffb300;
+  --info: #3aa0ff;
+
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Светлая тема (по умолчанию + системная светлая) */
+:root,
+:root[data-theme='light'] {
+  --bg: #eef1f6;
+  --bg-elevated: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f4f6fa;
+  --surface-3: #e9edf3;
+  --border: #d9dee7;
+  --border-strong: #c2c9d6;
+  --text: #1c2430;
+  --text-muted: #5b6676;
+  --text-faint: #8a95a6;
+  --card-self: #eaf2ff;
+  --card-self-border: #7aa7ff;
+  --overlay: rgba(20, 26, 36, 0.5);
+}
+
+/* Тёмная тема */
+:root[data-theme='dark'] {
+  --bg: #14171d;
+  --bg-elevated: #1c2027;
+  --surface: #222831;
+  --surface-2: #272e39;
+  --surface-3: #2f3744;
+  --border: #333c49;
+  --border-strong: #454f5f;
+  --text: #e7ecf3;
+  --text-muted: #a3adbc;
+  --text-faint: #7a8494;
+  --card-self: #1e2a3d;
+  --card-self-border: #5c86c9;
+  --overlay: rgba(0, 0, 0, 0.6);
+}
+
+/* Системная тёмная, если тема не задана явно */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #14171d;
+    --bg-elevated: #1c2027;
+    --surface: #222831;
+    --surface-2: #272e39;
+    --surface-3: #2f3744;
+    --border: #333c49;
+    --border-strong: #454f5f;
+    --text: #e7ecf3;
+    --text-muted: #a3adbc;
+    --text-faint: #7a8494;
+    --card-self: #1e2a3d;
+    --card-self-border: #5c86c9;
+    --overlay: rgba(0, 0, 0, 0.6);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  min-height: 100vh;
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 #app {
-  width: auto;
-  height: auto;
-  margin: auto;
+  min-height: 100vh;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+/* ── Кнопки: единая система ── */
+.btn {
+  --btn-bg: var(--surface-2);
+  --btn-fg: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--btn-fg);
+  background: var(--btn-bg);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+  user-select: none;
+}
+.btn:hover {
+  filter: brightness(1.06);
+  box-shadow: var(--shadow-sm);
+}
+.btn:active {
+  transform: translateY(1px) scale(0.99);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+  box-shadow: none;
+}
+.btn--primary {
+  --btn-bg: var(--accent);
+  --btn-fg: #fff;
+}
+.btn--primary:hover {
+  --btn-bg: var(--accent-strong);
+}
+.btn--success {
+  --btn-bg: var(--success);
+  --btn-fg: #fff;
+}
+.btn--danger {
+  --btn-bg: var(--danger);
+  --btn-fg: #fff;
+}
+.btn--ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--text);
+  border-color: var(--border-strong);
+}
+.btn--block {
+  width: 100%;
+}
+.btn--sm {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: var(--radius-sm);
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
+/* ── Поля ввода ── */
+.input {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 15px;
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  width: 100%;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ── Карточки ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Анимации ── */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in {
+  animation: fade-in var(--dur) var(--ease);
+}
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent-soft);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 122, 69, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 122, 69, 0);
   }
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
+/* Vue transition helpers */
+.list-enter-active,
+.list-leave-active {
+  transition: all var(--dur) var(--ease);
+}
+.list-enter-from {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
 }

@@ -48,8 +48,11 @@ export function registerSocketHandlers(io: IO): void {
       }
     }
 
+    // Входим в комнату ДО добавления игрока, чтобы broadcast со списком дошёл и до нас (I.5).
+    socket.join(lobbyCode)
     const playerId = lobby.addOrReconnect(socket.id, name)
     if (!playerId) {
+      socket.leave(lobbyCode)
       socket.emit('errorMessage', {
         message: lobby.started
           ? 'Игра уже началась, вход закрыт (или имя занято)'
@@ -61,7 +64,6 @@ export function registerSocketHandlers(io: IO): void {
 
     socket.data.playerId = playerId
     socket.data.lobbyCode = lobbyCode
-    socket.join(lobbyCode)
 
     // Отправляем приветствие + полный снапшот состояния (важно для реконнекта).
     lobby.snapshotFor(playerId)
@@ -70,6 +72,8 @@ export function registerSocketHandlers(io: IO): void {
 
     socket.on('updateSettings', ({ settings }) => lobby!.updateSettings(playerId, settings))
     socket.on('startGame', () => lobby!.start(playerId))
+    socket.on('beginRounds', () => lobby!.beginRounds(playerId))
+    socket.on('newGame', () => lobby!.newGame(playerId))
     socket.on('revealCharacteristic', ({ characteristicType }) =>
       lobby!.reveal(playerId, characteristicType),
     )

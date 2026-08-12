@@ -24,17 +24,27 @@ const props = defineProps<{
 }>()
 
 const game = useGameStore()
-const { currentPlayerName, isMyTurn, revealsLeftThisTurn } = storeToRefs(game)
+const { currentPlayerName, currentVoterName, isMyTurn, isMyVoteTurn, revealsLeftThisTurn, settings } =
+  storeToRefs(game)
 
 const label = computed(() => STAGE_LABELS[props.stage])
-const highlightMine = computed(() => props.stage === 'reveal' && isMyTurn.value)
+const isVoting = computed(() => props.stage === 'vote1' || props.stage === 'vote2')
+const highlightMine = computed(
+  () => (props.stage === 'reveal' && isMyTurn.value) || isMyVoteTurn.value,
+)
 
 const turnLine = computed(() => {
-  if (props.stage !== 'reveal') return ''
-  if (isMyTurn.value) {
-    return `Ваш ход! Осталось вскрыть: ${revealsLeftThisTurn.value}. Можно завершить ход раньше.`
+  if (props.stage === 'reveal') {
+    if (isMyTurn.value) {
+      return `Ваш ход! Осталось вскрыть: ${revealsLeftThisTurn.value}. Можно завершить ход раньше.`
+    }
+    return currentPlayerName.value ? `Сейчас ходит: ${currentPlayerName.value}` : ''
   }
-  return currentPlayerName.value ? `Сейчас ходит: ${currentPlayerName.value}` : ''
+  if (isVoting.value && settings.value.voteMode === 'sequential') {
+    if (isMyVoteTurn.value) return 'Ваша очередь голосовать! Обоснуйте и выберите цель.'
+    return currentVoterName.value ? `Голосует: ${currentVoterName.value}` : ''
+  }
+  return ''
 })
 </script>
 
@@ -44,16 +54,17 @@ const turnLine = computed(() => {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  background-color: #f8f8f8;
-  border: 2px solid #ddd;
-  border-radius: 10px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
   padding: 12px 16px;
   margin-bottom: 12px;
   text-align: center;
+  box-shadow: var(--shadow-sm);
 }
 .game-stage-message.my-turn {
-  border-color: #ffb300;
-  background: #fff8e6;
+  border-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 12%, var(--surface));
   box-shadow: 0 0 0 3px rgba(255, 179, 0, 0.25);
 }
 .stage-row {
@@ -64,7 +75,7 @@ const turnLine = computed(() => {
   justify-content: center;
 }
 .stage-label {
-  color: #333;
+  color: var(--text);
   font-size: 20px;
   font-weight: bold;
 }
@@ -75,7 +86,7 @@ const turnLine = computed(() => {
 }
 .stage-paused {
   font-size: 18px;
-  color: #555;
+  color: var(--text-muted);
 }
 .time-expired-message {
   font-size: 20px;
@@ -85,11 +96,11 @@ const turnLine = computed(() => {
 }
 .turn-line {
   font-size: 15px;
-  color: #444;
+  color: var(--text-muted);
   font-weight: 600;
 }
 .my-turn .turn-line {
-  color: #a86b00;
+  color: var(--accent-strong);
 }
 @keyframes pulse {
   0%,

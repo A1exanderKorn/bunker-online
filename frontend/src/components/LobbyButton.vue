@@ -1,29 +1,27 @@
 <template>
-  <button :class="customClass" @click="handleClick">{{ text }}</button>
+  <button :class="btnClass" @click="handleClick">{{ text }}</button>
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits<{
-  (e: 'click'): void
+import { computed } from 'vue'
+
+const emit = defineEmits<{ (e: 'click'): void }>()
+const props = defineProps<{
+  text: string
+  /** Совместимость со старым API: base/confirm/danger + новые btn-классы. */
+  customClass?: string
 }>()
 
 function handleClick() {
   emit('click')
 }
 
-defineProps<{
-  text: string
-  customClass?: string
-}>()
+// Маппинг старых классов на новую дизайн-систему.
+const btnClass = computed(() => {
+  const c = props.customClass ?? ''
+  if (c.includes('confirm')) return 'btn btn--success btn--block'
+  if (c.includes('danger')) return 'btn btn--danger'
+  if (c.includes('base')) return 'btn btn--primary btn--block'
+  return 'btn ' + c
+})
 </script>
-
-<style lang="css" scoped>
-  .base-button{
-    font: bold;
-    background-color: burlywood;
-    font-size: 26px;
-    font: bold;
-    width: 300px;
-  }
-
-</style>
