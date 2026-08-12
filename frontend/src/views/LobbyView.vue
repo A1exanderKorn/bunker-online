@@ -11,6 +11,7 @@ import GameStageMessage from '@/components/GameStageMessage.vue'
 import LobbySettingsPanel from '@/components/LobbySettingsPanel.vue'
 import BunkerInfoPanel from '@/components/BunkerInfoPanel.vue'
 import ActionCardsPanel from '@/components/ActionCardsPanel.vue'
+import CardAdminPanel from '@/components/CardAdminPanel.vue'
 
 const route = useRoute()
 const session = useSessionStore()
@@ -155,6 +156,9 @@ const survivorNames = computed(() =>
     </div>
 
     <GameTable />
+
+    <!-- Мини-админка теста карт (только хост) -->
+    <CardAdminPanel v-if="isHost" />
 
     <!-- Управление хоста -->
     <div v-if="isHost" class="host-controls">

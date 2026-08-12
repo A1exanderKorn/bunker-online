@@ -3,6 +3,9 @@ import type {
   ActionCard,
   Biology,
   BunkerState,
+  CardPlayedPayload,
+  CardTargets,
+  CatalogCard,
   Characteristic,
   GameStage,
   LobbySettings,
@@ -46,6 +49,9 @@ export const useGameStore = defineStore('game', {
 
     bunker: { catastrophe: '', years: 0, threats: [] } as BunkerState,
     actionCards: [] as ActionCard[],
+    myCards: [] as ActionCard[],
+    cardPopup: null as CardPlayedPayload | null,
+    catalog: [] as CatalogCard[],
 
     roster: [] as RosterPlayer[],
     publicPlayers: [] as PublicPlayer[],
@@ -70,6 +76,14 @@ export const useGameStore = defineStore('game', {
     isEnded: (state) => state.stage === 'end',
     amAlive: (state) => state.roster.find((p) => p.id === state.myId)?.isAlive ?? true,
     isReview: (state) => state.stage === 'review',
+    playableCards: (state) =>
+      state.myCards.filter((c) => {
+        if (c.used) return false
+        if (c.stage === 'any') return true
+        if (c.stage === 'reveal') return state.stage === 'reveal'
+        if (c.stage === 'vote') return state.stage === 'vote1' || state.stage === 'vote2'
+        return false
+      }),
     isMyTurn: (state) => state.stage === 'reveal' && state.turn.currentPlayerId === state.myId,
     isMyVoteTurn: (state) =>
       (state.stage === 'vote1' || state.stage === 'vote2') &&
@@ -125,11 +139,29 @@ export const useGameStore = defineStore('game', {
         this.bunker = payload.bunker
       })
 
+      socket.on('yourCards', (payload) => {
+        this.myCards = payload.cards
+      })
+
+      socket.on('cardCatalog', (payload) => {
+        this.catalog = payload.cards
+      })
+
+      socket.on('cardPlayed', (payload) => {
+        this.cardPopup = payload
+        // Попап автоматически скрывается через несколько секунд.
+        window.setTimeout(() => {
+          if (this.cardPopup === payload) this.cardPopup = null
+        }, 6000)
+      })
+
       socket.on('newGameStarted', () => {
         // Сброс к лобби, но сохраняем подключение/идентичность.
         this.started = false
         this.stage = 'lobby'
         this.publicPlayers = []
+        this.myCards = []
+        this.cardPopup = null
         this.myCharacteristics = []
         this.myBiology = null
         this.turn = { currentPlayerId: null, round: 0, revealsThisTurn: 0, revealedThisTurn: 0, currentVoterId: null }
@@ -214,6 +246,18 @@ export const useGameStore = defineStore('game', {
     },
     beginRounds() {
       getSocket()?.emit('beginRounds')
+    },
+    playCard(instanceId: string, targets: CardTargets) {
+      getSocket()?.emit('playCard', { instanceId, targets })
+    },
+    adminGiveCard(cardId: string) {
+      getSocket()?.emit('adminGiveCard', { cardId })
+    },
+    requestCatalog() {
+      getSocket()?.emit('requestCatalog')
+    },
+    dismissCardPopup() {
+      this.cardPopup = null
     },
     newGame() {
       getSocket()?.emit('newGame')

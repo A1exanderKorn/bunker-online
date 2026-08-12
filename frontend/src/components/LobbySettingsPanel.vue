@@ -5,12 +5,14 @@ import { useGameStore } from '@/stores/game'
 import {
   SETTINGS_LIMITS,
   VOTE_MODE_LABELS,
+  CARDS_POWER_LABELS,
   characteristicsCount,
   cumulativeReveals,
   remainingPlayers,
   type LobbySettings,
   type RoundStep,
   type VoteMode,
+  type CardsPower,
 } from '@shared/types'
 
 /**
@@ -133,6 +135,29 @@ const survivorsHint = computed(() =>
         <input type="checkbox" :checked="settings.threatsEnabled" :disabled="!isHost" @change="patch({ threatsEnabled: ($event.target as HTMLInputElement).checked })" />
         <span>Угрозы</span>
       </label>
+      <label class="check" :class="{ ro: !isHost }">
+        <input type="checkbox" :checked="settings.actionCardsEnabled" :disabled="!isHost" @change="patch({ actionCardsEnabled: ($event.target as HTMLInputElement).checked })" />
+        <span>Карты действия</span>
+      </label>
+    </div>
+
+    <!-- Влияние карт (только если карты включены) -->
+    <div v-if="settings.actionCardsEnabled" class="switches">
+      <div class="switch-group">
+        <span class="switch-title">Влияние карт</span>
+        <div class="seg">
+          <button
+            v-for="pw in (['weak', 'balanced', 'strong'] as CardsPower[])"
+            :key="pw"
+            class="seg-btn"
+            :class="{ active: settings.cardsPower === pw }"
+            :disabled="!isHost"
+            @click="patch({ cardsPower: pw })"
+          >
+            {{ CARDS_POWER_LABELS[pw] }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="char-count">Число характеристик: <b>{{ charCount }}</b></div>

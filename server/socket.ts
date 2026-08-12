@@ -74,6 +74,9 @@ export function registerSocketHandlers(io: IO): void {
     socket.on('startGame', () => lobby!.start(playerId))
     socket.on('beginRounds', () => lobby!.beginRounds(playerId))
     socket.on('newGame', () => lobby!.newGame(playerId))
+    socket.on('playCard', ({ instanceId, targets }) => lobby!.playCard(playerId, instanceId, targets))
+    socket.on('adminGiveCard', ({ cardId }) => lobby!.adminGiveCard(playerId, cardId))
+    socket.on('requestCatalog', () => lobby!.sendCatalog(playerId))
     socket.on('revealCharacteristic', ({ characteristicType }) =>
       lobby!.reveal(playerId, characteristicType),
     )

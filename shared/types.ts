@@ -95,6 +95,11 @@ export interface LobbySettings {
   /** III.5: показывать ли угрозы (можно отключить). */
   threatsEnabled: boolean
 
+  /** Карты действия: включены ли. Каждому игроку выдаётся 1 карта по КФ. */
+  actionCardsEnabled: boolean
+  /** Влияние карт: сдвиг вероятностей категорий. */
+  cardsPower: CardsPower
+
   /**
    * Пошаговая программа раундов (II.5). Последовательность шагов:
    * вскрытие N характеристик либо голосование. Если список закончился,
@@ -108,6 +113,15 @@ export type VoteMode = 'simultaneous' | 'sequential'
 export const VOTE_MODE_LABELS: Record<VoteMode, string> = {
   simultaneous: 'Одновременное',
   sequential: 'Поочерёдное',
+}
+
+/** Влияние карт действия (сдвиг вероятностей категорий). */
+export type CardsPower = 'weak' | 'balanced' | 'strong'
+
+export const CARDS_POWER_LABELS: Record<CardsPower, string> = {
+  weak: 'Слабые',
+  balanced: 'Баланс',
+  strong: 'Сильные',
 }
 
 /**
@@ -132,6 +146,8 @@ export const DEFAULT_SETTINGS: LobbySettings = {
   extraBaggage: false,
   noPhobias: false,
   threatsEnabled: true,
+  actionCardsEnabled: false,
+  cardsPower: 'balanced',
   roundSteps: [],
 }
 
@@ -201,14 +217,71 @@ export interface BunkerState {
   threats: string[]
 }
 
-// ─── Карты действия (заглушка, функционал позже) ───────────────
+// ─── Карты действия ───────────────────────────────────
 
-/** Карта действия игрока (пока только отображение). */
+/** На каком этапе можно сыграть карту. */
+export type CardStage = 'reveal' | 'vote' | 'any'
+
+/** Категория цели выбора (для UI модалки). */
+export type CardPickKind = 'player' | 'characteristic' | 'threat' | 'catCategory'
+
+/** Описание одного требуемого выбора при активации карты. */
+export interface CardPickSpec {
+  kind: CardPickKind
+  /** Подсказка для UI, что выбирать. */
+  label: string
+}
+
+/** Карта действия игрока. */
 export interface ActionCard {
-  id: string
+  /** Уникальный id экземпляра у игрока (не каталожный). */
+  instanceId: string
+  /** Каталожный id карты. */
+  cardId: string
+  category: string
   title: string
-  description: string
+  code: string
+  action: string
+  target: string
+  scope: string
+  /** Сколько выборов нужно сделать при активации. */
+  picks: number
+  stage: CardStage
+  /** Спецификация каждого выбора (для UI). */
+  pickSpecs: CardPickSpec[]
+  note: string
   used: boolean
+}
+
+/** Каталожная карта для админ-панели. */
+export interface CatalogCard {
+  cardId: string
+  category: string
+  title: string
+  code: string
+  stage: CardStage
+  picks: number
+}
+
+/** Цели, выбранные игроком при активации карты. */
+export interface CardTargets {
+  /** Выбранные игроки (playerId). */
+  players?: string[]
+  /** Выбранные характеристики: {playerId, category}. */
+  characteristics?: { playerId: string; category: string }[]
+  /** Выбранные категории характеристик. */
+  categories?: string[]
+  /** Выбранные угрозы (индексы). */
+  threats?: number[]
+}
+
+/** Событие о сыгранной карте (попап у всех). */
+export interface CardPlayedPayload {
+  byPlayerId: string
+  byName: string
+  title: string
+  /** Человекочитаемое описание применения (с целями). */
+  effectText: string
 }
 
 // ─── Стадии игры ────────────────────────────────────────────────────────────
@@ -336,6 +409,12 @@ export interface ServerToClientEvents {
   /** Сброс к лобби для новой игры (П.8). */
   newGameStarted: (payload: Record<string, never>) => void
   bunkerUpdated: (payload: BunkerUpdatedPayload) => void
+  /** Приватно: собственные карты игрока. */
+  yourCards: (payload: { cards: ActionCard[] }) => void
+  /** Карта сыграна — попап у всех. */
+  cardPlayed: (payload: CardPlayedPayload) => void
+  /** Каталог карт (админ-панель). */
+  cardCatalog: (payload: { cards: CatalogCard[] }) => void
   yourCharacteristics: (payload: YourCharacteristicsPayload) => void
   charactersUpdated: (payload: { players: PublicPlayer[] }) => void
   stageChanged: (payload: StageChangedPayload) => void
@@ -353,6 +432,12 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   updateSettings: (payload: SettingsPayload) => void
   startGame: () => void
+  /** Сыграть карту действия с выбранными целями. */
+  playCard: (payload: { instanceId: string; targets: CardTargets }) => void
+  /** Админ-тест: выдать себе конкретную карту по cardId. */
+  adminGiveCard: (payload: { cardId: string }) => void
+  /** Админ: запросить каталог карт. */
+  requestCatalog: () => void
   /** Хост: начать раунды вскрытия (после стадии ознакомления). */
   beginRounds: () => void
   /** Хост: начать новую игру — всех в лобби, тасуем порядок (хост тот же). */
