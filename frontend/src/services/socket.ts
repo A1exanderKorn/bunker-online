@@ -1,19 +1,24 @@
-import { io, Socket } from 'socket.io-client'
+import { io, type Socket } from 'socket.io-client'
+import type { ClientToServerEvents, ServerToClientEvents } from '@shared/types'
+import { SERVER_URL } from '@/config'
 
-export let socket: Socket
+export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>
 
-export function connectSocket(name: string, lobbyCode: string) {
-  if (!socket || !socket.connected) {
-    socket = io('ws://localhost:3000', {
-      query: { name, lobbyCode }
-    })
+let socket: GameSocket | null = null
 
-    socket.on('connect', () => {
-      console.log('Connected to server')
-    })
+/** Создаёт (или пересоздаёт) подключение к серверу для данного лобби. */
+export function connectSocket(name: string, lobbyCode: string): GameSocket {
+  if (socket) socket.disconnect()
+  socket = io(SERVER_URL, { query: { name, lobbyCode } })
+  return socket
+}
 
-    socket.on('disconnect', () => {
-      console.log('Disconnected from server')
-    })
-  }
+/** Текущий сокет, если подключение установлено. */
+export function getSocket(): GameSocket | null {
+  return socket
+}
+
+export function disconnectSocket(): void {
+  socket?.disconnect()
+  socket = null
 }

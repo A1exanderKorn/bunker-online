@@ -1,14 +1,10 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HomeView from './components/LobbyButton.vue'
-
+import { RouterView } from 'vue-router'
 </script>
 
 <template>
   <RouterView />
 </template>
-
-<script setup lang="ts"></script>
 
 <style>
 body {

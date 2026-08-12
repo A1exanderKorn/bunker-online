@@ -1,18 +1,23 @@
 <template>
-  <div class="game-stage-message" v-if="stage">
-    <span class="stage-label">{{ props.stage }}</span>
-    <span v-if="timer !== null" class="stage-timer">{{ timer }} сек</span>
+  <div class="game-stage-message">
+    <span class="stage-label">{{ label }}</span>
+    <span v-if="isPaused" class="stage-paused">⏸ Пауза</span>
+    <span v-else-if="timer != null && timer > 0" class="stage-timer">{{ timer }} сек</span>
+    <span v-else-if="timer != null" class="time-expired-message">ВРЕМЯ ВЫШЛО</span>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from 'vue'
+import { STAGE_LABELS, type GameStage } from '@shared/types'
 
 const props = defineProps<{
-  stage: string | null
+  stage: GameStage
   timer?: number | null
+  isPaused?: boolean
 }>()
 
+const label = computed(() => STAGE_LABELS[props.stage])
 </script>
 
 <style scoped>
@@ -35,16 +40,31 @@ const props = defineProps<{
   margin-bottom: 4px;
 }
 
-.stage-description {
-  font-size: 16px;
-  font-weight: normal;
-  color: #555;
-  margin-bottom: 4px;
-}
-
 .stage-timer {
   font-size: 18px;
   font-weight: bold;
   color: #e74c3c;
+}
+
+.stage-paused {
+  font-size: 18px;
+  color: #555;
+}
+
+.time-expired-message {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ff0000;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 </style>

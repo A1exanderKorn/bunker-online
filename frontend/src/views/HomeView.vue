@@ -1,17 +1,22 @@
 <template>
   <div class="main-block">
     <h1 class="title-text">Добро пожаловать!</h1>
+
     <div class="buttons-set" v-if="!nameSet">
       <input class="name-input" type="text" v-model="name" placeholder="Введите имя" />
-      <LobbyButton @click="confirmName" customClass="confirm-button" text="ОК"/>
+      <LobbyButton @click="confirmName" customClass="confirm-button" text="ОК" />
     </div>
 
     <div class="buttons-set" v-else>
-      <LobbyButton @click="createLobby" customClass="base-button" text="Создать игру"/>
-      <LobbyButton @click="joinMode = !joinMode" customClass="base-button" text="Присоединиться к игре"/>
-  
+      <LobbyButton @click="createLobby" customClass="base-button" text="Создать игру" />
+      <LobbyButton
+        @click="joinMode = !joinMode"
+        customClass="base-button"
+        text="Присоединиться к игре"
+      />
+
       <input v-if="joinMode" v-model="code" placeholder="Введите код лобби" class="name-input" />
-      <LobbyButton v-if="joinMode" @click="joinLobby" customClass="confirm-button" text="Войти"/>
+      <LobbyButton v-if="joinMode" @click="joinLobby" customClass="confirm-button" text="Войти" />
     </div>
   </div>
 </template>
@@ -19,61 +24,54 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useLobbyStore } from '@/stores/lobby'
-import { connectSocket } from '@/services/socket'
-import LobbyForm from '@/components/LobbyButton.vue'
+import { useSessionStore } from '@/stores/session'
 import LobbyButton from '@/components/LobbyButton.vue'
 
-const store = useLobbyStore()
-
-onMounted(() => {
-  store.initFromLocalStorage()
-})
-
-const name = ref(store.name??"")
-const code = ref('')
-const joinMode = ref(false)
-const nameSet = ref(store.name === ''?false:true)
-
+const session = useSessionStore()
 const router = useRouter()
 
-const confirmName = () => {
+onMounted(() => session.loadName())
+
+const name = ref(session.name)
+const code = ref('')
+const joinMode = ref(false)
+const nameSet = ref(session.hasName)
+
+function confirmName() {
   if (name.value.trim()) {
-    store.setLocalStorage(name.value)
-    store.setName(name.value)
+    session.setName(name.value.trim())
     nameSet.value = true
   }
 }
 
-const createLobby = () => {
-  const generatedCode = generateLobbyCode()
-  const upperCode = generatedCode.toUpperCase()
-  store.setLobby(upperCode, true)
-  router.push(`/lobby/${upperCode}`)
+function createLobby() {
+  const generated = generateLobbyCode()
+  session.setLobby(generated)
+  router.push(`/lobby/${generated}`)
 }
 
-const joinLobby = () => {
-  const upperCode = code.value.toUpperCase()
-  store.setLobby(upperCode, false)
-  router.push(`/lobby/${upperCode}`)
+function joinLobby() {
+  if (!code.value.trim()) return
+  session.setLobby(code.value.trim())
+  router.push(`/lobby/${session.lobbyCode}`)
 }
 
 function generateLobbyCode() {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  let code = ''
+  let result = ''
   for (let i = 0; i < 4; i++) {
-    code += letters[Math.floor(Math.random() * letters.length)]
+    result += letters[Math.floor(Math.random() * letters.length)]
   }
-  return code
+  return result
 }
 </script>
 
-<style>
-  .main-block {
+<style scoped>
+.main-block {
   display: flex;
   flex-direction: column;
   margin: auto;
-  height: 100%;
+  height: 100vh;
   justify-content: center;
   gap: 30px;
   width: 400px;
