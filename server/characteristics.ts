@@ -75,10 +75,14 @@ function parseRow(row: ExcelRow): Characteristic {
 
 /**
  * Выбирает кандидата со смещением так, чтобы средний коэффициент набора
- * стремился к целевому (0.5).
+ * стремился к целевому (targetCoef).
  */
-function pickWithBias<T extends { coef: number }>(candidates: T[], currentAvg: number, count: number): T {
-  const targetCoef = 0.5
+function pickWithBias<T extends { coef: number }>(
+  candidates: T[],
+  currentAvg: number,
+  count: number,
+  targetCoef: number,
+): T {
   const total = currentAvg * count
   const desiredCoef = targetCoef * (count + 1) - total
 
@@ -102,7 +106,11 @@ function pickWithBias<T extends { coef: number }>(candidates: T[], currentAvg: n
 }
 
 /** Раздаёт одному игроку биологию и полный набор характеристик. */
-function dealToPlayer(usedValues: Set<string>, biologies: Biology[]): {
+function dealToPlayer(
+  usedValues: Set<string>,
+  biologies: Biology[],
+  targetCoef: number,
+): {
   biology: Biology
   characteristics: Characteristic[]
 } {
@@ -115,7 +123,7 @@ function dealToPlayer(usedValues: Set<string>, biologies: Biology[]): {
       .map(parseRow)
       .filter((c) => !usedValues.has(c.value))
 
-    const chosen = pickWithBias(available, currentCoef, characteristics.length)
+    const chosen = pickWithBias(available, currentCoef, characteristics.length, targetCoef)
     usedValues.add(chosen.value)
     currentCoef = (currentCoef * characteristics.length + chosen.coef) / (characteristics.length + 1)
     characteristics.push(chosen)
@@ -125,12 +133,12 @@ function dealToPlayer(usedValues: Set<string>, biologies: Biology[]): {
 }
 
 /** Раздаёт характеристики всем игрокам (мутирует объекты игроков). */
-export function dealCharacteristics(players: Player[]): void {
+export function dealCharacteristics(players: Player[], targetCoef = 0.5): void {
   const used = new Set<string>()
   const biologies: Biology[] = []
 
   for (const player of players) {
-    const { biology, characteristics } = dealToPlayer(used, biologies)
+    const { biology, characteristics } = dealToPlayer(used, biologies, targetCoef)
     biologies.push(biology)
     player.biology = biology
     player.characteristics = characteristics

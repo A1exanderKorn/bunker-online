@@ -5,52 +5,85 @@ import { LobbyManager } from './lobby'
 type IO = Server<ClientToServerEvents, ServerToClientEvents>
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>
 
-interface SocketData {
+interface HandshakeQuery {
   name: string
   lobbyCode: string
+  /** 'create' — создать новое лобби, 'join' — войти в существующее. */
+  mode: 'create' | 'join'
 }
+
+const CODE_RE = /^[A-Z]{4}$/
 
 /** Подключает все обработчики socket-событий к серверу. */
 export function registerSocketHandlers(io: IO): void {
   const manager = new LobbyManager(io)
 
   io.on('connection', (socket: GameSocket) => {
-    const { name, lobbyCode } = socket.handshake.query as Partial<SocketData>
+    const q = socket.handshake.query as Partial<HandshakeQuery>
+    const name = (q.name ?? '').trim()
+    const lobbyCode = (q.lobbyCode ?? '').toUpperCase()
+    const mode = q.mode === 'create' ? 'create' : 'join'
 
-    if (!name || !lobbyCode) {
+    if (!name || !CODE_RE.test(lobbyCode)) {
+      socket.emit('errorMessage', { message: 'Некорректное имя или код лобби' })
       socket.disconnect()
       return
     }
 
-    socket.data.name = name
+    // Разделяем создание и присоединение, чтобы опечатка в коде не плодила
+    // пустые лобби, а вход в несуществующее лобби давал внятную ошибку.
+    let lobby = manager.get(lobbyCode)
+    if (mode === 'create') {
+      if (lobby && !lobby.isEmpty()) {
+        socket.emit('errorMessage', { message: 'Лобби с таким кодом уже существует' })
+        socket.disconnect()
+        return
+      }
+      lobby = manager.getOrCreate(lobbyCode)
+    } else {
+      if (!lobby || lobby.isEmpty()) {
+        socket.emit('errorMessage', { message: 'Лобби не найдено' })
+        socket.disconnect()
+        return
+      }
+    }
+
+    const playerId = lobby.addOrReconnect(socket.id, name)
+    if (!playerId) {
+      socket.emit('errorMessage', {
+        message: lobby.started
+          ? 'Игра уже началась, вход закрыт (или имя занято)'
+          : 'Не удалось присоединиться к лобби (имя занято или лобби заполнено)',
+      })
+      socket.disconnect()
+      return
+    }
+
+    socket.data.playerId = playerId
     socket.data.lobbyCode = lobbyCode
     socket.join(lobbyCode)
 
-    const lobby = manager.getOrCreate(lobbyCode)
-    const joined = lobby.addPlayer(socket.id, name)
-    if (!joined) {
-      socket.emit('errorMessage', { message: 'Не удалось присоединиться к лобби' })
-      socket.disconnect()
-      return
-    }
+    // Отправляем приветствие + полный снапшот состояния (важно для реконнекта).
+    lobby.snapshotFor(playerId)
 
-    console.log(`${name} подключился к лобби ${lobbyCode}`)
+    console.log(`${name} (${playerId}) подключился к лобби ${lobbyCode} [${mode}]`)
 
-    socket.on('startGame', () => lobby.start(socket.id))
+    socket.on('updateSettings', ({ settings }) => lobby!.updateSettings(playerId, settings))
+    socket.on('startGame', () => lobby!.start(playerId))
     socket.on('revealCharacteristic', ({ characteristicType }) =>
-      lobby.reveal(socket.id, characteristicType),
+      lobby!.reveal(playerId, characteristicType),
     )
-    socket.on('vote', ({ targetId }) => lobby.vote(socket.id, targetId))
-    socket.on('resolveVote', () => lobby.resolveVote(socket.id))
-    socket.on('pauseGame', () => lobby.pause(socket.id))
-    socket.on('resumeGame', () => lobby.resume(socket.id))
-    socket.on('resetTimer', ({ timerValue } = {}) => lobby.resetTimer(socket.id, timerValue))
-    socket.on('nextStage', ({ timerValue } = {}) => lobby.nextStage(socket.id, timerValue))
+    socket.on('endTurn', () => lobby!.endTurn(playerId))
+    socket.on('vote', ({ targetId }) => lobby!.vote(playerId, targetId))
+    socket.on('resolveVote', () => lobby!.resolveVote(playerId))
+    socket.on('pauseGame', () => lobby!.pause(playerId))
+    socket.on('resumeGame', () => lobby!.resume(playerId))
+    socket.on('resetTimer', () => lobby!.resetTimer(playerId))
 
     socket.on('disconnect', () => {
-      lobby.removePlayer(socket.id)
-      if (lobby.isEmpty()) manager.remove(lobbyCode)
-      console.log(`${name} отключился от лобби ${lobbyCode}`)
+      lobby!.handleDisconnect(playerId)
+      if (lobby!.isEmpty()) manager.remove(lobbyCode)
+      console.log(`${name} (${playerId}) отключился от лобби ${lobbyCode}`)
     })
   })
 }

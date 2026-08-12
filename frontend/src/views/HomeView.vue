@@ -15,7 +15,16 @@
         text="Присоединиться к игре"
       />
 
-      <input v-if="joinMode" v-model="code" placeholder="Введите код лобби" class="name-input" />
+      <input
+        v-if="joinMode"
+        v-model="code"
+        placeholder="Код лобби (4 буквы)"
+        maxlength="4"
+        class="name-input"
+        @input="code = code.toUpperCase()"
+        @keyup.enter="joinLobby"
+      />
+      <p v-if="joinMode && joinError" class="join-error">{{ joinError }}</p>
       <LobbyButton v-if="joinMode" @click="joinLobby" customClass="confirm-button" text="Войти" />
     </div>
   </div>
@@ -35,6 +44,7 @@ onMounted(() => session.loadName())
 const name = ref(session.name)
 const code = ref('')
 const joinMode = ref(false)
+const joinError = ref('')
 const nameSet = ref(session.hasName)
 
 function confirmName() {
@@ -46,13 +56,18 @@ function confirmName() {
 
 function createLobby() {
   const generated = generateLobbyCode()
-  session.setLobby(generated)
+  session.setLobby(generated, 'create')
   router.push(`/lobby/${generated}`)
 }
 
 function joinLobby() {
-  if (!code.value.trim()) return
-  session.setLobby(code.value.trim())
+  const raw = code.value.trim().toUpperCase()
+  if (!/^[A-Z]{4}$/.test(raw)) {
+    joinError.value = 'Код лобби — ровно 4 латинские буквы'
+    return
+  }
+  joinError.value = ''
+  session.setLobby(raw, 'join')
   router.push(`/lobby/${session.lobbyCode}`)
 }
 
@@ -101,5 +116,17 @@ function generateLobbyCode() {
   text-align: center;
   font-size: 28px;
   font-weight: bold;
+}
+.join-error {
+  color: #ff6b6b;
+  font-size: 15px;
+  margin: 0;
+  text-align: center;
+}
+@media (max-width: 480px) {
+  .main-block {
+    width: 90%;
+    font-size: 20px;
+  }
 }
 </style>

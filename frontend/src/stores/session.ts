@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import type { JoinMode } from '@/services/socket'
 
 const NAME_KEY = 'playerName'
 
@@ -7,6 +8,8 @@ export const useSessionStore = defineStore('session', {
   state: () => ({
     name: '',
     lobbyCode: '',
+    /** Как мы попали в текущее лобби: создали или присоединились. */
+    mode: 'join' as JoinMode,
   }),
   getters: {
     hasName: (state) => state.name.trim().length > 0,
@@ -16,11 +19,12 @@ export const useSessionStore = defineStore('session', {
       this.name = localStorage.getItem(NAME_KEY) ?? ''
     },
     setName(name: string) {
-      this.name = name
-      localStorage.setItem(NAME_KEY, name)
+      this.name = name.trim()
+      localStorage.setItem(NAME_KEY, this.name)
     },
-    setLobby(code: string) {
+    setLobby(code: string, mode: JoinMode = 'join') {
       this.lobbyCode = code.toUpperCase()
+      this.mode = mode
     },
   },
 })
