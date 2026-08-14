@@ -52,10 +52,13 @@ function join() {
 
 const copied = ref(false)
 function copyCode() {
-  navigator.clipboard?.writeText(code.value).then(() => {
-    copied.value = true
-    setTimeout(() => (copied.value = false), 1500)
-  }).catch(() => {})
+  navigator.clipboard
+    ?.writeText(code.value)
+    .then(() => {
+      copied.value = true
+      setTimeout(() => (copied.value = false), 1500)
+    })
+    .catch(() => {})
 }
 
 onMounted(() => {
@@ -79,7 +82,11 @@ const canEndTurn = computed(() => game.turn.revealedThisTurn >= 1)
 
 const survivorNames = computed(() =>
   survivorIds.value
-    .map((id) => publicPlayers.value.find((p) => p.id === id)?.name ?? roster.value.find((p) => p.id === id)?.name)
+    .map(
+      (id) =>
+        publicPlayers.value.find((p) => p.id === id)?.name ??
+        roster.value.find((p) => p.id === id)?.name,
+    )
     .filter(Boolean),
 )
 </script>
@@ -124,7 +131,9 @@ const survivorNames = computed(() =>
     <!-- П.1: стадия ознакомления -->
     <div v-if="isReview" class="review-bar fade-in">
       <span>Ознакомьтесь со своими характеристиками ниже.</span>
-      <button v-if="isHost" class="btn btn--success" @click="game.beginRounds()">Начать раунды</button>
+      <button v-if="isHost" class="btn btn--success" @click="game.beginRounds()">
+        Начать раунды
+      </button>
       <span v-else class="hint">Ждём хоста…</span>
     </div>
 
@@ -159,7 +168,7 @@ const survivorNames = computed(() =>
     <GameTable />
 
     <!-- Мини-админка теста карт (только хост) -->
-    <CardAdminPanel v-if="isHost" />
+    <!-- <CardAdminPanel v-if="isHost" /> -->
 
     <!-- Управление хоста -->
     <div v-if="isHost" class="host-controls">
@@ -183,7 +192,11 @@ const survivorNames = computed(() =>
     <div class="lobby-head">
       <h1>
         Лобби:
-        <button class="code-copy" @click="copyCode" :title="copied ? 'Скопировано!' : 'Нажмите, чтобы скопировать'">
+        <button
+          class="code-copy"
+          @click="copyCode"
+          :title="copied ? 'Скопировано!' : 'Нажмите, чтобы скопировать'"
+        >
           {{ code }} <span class="copy-ic">{{ copied ? '✓' : '📋' }}</span>
         </button>
       </h1>
