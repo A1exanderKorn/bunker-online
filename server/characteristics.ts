@@ -1,6 +1,7 @@
-import type { Biology, Characteristic, CharacteristicCategory, Player, Sex } from '../shared/types'
+import type { Biology, Characteristic, CharacteristicCategory, CharSlot, Player, Sex } from '../shared/types'
+import { slotsFromTypes } from '../shared/types'
 import { CATEGORY_ORDER } from './config'
-import { rowsByCategory, type ExcelRow } from './data'
+import { dealCategories, displayCategoryOrder, rowsByCategory, type ExcelRow } from './data'
 
 /** Фишер–Йейтс, тасует массив на месте и возвращает его же. */
 export function shuffleArray<T>(array: T[]): T[] {
@@ -66,11 +67,30 @@ export function generateBiology(existing: Biology[]): Biology {
 function parseRow(row: ExcelRow): Characteristic {
   return {
     type: row['Категория'] as Characteristic['type'],
-    value: row['Название'],
-    coef: row['КФ'],
-    hint: row['Подсказка'],
+    value: String(row['Название'] ?? '').trim(),
+    coef: Number(row['КФ']) || 0,
+    hint: String(row['Подсказка'] ?? ''),
     isVisible: false,
+    occ: 0,
   }
+}
+
+/** Проставляет occ (Багаж #1 / #2) по порядку в наборе. */
+export function assignOccurrences(chars: Characteristic[]): void {
+  const seen: Record<string, number> = {}
+  for (const c of chars) {
+    const occ = seen[c.type] ?? 0
+    c.occ = occ
+    seen[c.type] = occ + 1
+  }
+}
+
+export function findChar(
+  chars: Characteristic[],
+  type: string,
+  occ = 0,
+): Characteristic | undefined {
+  return chars.find((c) => c.type === type && (c.occ ?? 0) === occ)
 }
 
 /**
@@ -131,6 +151,7 @@ function dealToPlayer(
     characteristics.push(chosen)
   }
 
+  assignOccurrences(characteristics)
   return { biology, characteristics }
 }
 
@@ -145,15 +166,30 @@ export interface DealOptions {
 
 /** Строит программу категорий с учётом багажа/фобий. */
 function buildCategoryProgram(opts: DealOptions): CharacteristicCategory[] {
-  let program = [...CATEGORY_ORDER]
+  let program = dealCategories()
+  if (program.length === 0) program = [...CATEGORY_ORDER]
   if (opts.noPhobias) program = program.filter((c) => c !== 'Фобия')
   if (opts.extraBaggage) {
-    // Второй «Багаж» сразу после первого.
     const idx = program.lastIndexOf('Багаж')
     if (idx >= 0) program.splice(idx + 1, 0, 'Багаж')
     else program.push('Багаж')
   }
   return program
+}
+
+/** Раскладка строк карточки: Excel-порядок + второй багаж / без фобий. */
+export function buildCharLayout(opts: DealOptions): CharSlot[] {
+  let types = displayCategoryOrder()
+  if (types.length === 0) {
+    types = ['Профессия', 'Здоровье', 'Биология', 'Хобби', 'Фобия', 'Багаж', 'Факт']
+  }
+  if (opts.noPhobias) types = types.filter((c) => c !== 'Фобия')
+  if (opts.extraBaggage) {
+    const idx = types.lastIndexOf('Багаж')
+    if (idx >= 0) types.splice(idx + 1, 0, 'Багаж')
+    else types.push('Багаж')
+  }
+  return slotsFromTypes(types)
 }
 
 /** Раздаёт характеристики всем игрокам (мутирует объекты игроков). */

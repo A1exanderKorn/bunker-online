@@ -1,0 +1,11 @@
+{
+  "name": "bunker-online",
+  "private": true,
+  "description": "Браузерная версия карточной игры «Бункер»",
+  "scripts": {
+    "dev:server": "npm --prefix server run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend ci && npm --prefix frontend run build-only && npm --prefix server ci && npm --prefix server run build",
+    "start": "npm --prefix server start"
+  }
+}

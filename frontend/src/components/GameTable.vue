@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { BIOLOGY_CATEGORY, type Biology, type PublicPlayer } from '@shared/types'
+import { BIOLOGY_CATEGORY, fallbackCharLayout, type Biology, type CharSlot, type PublicPlayer } from '@shared/types'
 
 /**
  * Игровое поле в виде адаптивной сетки карточек игроков.
@@ -10,7 +10,7 @@ import { BIOLOGY_CATEGORY, type Biology, type PublicPlayer } from '@shared/types
  * может раскрывать по одной характеристике — но только в свой ход.
  */
 const game = useGameStore()
-const { publicPlayers, myId, isVoting, amAlive, voteTally, votedIds, votesByTarget, myVote, turn, settings } =
+const { publicPlayers, myId, isVoting, amAlive, voteTally, votedIds, votesByTarget, myVote, turn, settings, charLayout, revoteFrom, lastResult, stage } =
   storeToRefs(game)
 
 function isVoterTurn(p: PublicPlayer): boolean {
@@ -23,8 +23,9 @@ function votersFor(p: PublicPlayer): string[] {
   return ids.map((id) => publicPlayers.value.find((x) => x.id === id)?.name ?? '?')
 }
 
-// Порядок строк характеристик (биология между «Здоровье» и «Хобби»).
-const rows: string[] = ['Профессия', 'Здоровье', BIOLOGY_CATEGORY, 'Хобби', 'Фобия', 'Багаж', 'Факт']
+const rows = computed<CharSlot[]>(() =>
+  charLayout.value.length > 0 ? charLayout.value : fallbackCharLayout(settings.value),
+)
 
 function isMe(p: PublicPlayer) {
   return p.id === myId.value
@@ -38,56 +39,69 @@ function formatBiology(bio: Biology | null | undefined): string | null {
   return `${bio.sex}, ${bio.age} лет` + (bio.infertile ? ', бесплоден' : '')
 }
 
+function findSlotChar(p: PublicPlayer, slot: CharSlot) {
+  const source = isMe(p) ? game.myCharacteristics : p.characteristics
+  return source.find((c) => c.type === slot.type && (c.occ ?? 0) === slot.occ)
+}
+
 /** Значение ячейки: свою строку показываем полностью, чужую — только вскрытое. */
-function getValue(p: PublicPlayer, type: string): string | null {
-  if (type === BIOLOGY_CATEGORY) {
+function getValue(p: PublicPlayer, slot: CharSlot): string | null {
+  if (slot.type === BIOLOGY_CATEGORY) {
     return formatBiology(isMe(p) ? game.myBiology : p.biology)
   }
-  if (isMe(p)) {
-    return game.myCharacteristics.find((c) => c.type === type)?.value ?? null
-  }
-  return p.characteristics.find((c) => c.type === type)?.value ?? null
+  return findSlotChar(p, slot)?.value ?? null
 }
 
-function getHint(p: PublicPlayer, type: string): string | null {
-  if (type === BIOLOGY_CATEGORY) {
+function getHint(p: PublicPlayer, slot: CharSlot): string | null {
+  if (slot.type === BIOLOGY_CATEGORY) {
     return (isMe(p) ? game.myBiology?.hint : p.biology?.hint) ?? null
   }
-  const source = isMe(p) ? game.myCharacteristics : p.characteristics
-  return source.find((c) => c.type === type)?.hint ?? null
+  return findSlotChar(p, slot)?.hint ?? null
 }
 
-function isRevealed(p: PublicPlayer, type: string): boolean {
-  if (type === BIOLOGY_CATEGORY) {
+function isRevealed(p: PublicPlayer, slot: CharSlot): boolean {
+  if (slot.type === BIOLOGY_CATEGORY) {
     return isMe(p) ? !!game.myBiology?.isVisible : !!p.biology
   }
   if (isMe(p)) {
-    return !!game.myCharacteristics.find((c) => c.type === type)?.isVisible
+    return !!findSlotChar(p, slot)?.isVisible
   }
-  return !!p.characteristics.find((c) => c.type === type)
+  return !!findSlotChar(p, slot)
 }
 
 /** Можно ли вскрыть эту характеристику: моя, ещё не вскрыта, мой ход, лимит не исчерпан. */
-function canReveal(p: PublicPlayer, type: string): boolean {
+function canReveal(p: PublicPlayer, slot: CharSlot): boolean {
   return (
     isMe(p) &&
-    !isRevealed(p, type) &&
+    !isRevealed(p, slot) &&
     game.isMyTurn &&
     game.revealsLeftThisTurn > 0
   )
 }
 
-function tryReveal(p: PublicPlayer, type: string) {
-  if (!canReveal(p, type)) return
-  const label = type === BIOLOGY_CATEGORY ? 'Биология' : type
-  if (!window.confirm(`Открыть характеристику «${label}» для всех?`)) return
-  game.reveal(type as never)
+function tryReveal(p: PublicPlayer, slot: CharSlot) {
+  if (!canReveal(p, slot)) return
+  if (!window.confirm(`Открыть характеристику «${slot.label}» для всех?`)) return
+  game.reveal(slot.type as never, slot.occ)
+}
+
+function voteOptionCount(): number {
+  const tied =
+    stage.value === 'vote2' && lastResult.value?.tie ? lastResult.value.tiedIds : null
+  return publicPlayers.value.filter(
+    (x) => x.isAlive && x.id !== myId.value && (!tied || tied.includes(x.id)),
+  ).length
+}
+
+function isRevoteLocked(p: PublicPlayer): boolean {
+  const prev = revoteFrom.value[myId.value]
+  return !!prev && prev === p.id && voteOptionCount() > 1
 }
 
 function canVoteFor(p: PublicPlayer): boolean {
   if (!isVoting.value || !amAlive.value || !p.isAlive || isMe(p)) return false
-  // В поочерёдном режиме голосовать можно только в свою очередь.
   if (settings.value.voteMode === 'sequential' && !game.isMyVoteTurn) return false
+  if (isRevoteLocked(p)) return false
   return true
 }
 function hasVoted(p: PublicPlayer): boolean {
@@ -142,33 +156,33 @@ function toggleVoters(id: string) {
 
       <ul class="char-list">
         <li
-          v-for="type in rows"
-          :key="type"
+          v-for="slot in rows"
+          :key="slot.type + '#' + slot.occ"
           class="char-row"
           :class="{
-            revealed: isRevealed(p, type),
-            'mine-revealed': isMe(p) && isRevealed(p, type),
-            clickable: canReveal(p, type),
-            locked: isMe(p) && !isRevealed(p, type) && !canReveal(p, type),
+            revealed: isRevealed(p, slot),
+            'mine-revealed': isMe(p) && isRevealed(p, slot),
+            clickable: canReveal(p, slot),
+            locked: isMe(p) && !isRevealed(p, slot) && !canReveal(p, slot),
           }"
-          @click="tryReveal(p, type)"
+          @click="tryReveal(p, slot)"
         >
           <span class="char-type">
-            {{ type === BIOLOGY_CATEGORY ? 'Биология' : type }}
-            <span v-if="isMe(p) && isRevealed(p, type)" class="revealed-tick" title="Вы вскрыли эту характеристику">✓</span>
+            {{ slot.label }}
+            <span v-if="isMe(p) && isRevealed(p, slot)" class="revealed-tick" title="Вы вскрыли эту характеристику">✓</span>
           </span>
           <span class="char-value">
-            <template v-if="isRevealed(p, type) || isMe(p)">
-              {{ getValue(p, type) ?? '—' }}
+            <template v-if="isRevealed(p, slot) || isMe(p)">
+              {{ getValue(p, slot) ?? '—' }}
             </template>
             <template v-else>
               <span class="hidden-dot">••••</span>
             </template>
           </span>
           <span
-            v-if="getHint(p, type) && (isRevealed(p, type) || isMe(p))"
+            v-if="getHint(p, slot) && (isRevealed(p, slot) || isMe(p))"
             class="char-hint"
-            :title="getHint(p, type) ?? ''"
+            :title="getHint(p, slot) ?? ''"
             >ⓘ</span
           >
         </li>
@@ -183,6 +197,7 @@ function toggleVoters(id: string) {
         >
           {{ myVote === p.id ? '✓ Ваш голос' : 'Голосовать' }}
         </button>
+        <span v-else-if="isRevoteLocked(p)" class="voted-mark">уже выбирали</span>
         <span v-else-if="hasVoted(p)" class="voted-mark">проголосовал</span>
       </footer>
     </article>
@@ -296,7 +311,7 @@ function toggleVoters(id: string) {
 }
 .char-row {
   display: grid;
-  grid-template-columns: 84px 1fr 22px;
+  grid-template-columns: 92px 1fr 22px;
   align-items: start;
   gap: 6px;
   padding: 6px 8px;

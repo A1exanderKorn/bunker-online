@@ -6,6 +6,7 @@ import type {
   CardPlayedPayload,
   CardTargets,
   CatalogCard,
+  CharSlot,
   Characteristic,
   GameStage,
   LobbySettings,
@@ -47,7 +48,8 @@ export const useGameStore = defineStore('game', {
       currentVoterId: null,
     } as TurnState,
 
-    bunker: { catastrophe: '', years: 0, threats: [] } as BunkerState,
+    bunker: { catastrophe: '', years: 0, threats: [], conditions: [] } as BunkerState,
+    charLayout: [] as CharSlot[],
     actionCards: [] as ActionCard[],
     myCards: [] as ActionCard[],
     cardPopup: null as CardPlayedPayload | null,
@@ -62,6 +64,7 @@ export const useGameStore = defineStore('game', {
     voteTally: {} as Record<string, number>,
     votedIds: [] as string[],
     votesByTarget: {} as Record<string, string[]>,
+    revoteFrom: {} as Record<string, string>,
     myVote: '' as string,
     lastResult: null as VoteResultPayload | null,
 
@@ -130,6 +133,7 @@ export const useGameStore = defineStore('game', {
         this.settings = payload.settings
         this.turn = payload.turn
         this.bunker = payload.bunker
+        this.charLayout = payload.charLayout ?? []
         this.actionCards = payload.actionCards
         this.lastResult = null
         this.survivorIds = []
@@ -171,8 +175,10 @@ export const useGameStore = defineStore('game', {
         this.myVote = ''
         this.lastResult = null
         this.survivorIds = []
-        this.bunker = { catastrophe: '', years: 0, threats: [] }
+        this.bunker = { catastrophe: '', years: 0, threats: [], conditions: [] }
+        this.charLayout = []
         this.actionCards = []
+        this.revoteFrom = {}
       })
 
       socket.on('yourCharacteristics', (payload) => {
@@ -182,6 +188,23 @@ export const useGameStore = defineStore('game', {
 
       socket.on('charactersUpdated', (payload) => {
         this.publicPlayers = payload.players
+        const me = payload.players.find((p) => p.id === this.myId)
+        if (!me) return
+        for (const vis of me.characteristics) {
+          const mine = this.myCharacteristics.find(
+            (c) => c.type === vis.type && (c.occ ?? 0) === (vis.occ ?? 0),
+          )
+          if (mine) {
+            mine.isVisible = true
+            mine.value = vis.value
+            mine.coef = vis.coef
+            mine.hint = vis.hint
+          }
+        }
+        if (me.biology && this.myBiology) {
+          this.myBiology.isVisible = true
+          Object.assign(this.myBiology, me.biology)
+        }
       })
 
       socket.on('stageChanged', (payload) => {
@@ -217,6 +240,8 @@ export const useGameStore = defineStore('game', {
         this.voteTally = payload.tally
         this.votedIds = payload.voted
         this.votesByTarget = payload.votesByTarget
+        this.revoteFrom = payload.revoteFrom ?? {}
+        if (!payload.voted.includes(this.myId)) this.myVote = ''
       })
 
       socket.on('voteResult', (payload) => {
@@ -231,6 +256,9 @@ export const useGameStore = defineStore('game', {
 
       socket.on('errorMessage', (payload) => {
         this.error = payload.message
+        window.setTimeout(() => {
+          if (this.error === payload.message) this.error = ''
+        }, 5000)
       })
     },
 
@@ -262,8 +290,8 @@ export const useGameStore = defineStore('game', {
     newGame() {
       getSocket()?.emit('newGame')
     },
-    reveal(characteristicType: Characteristic['type'] | 'Биология') {
-      getSocket()?.emit('revealCharacteristic', { characteristicType })
+    reveal(characteristicType: Characteristic['type'] | 'Биология', occ = 0) {
+      getSocket()?.emit('revealCharacteristic', { characteristicType, occ })
     },
     endTurn() {
       getSocket()?.emit('endTurn')

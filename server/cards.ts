@@ -53,10 +53,33 @@ interface CardRow {
 const SHEET = 'Карты действия'
 
 let cache: CardDef[] | null = null
+let categoryWeights: Map<string, number[]> | null = null
+
+function loadCategoryWeights(wb: XLSX.WorkBook): Map<string, number[]> {
+  const map = new Map<string, number[]>()
+  const sheet = wb.Sheets['Категории карт']
+  if (!sheet) return map
+  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet)
+  for (const r of rows) {
+    const cat = String(r.category ?? r.Категория ?? '').trim()
+    if (!cat) continue
+    map.set(cat, [
+      Number(r.prob025) || 0,
+      Number(r.prob035) || 0,
+      Number(r.prob04) || 0,
+      Number(r.prob045) || 0,
+      Number(r.prob05) || 0,
+      Number(r.prob06) || 0,
+      Number(r.prob06p) || 0,
+    ])
+  }
+  return map
+}
 
 export function loadCards(): CardDef[] {
   if (cache) return cache
   const wb = XLSX.readFile(DATA_PATH)
+  categoryWeights = loadCategoryWeights(wb)
   const sheet = wb.Sheets[SHEET]
   if (!sheet) {
     cache = []
@@ -119,6 +142,8 @@ function rollCategory(defs: CardDef[], coef: number, power: CardsPower): string 
   const bucket = bucketWithPower(coefBucket(coef), power)
   // Для каждой категории берём вероятность из первой её карты (они одинаковы).
   const weights = cats.map((cat) => {
+    const fromSheet = categoryWeights?.get(cat)
+    if (fromSheet) return fromSheet[bucket] ?? 0
     const first = defs.find((d) => d.category === cat)
     return first ? first.probs[bucket] : 0
   })
@@ -138,45 +163,84 @@ function rollCategory(defs: CardDef[], coef: number, power: CardsPower): string 
 /** Спецификации выборов для UI по коду/параметрам карты. */
 export function pickSpecsFor(def: CardDef): CardPickSpec[] {
   const specs: CardPickSpec[] = []
-  const targetLabel: Record<string, string> = {
-    job: 'профессию',
-    biology: 'биологию',
-    health: 'здоровье',
-    item: 'багаж',
-    fact: 'факт',
-    any: 'характеристику',
-    lastOpened: 'последнюю открытую характеристику',
-    factItem: 'факт или багаж',
-  }
+  const exceptSelf = /кроме себя/i.test(`${def.title} ${def.note}`) || def.target === 'lastOpened'
+  const revealedOnly = /открыт/i.test(`${def.title} ${def.note}`)
 
-  // Спец-случаи по действию.
   if (def.action === 'swap' && def.scope === 'fixed') {
-    specs.push({ kind: 'player', label: 'Выберите игрока для обмена' })
-    if (def.target === 'any') specs.push({ kind: 'characteristic', label: 'Выберите открытую характеристику' })
-    return specs
-  }
-  if (def.action === 'change' && def.target === 'any' && def.scope === 'all') {
-    specs.push({ kind: 'catCategory', label: 'Выберите категорию характеристики' })
-    return specs
-  }
-  if (def.action === 'change' && def.scope === 'fixed') {
-    specs.push({ kind: 'player', label: 'Выберите игрока' })
-    const need = Math.max(0, def.picks - 1)
-    for (let i = 0; i < need; i++) {
+    specs.push({ kind: 'player', label: 'Выберите игрока для обмена', excludeSelf: true })
+    if (def.target === 'any') {
       specs.push({
         kind: 'characteristic',
-        label: `Выберите ${targetLabel[def.target] ?? 'характеристику'}${need > 1 ? ` (${i + 1})` : ''}`,
+        label: 'Выберите открытую характеристику',
+        revealedOnly: true,
+      })
+    } else if (def.target === 'item') {
+      specs.push({
+        kind: 'characteristic',
+        label: 'Выберите багаж для обмена',
+        categories: ['Багаж'],
+        revealedOnly: true,
       })
     }
     return specs
   }
+
+  if (def.action === 'change' && def.target === 'any' && def.scope === 'all') {
+    specs.push({ kind: 'catCategory', label: 'Выберите категорию характеристики' })
+    return specs
+  }
+
+  if (def.action === 'change' && def.scope === 'self' && (def.target === 'factItem' || def.target === 'item' || def.target === 'fact')) {
+    const cats =
+      def.target === 'factItem' ? ['Факт', 'Багаж'] : def.target === 'item' ? ['Багаж'] : ['Факт']
+    specs.push({
+      kind: 'characteristic',
+      label: def.target === 'factItem' ? 'Выберите факт или багаж для замены' : 'Выберите характеристику',
+      categories: cats,
+    })
+    return specs
+  }
+
+  if (def.action === 'change' && def.scope === 'fixed') {
+    specs.push({
+      kind: 'player',
+      label: exceptSelf ? 'Выберите игрока (не себя)' : 'Выберите игрока',
+      excludeSelf: exceptSelf,
+    })
+    if (def.target === 'lastOpened') return specs
+    if (def.target === 'any') {
+      const n = /any2/i.test(def.code) || /2\s*люб/i.test(def.title) ? 2 : Math.max(1, (def.picks - 1) || 1)
+      for (let i = 0; i < n; i++) {
+        specs.push({
+          kind: 'characteristic',
+          label: n > 1 ? `Выберите характеристику (${i + 1})` : 'Выберите характеристику',
+          revealedOnly,
+        })
+      }
+    } else if (def.target === 'item' || def.target === 'fact' || def.target === 'factItem') {
+      const cats =
+        def.target === 'factItem' ? ['Факт', 'Багаж'] : def.target === 'item' ? ['Багаж'] : ['Факт']
+      specs.push({
+        kind: 'characteristic',
+        label: 'Выберите характеристику',
+        categories: cats,
+      })
+    }
+    // job / health / biology — категория известна, достаточно игрока
+    return specs
+  }
+
   if (def.action === 'removeThreat') {
     specs.push({ kind: 'threat', label: 'Выберите угрозу для удаления' })
     return specs
   }
-  // Общий случай: picks игроков.
+
   for (let i = 0; i < def.picks; i++) {
-    specs.push({ kind: 'player', label: def.picks > 1 ? `Выберите игрока (${i + 1})` : 'Выберите игрока' })
+    specs.push({
+      kind: 'player',
+      label: def.picks > 1 ? `Выберите игрока (${i + 1})` : 'Выберите игрока',
+      excludeSelf: def.action === 'selfProtection',
+    })
   }
   return specs
 }

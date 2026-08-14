@@ -27,7 +27,7 @@ function stageLabel(c: ActionCard): string {
 
 function onClickCard(c: ActionCard) {
   if (!canPlay(c)) return
-  if (c.picks === 0 && c.pickSpecs.length === 0) {
+  if (c.pickSpecs.length === 0) {
     if (!window.confirm(`Сыграть карту «${c.title}»?`)) return
     game.playCard(c.instanceId, {})
     return

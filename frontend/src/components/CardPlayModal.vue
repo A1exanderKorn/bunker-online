@@ -2,7 +2,15 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { CHARACTERISTIC_CATEGORIES, type ActionCard, type CardTargets } from '@shared/types'
+import {
+  BIOLOGY_CATEGORY,
+  fallbackCharLayout,
+  type ActionCard,
+  type CardTargets,
+  type CategoryPick,
+  type CharPick,
+  type CharSlot,
+} from '@shared/types'
 
 /**
  * Модалка активации карты: пошагово собирает цели по pickSpecs,
@@ -12,38 +20,97 @@ const props = defineProps<{ card: ActionCard }>()
 const emit = defineEmits<{ (e: 'close'): void; (e: 'confirm', targets: CardTargets): void }>()
 
 const game = useGameStore()
-const { publicPlayers, myId, bunker } = storeToRefs(game)
+const { publicPlayers, myId, bunker, myCharacteristics, myBiology, charLayout, settings } =
+  storeToRefs(game)
 
 const stepIdx = ref(0)
 const chosenPlayers = ref<string[]>([])
-const chosenChars = ref<{ playerId: string; category: string }[]>([])
-const chosenCategories = ref<string[]>([])
+const chosenChars = ref<CharPick[]>([])
+const chosenCategories = ref<CategoryPick[]>([])
 const chosenThreats = ref<number[]>([])
 
 const specs = computed(() => props.card.pickSpecs)
 const current = computed(() => specs.value[stepIdx.value])
 const isLast = computed(() => stepIdx.value >= specs.value.length - 1)
 
-// Кандидаты-игроки: живые (для большинства карт можно и себя).
-const alivePlayers = computed(() => publicPlayers.value.filter((p) => p.isAlive))
+const layout = computed<CharSlot[]>(() =>
+  charLayout.value.length > 0
+    ? charLayout.value
+    : fallbackCharLayout(settings.value),
+)
 
-// Для выбора характеристики — категории конкретного игрока (последний выбранный или сам).
+const alivePlayers = computed(() => {
+  let list = publicPlayers.value.filter((p) => p.isAlive)
+  if (current.value?.excludeSelf) list = list.filter((p) => p.id !== myId.value)
+  // Уже выбранных игроков на этом шаге (вторая цель) не предлагаем снова.
+  if (current.value?.kind === 'player') {
+    list = list.filter((p) => !chosenPlayers.value.includes(p.id))
+  }
+  return list
+})
+
 const charTargetPlayer = computed(() => {
-  // Если карта уже выбрала игрока — берём его, иначе себя.
   return chosenPlayers.value[chosenPlayers.value.length - 1] ?? myId.value
 })
-const availableCategories = computed<string[]>(() => [...CHARACTERISTIC_CATEGORIES, 'Биология'])
+
+function isSlotRevealed(playerId: string, slot: CharSlot): boolean {
+  if (slot.type === BIOLOGY_CATEGORY) {
+    if (playerId === myId.value) return !!myBiology.value?.isVisible
+    return !!publicPlayers.value.find((p) => p.id === playerId)?.biology
+  }
+  if (playerId === myId.value) {
+    return !!myCharacteristics.value.find(
+      (c) => c.type === slot.type && (c.occ ?? 0) === slot.occ && c.isVisible,
+    )
+  }
+  const pub = publicPlayers.value.find((p) => p.id === playerId)
+  return !!pub?.characteristics.find((c) => c.type === slot.type && (c.occ ?? 0) === slot.occ)
+}
+
+const availableSlots = computed<CharSlot[]>(() => {
+  const spec = current.value
+  if (!spec) return []
+  let slots = layout.value
+  if (spec.kind === 'characteristic' && spec.categories?.length) {
+    slots = slots.filter((s) => spec.categories!.includes(s.type))
+  }
+  if (spec.kind === 'catCategory') {
+    // все слоты раскладки, включая биологию
+  } else if (spec.kind === 'characteristic' && !spec.categories?.length) {
+    // любые, включая биологию
+  }
+  if (spec.revealedOnly) {
+    slots = slots.filter((s) => isSlotRevealed(charTargetPlayer.value, s))
+  }
+  if (spec.kind === 'characteristic') {
+    const taken = new Set(
+      chosenChars.value
+        .filter((c) => c.playerId === charTargetPlayer.value)
+        .map((c) => `${c.category}#${c.occ}`),
+    )
+    slots = slots.filter((s) => !taken.has(`${s.type}#${s.occ}`))
+  }
+  if (spec.kind === 'catCategory') {
+    const taken = new Set(chosenCategories.value.map((c) => `${c.category}#${c.occ}`))
+    slots = slots.filter((s) => !taken.has(`${s.type}#${s.occ}`))
+  }
+  return slots
+})
 
 function pickPlayer(id: string) {
   chosenPlayers.value.push(id)
   next()
 }
-function pickCharacteristic(category: string) {
-  chosenChars.value.push({ playerId: charTargetPlayer.value, category })
+function pickCharacteristic(slot: CharSlot) {
+  chosenChars.value.push({
+    playerId: charTargetPlayer.value ?? '',
+    category: slot.type,
+    occ: slot.occ,
+  })
   next()
 }
-function pickCategory(category: string) {
-  chosenCategories.value.push(category)
+function pickCategory(slot: CharSlot) {
+  chosenCategories.value.push({ category: slot.type, occ: slot.occ })
   next()
 }
 function pickThreat(idx: number) {
@@ -65,7 +132,8 @@ function confirm() {
   emit('confirm', targets)
 }
 
-function playerName(id: string) {
+function playerName(id: string | undefined) {
+  if (!id) return '?'
   return publicPlayers.value.find((p) => p.id === id)?.name ?? '?'
 }
 </script>
@@ -83,29 +151,27 @@ function playerName(id: string) {
       <div class="step">
         <p class="step-label">{{ current?.label }}</p>
 
-        <!-- Выбор игрока -->
         <div v-if="current?.kind === 'player'" class="options">
           <button v-for="p in alivePlayers" :key="p.id" class="opt" @click="pickPlayer(p.id)">
             {{ p.name }}<span v-if="p.id === myId"> (вы)</span>
           </button>
+          <p v-if="alivePlayers.length === 0" class="empty">Нет подходящих игроков.</p>
         </div>
 
-        <!-- Выбор характеристики (категории) у целевого игрока -->
         <div v-else-if="current?.kind === 'characteristic'" class="options">
           <div class="target-hint">Игрок: <b>{{ playerName(charTargetPlayer) }}</b></div>
-          <button v-for="cat in availableCategories" :key="cat" class="opt" @click="pickCharacteristic(cat)">
-            {{ cat }}
+          <button v-for="slot in availableSlots" :key="slot.type + '#' + slot.occ" class="opt" @click="pickCharacteristic(slot)">
+            {{ slot.label }}
           </button>
+          <p v-if="availableSlots.length === 0" class="empty">Нет доступных характеристик.</p>
         </div>
 
-        <!-- Выбор категории (для «пересдать всем») -->
         <div v-else-if="current?.kind === 'catCategory'" class="options">
-          <button v-for="cat in availableCategories" :key="cat" class="opt" @click="pickCategory(cat)">
-            {{ cat }}
+          <button v-for="slot in availableSlots" :key="slot.type + '#' + slot.occ" class="opt" @click="pickCategory(slot)">
+            {{ slot.label }}
           </button>
         </div>
 
-        <!-- Выбор угрозы -->
         <div v-else-if="current?.kind === 'threat'" class="options">
           <button
             v-for="(t, i) in bunker.threats"

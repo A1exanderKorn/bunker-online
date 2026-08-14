@@ -7,7 +7,11 @@
 
 export type Sex = 'М' | 'Ж' | 'Андроид' | 'Гермафродит'
 
-/** Категории характеристик (совпадают со значениями в data.xlsx). */
+/**
+ * Базовые категории (фолбэк, если Excel недоступен).
+ * Реальный набор и порядок берутся из data.xlsx — новые категории
+ * подхватываются автоматически.
+ */
 export const CHARACTERISTIC_CATEGORIES = [
   'Профессия',
   'Здоровье',
@@ -17,10 +21,57 @@ export const CHARACTERISTIC_CATEGORIES = [
   'Факт',
 ] as const
 
-export type CharacteristicCategory = (typeof CHARACTERISTIC_CATEGORIES)[number]
+/** Категория характеристики — строка из Excel, не закрытый enum. */
+export type CharacteristicCategory = string
 
 /** Псевдо-категория для строки биологии в таблице. */
 export const BIOLOGY_CATEGORY = 'Биология' as const
+
+/** Слот строки на карточке игрока (учитывает второй багаж и новые категории). */
+export interface CharSlot {
+  type: string
+  /** 0-based индекс среди характеристик того же типа (Багаж #1 → 0, Багаж #2 → 1). */
+  occ: number
+  label: string
+}
+
+/** Подпись слота: «Багаж #2», если однотипных больше одной. */
+export function charSlotLabel(type: string, occ: number, totalOfType: number): string {
+  if (type === BIOLOGY_CATEGORY || totalOfType <= 1) return type
+  return `${type} #${occ + 1}`
+}
+
+/**
+ * Раскладка строк карточки по настройкам (фолбэк на клиенте).
+ * Сервер присылает свой layout из Excel — он приоритетнее.
+ */
+export function fallbackCharLayout(s: {
+  extraBaggage?: boolean
+  noPhobias?: boolean
+}): CharSlot[] {
+  const types: string[] = [
+    'Профессия',
+    'Здоровье',
+    BIOLOGY_CATEGORY,
+    'Хобби',
+    ...(s.noPhobias ? [] : ['Фобия']),
+    'Багаж',
+    ...(s.extraBaggage ? ['Багаж'] : []),
+    'Факт',
+  ]
+  return slotsFromTypes(types)
+}
+
+export function slotsFromTypes(types: string[]): CharSlot[] {
+  const totals: Record<string, number> = {}
+  for (const t of types) totals[t] = (totals[t] ?? 0) + 1
+  const seen: Record<string, number> = {}
+  return types.map((type) => {
+    const occ = seen[type] ?? 0
+    seen[type] = occ + 1
+    return { type, occ, label: charSlotLabel(type, occ, totals[type]) }
+  })
+}
 
 export interface Characteristic {
   type: CharacteristicCategory
@@ -28,6 +79,8 @@ export interface Characteristic {
   coef: number
   hint: string
   isVisible: boolean
+  /** 0-based индекс среди характеристик того же типа у игрока. */
+  occ: number
 }
 
 export interface Biology {
@@ -207,6 +260,13 @@ export function remainingPlayers(steps: RoundStep[], playerCount: number): numbe
 
 // ─── Бункер: катастрофы, угрозы, условия (III.5) ───────────────────
 
+/** Доп. условие бункера, открытое картой действия. */
+export interface BunkerCondition {
+  text: string
+  byPlayerId: string
+  byName: string
+}
+
 /** Стартовое состояние бункера, видное всем. */
 export interface BunkerState {
   /** Катастрофа (показывается сразу). */
@@ -215,6 +275,8 @@ export interface BunkerState {
   years: number
   /** Раскрытые по ходу игры угрозы (в порядке появления). */
   threats: string[]
+  /** Доп. условия, открытые картами (отдельно от угроз). */
+  conditions: BunkerCondition[]
 }
 
 // ─── Карты действия ───────────────────────────────────
@@ -230,6 +292,24 @@ export interface CardPickSpec {
   kind: CardPickKind
   /** Подсказка для UI, что выбирать. */
   label: string
+  /** Нельзя выбрать себя. */
+  excludeSelf?: boolean
+  /** Ограничить выбор этими типами (Факт/Багаж и т.п.). */
+  categories?: string[]
+  /** Только уже открытые характеристики. */
+  revealedOnly?: boolean
+}
+
+/** Ссылка на конкретную характеристику игрока (с учётом второго багажа). */
+export interface CharPick {
+  playerId: string
+  category: string
+  occ: number
+}
+
+export interface CategoryPick {
+  category: string
+  occ: number
 }
 
 /** Карта действия игрока. */
@@ -267,10 +347,10 @@ export interface CatalogCard {
 export interface CardTargets {
   /** Выбранные игроки (playerId). */
   players?: string[]
-  /** Выбранные характеристики: {playerId, category}. */
-  characteristics?: { playerId: string; category: string }[]
-  /** Выбранные категории характеристик. */
-  categories?: string[]
+  /** Выбранные характеристики (с номером слота). */
+  characteristics?: CharPick[]
+  /** Выбранные категории (для «пересдать всем»). */
+  categories?: CategoryPick[]
   /** Выбранные угрозы (индексы). */
   threats?: number[]
 }
@@ -328,6 +408,8 @@ export interface GameStartedPayload {
   bunker: BunkerState
   /** Собственные карты действия игрока (заглушка). */
   actionCards: ActionCard[]
+  /** Порядок строк на карточке (из Excel + настройки багажа/фобий). */
+  charLayout: CharSlot[]
 }
 
 export interface BunkerUpdatedPayload {
@@ -359,6 +441,11 @@ export interface VotesUpdatedPayload {
   voted: string[]
   /** targetId -> список voterId, отдавших голос за этого игрока (II.4). */
   votesByTarget: Record<string, string[]>
+  /**
+   * Переголосование картой: voterId → предыдущая цель.
+   * Нельзя выбрать её снова, если есть другие варианты.
+   */
+  revoteFrom?: Record<string, string>
 }
 
 export interface VoteResultPayload {
@@ -381,6 +468,8 @@ export interface YourCharacteristicsPayload {
 
 export interface RevealPayload {
   characteristicType: CharacteristicCategory | typeof BIOLOGY_CATEGORY
+  /** Слот однотипной характеристики (второй багаж). */
+  occ?: number
 }
 
 export interface VotePayload {

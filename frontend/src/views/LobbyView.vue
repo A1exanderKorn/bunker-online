@@ -129,6 +129,7 @@ const survivorNames = computed(() =>
     </div>
 
     <BunkerInfoPanel class="info-mb" />
+    <p v-if="error" class="error game-error">{{ error }}</p>
 
     <ActionCardsPanel class="info-mb" />
 
@@ -408,6 +409,15 @@ const survivorNames = computed(() =>
 .error {
   color: var(--danger);
   font-size: 18px;
+}
+.game-error {
+  text-align: center;
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 14px;
 }
 
 /* Финальный экран */
