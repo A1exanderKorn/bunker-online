@@ -53,33 +53,10 @@ interface CardRow {
 const SHEET = 'Карты действия'
 
 let cache: CardDef[] | null = null
-let categoryWeights: Map<string, number[]> | null = null
-
-function loadCategoryWeights(wb: XLSX.WorkBook): Map<string, number[]> {
-  const map = new Map<string, number[]>()
-  const sheet = wb.Sheets['Категории карт']
-  if (!sheet) return map
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet)
-  for (const r of rows) {
-    const cat = String(r.category ?? r.Категория ?? '').trim()
-    if (!cat) continue
-    map.set(cat, [
-      Number(r.prob025) || 0,
-      Number(r.prob035) || 0,
-      Number(r.prob04) || 0,
-      Number(r.prob045) || 0,
-      Number(r.prob05) || 0,
-      Number(r.prob06) || 0,
-      Number(r.prob06p) || 0,
-    ])
-  }
-  return map
-}
 
 export function loadCards(): CardDef[] {
   if (cache) return cache
   const wb = XLSX.readFile(DATA_PATH)
-  categoryWeights = loadCategoryWeights(wb)
   const sheet = wb.Sheets[SHEET]
   if (!sheet) {
     cache = []
@@ -107,9 +84,9 @@ export function loadCards(): CardDef[] {
   return cache
 }
 
-/** Индекс корзины КФ (0..6) по порогам ≤0.3,≤0.35,≤0.4,≤0.45,≤0.5,≤0.6,>0.6. */
+/** Индекс корзины КФ (0..6) по порогам ≤0.25,≤0.35,≤0.4,≤0.45,≤0.5,≤0.6,>0.6. */
 function coefBucket(coef: number): number {
-  if (coef <= 0.3) return 0
+  if (coef <= 0.25) return 0
   if (coef <= 0.35) return 1
   if (coef <= 0.4) return 2
   if (coef <= 0.45) return 3
@@ -122,37 +99,41 @@ function coefBucket(coef: number): number {
 function categories(defs: CardDef[]): string[] {
   const seen: string[] = []
   for (const d of defs) if (!seen.includes(d.category)) seen.push(d.category)
-  return seen
+  const rank = new Map(['A', 'B', 'C', 'D'].map((category, index) => [category, index]))
+  return seen.sort(
+    (a, b) => (rank.get(a) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b) ?? Number.MAX_SAFE_INTEGER),
+  )
 }
 
 /**
  * Вес категории для данной корзины КФ с учётом влияния карт.
- * strong — сдвигаем в сторону «сильных» категорий (ниже в списке),
- * weak — в сторону «слабых» (выше). Реализуем сдвигом корзины на ±1.
+ * Меньшие корзины смещены к сильной категории A, большие — к слабым.
  */
 function bucketWithPower(bucket: number, power: CardsPower): number {
-  if (power === 'strong') return Math.min(6, bucket + 2)
-  if (power === 'weak') return Math.max(0, bucket - 2)
+  if (power === 'strong') return Math.max(0, bucket - 2)
+  if (power === 'weak') return Math.min(6, bucket + 2)
   return bucket
 }
 
-/** Ролл категории по вероятностям корзины; возвращает имя категории. */
-function rollCategory(defs: CardDef[], coef: number, power: CardsPower): string {
+/** Ролл категории A → B → C → D по весам K–Q из первой карты каждой категории. */
+export function rollCategory(
+  defs: CardDef[],
+  coef: number,
+  power: CardsPower,
+  random: () => number = Math.random,
+): string {
   const cats = categories(defs)
   const bucket = bucketWithPower(coefBucket(coef), power)
-  // Для каждой категории берём вероятность из первой её карты (они одинаковы).
   const weights = cats.map((cat) => {
-    const fromSheet = categoryWeights?.get(cat)
-    if (fromSheet) return fromSheet[bucket] ?? 0
     const first = defs.find((d) => d.category === cat)
-    return first ? first.probs[bucket] : 0
+    return Math.max(0, first?.probs[bucket] ?? 0)
   })
   const total = weights.reduce((a, b) => a + b, 0)
   if (total <= 0) {
-    // Фолбэк: равномерно среди всех категорий.
-    return cats[Math.floor(Math.random() * cats.length)]
+    console.warn(`Для корзины КФ ${bucket} не заданы вероятности категорий карт`)
+    return cats[0] ?? ''
   }
-  let rnd = Math.random() * total
+  let rnd = random() * total
   for (let i = 0; i < cats.length; i++) {
     if (rnd < weights[i]) return cats[i]
     rnd -= weights[i]

@@ -85,23 +85,64 @@ const survivorsHint = computed(() =>
     <div class="settings-grid">
       <label class="field">
         <span class="field-label">Время хода, сек</span>
-        <input class="input" type="number" :value="settings.turnSeconds" :min="L.turnSeconds.min" :max="L.turnSeconds.max" :disabled="!isHost" @change="updateNum('turnSeconds', ($event.target as HTMLInputElement).value)" />
+        <input
+          class="input"
+          type="number"
+          :value="settings.turnSeconds"
+          :min="L.turnSeconds.min"
+          :max="L.turnSeconds.max"
+          :disabled="!isHost"
+          @change="updateNum('turnSeconds', ($event.target as HTMLInputElement).value)"
+        />
       </label>
       <label v-if="settings.voteMode === 'simultaneous'" class="field">
         <span class="field-label">Время голосования, сек</span>
-        <input class="input" type="number" :value="settings.voteSeconds" :min="L.voteSeconds.min" :max="L.voteSeconds.max" :disabled="!isHost" @change="updateNum('voteSeconds', ($event.target as HTMLInputElement).value)" />
+        <input
+          class="input"
+          type="number"
+          :value="settings.voteSeconds"
+          :min="L.voteSeconds.min"
+          :max="L.voteSeconds.max"
+          :disabled="!isHost"
+          @change="updateNum('voteSeconds', ($event.target as HTMLInputElement).value)"
+        />
       </label>
       <label v-else class="field">
         <span class="field-label">Время на игрока, сек</span>
-        <input class="input" type="number" :value="settings.sequentialVoteSeconds" :min="L.sequentialVoteSeconds.min" :max="L.sequentialVoteSeconds.max" :disabled="!isHost" @change="updateNum('sequentialVoteSeconds', ($event.target as HTMLInputElement).value)" />
+        <input
+          class="input"
+          type="number"
+          :value="settings.sequentialVoteSeconds"
+          :min="L.sequentialVoteSeconds.min"
+          :max="L.sequentialVoteSeconds.max"
+          :disabled="!isHost"
+          @change="updateNum('sequentialVoteSeconds', ($event.target as HTMLInputElement).value)"
+        />
       </label>
       <label class="field">
         <span class="field-label">Целевой коэффициент</span>
-        <input class="input" type="number" step="0.05" :value="settings.targetCoef" :min="L.targetCoef.min" :max="L.targetCoef.max" :disabled="!isHost" @change="updateNum('targetCoef', ($event.target as HTMLInputElement).value)" />
+        <input
+          class="input"
+          type="number"
+          step="0.05"
+          :value="settings.targetCoef"
+          :min="L.targetCoef.min"
+          :max="L.targetCoef.max"
+          :disabled="!isHost"
+          @change="updateNum('targetCoef', ($event.target as HTMLInputElement).value)"
+        />
       </label>
       <label class="field">
         <span class="field-label">Останется игроков {{ survivorsHint }}</span>
-        <input class="input" type="number" :value="settings.survivorsCount" :min="L.survivorsCount.min" :max="L.survivorsCount.max" :disabled="!isHost" @change="updateNum('survivorsCount', ($event.target as HTMLInputElement).value)" />
+        <input
+          class="input"
+          type="number"
+          :value="settings.survivorsCount"
+          :min="L.survivorsCount.min"
+          :max="L.survivorsCount.max"
+          :disabled="!isHost"
+          @change="updateNum('survivorsCount', ($event.target as HTMLInputElement).value)"
+        />
       </label>
     </div>
 
@@ -111,7 +152,7 @@ const survivorsHint = computed(() =>
         <span class="switch-title">Голосование</span>
         <div class="seg">
           <button
-            v-for="mode in (['simultaneous', 'sequential'] as VoteMode[])"
+            v-for="mode in ['simultaneous', 'sequential'] as VoteMode[]"
             :key="mode"
             class="seg-btn"
             :class="{ active: settings.voteMode === mode }"
@@ -124,19 +165,39 @@ const survivorsHint = computed(() =>
       </div>
 
       <label class="check" :class="{ ro: !isHost }">
-        <input type="checkbox" :checked="settings.extraBaggage" :disabled="!isHost" @change="patch({ extraBaggage: ($event.target as HTMLInputElement).checked })" />
+        <input
+          type="checkbox"
+          :checked="settings.extraBaggage"
+          :disabled="!isHost"
+          @change="patch({ extraBaggage: ($event.target as HTMLInputElement).checked })"
+        />
         <span>Доп. багаж <em class="mini">(8-я хар-ка)</em></span>
       </label>
       <label class="check" :class="{ ro: !isHost }">
-        <input type="checkbox" :checked="settings.noPhobias" :disabled="!isHost" @change="patch({ noPhobias: ($event.target as HTMLInputElement).checked })" />
+        <input
+          type="checkbox"
+          :checked="settings.noPhobias"
+          :disabled="!isHost"
+          @change="patch({ noPhobias: ($event.target as HTMLInputElement).checked })"
+        />
         <span>Без фобий</span>
       </label>
       <label class="check" :class="{ ro: !isHost }">
-        <input type="checkbox" :checked="settings.threatsEnabled" :disabled="!isHost" @change="patch({ threatsEnabled: ($event.target as HTMLInputElement).checked })" />
+        <input
+          type="checkbox"
+          :checked="settings.threatsEnabled"
+          :disabled="!isHost"
+          @change="patch({ threatsEnabled: ($event.target as HTMLInputElement).checked })"
+        />
         <span>Угрозы</span>
       </label>
       <label class="check" :class="{ ro: !isHost }">
-        <input type="checkbox" :checked="settings.actionCardsEnabled" :disabled="!isHost" @change="patch({ actionCardsEnabled: ($event.target as HTMLInputElement).checked })" />
+        <input
+          type="checkbox"
+          :checked="settings.actionCardsEnabled"
+          :disabled="!isHost"
+          @change="patch({ actionCardsEnabled: ($event.target as HTMLInputElement).checked })"
+        />
         <span>Карты действия</span>
       </label>
     </div>
@@ -147,7 +208,7 @@ const survivorsHint = computed(() =>
         <span class="switch-title">Влияние карт</span>
         <div class="seg">
           <button
-            v-for="pw in (['weak', 'balanced', 'strong'] as CardsPower[])"
+            v-for="pw in ['weak', 'balanced', 'strong'] as CardsPower[]"
             :key="pw"
             class="seg-btn"
             :class="{ active: settings.cardsPower === pw }"
@@ -160,7 +221,9 @@ const survivorsHint = computed(() =>
       </div>
     </div>
 
-    <div class="char-count">Число характеристик: <b>{{ charCount }}</b></div>
+    <div class="char-count">
+      Число характеристик: <b>{{ charCount }}</b>
+    </div>
 
     <!-- Таблица шагов раундов -->
     <div class="rounds-wrap">
@@ -170,31 +233,50 @@ const survivorsHint = computed(() =>
           <tbody>
             <tr class="r-head">
               <th class="r-label">№</th>
-              <th v-for="(_, i) in settings.roundSteps" :key="'n' + i" class="r-num">{{ i + 1 }}</th>
+              <th v-for="(_, i) in settings.roundSteps" :key="'n' + i" class="r-num">
+                {{ i + 1 }}
+              </th>
               <th v-if="isHost" class="r-add"></th>
             </tr>
             <tr>
               <th class="r-label">Раунд</th>
               <td v-for="(step, i) in settings.roundSteps" :key="'k' + i" class="r-cell">
-                <button class="kind-btn" :class="step.kind" :disabled="!isHost" @click="toggleKind(i)" :title="step.kind === 'reveal' ? 'Вскрытие (клик — сменить на голосование)' : 'Голосование (клик — сменить на вскрытие)'">
+                <button
+                  class="kind-btn"
+                  :class="step.kind"
+                  :disabled="!isHost"
+                  @click="toggleKind(i)"
+                  :title="
+                    step.kind === 'reveal'
+                      ? 'Вскрытие (клик — сменить на голосование)'
+                      : 'Голосование (клик — сменить на вскрытие)'
+                  "
+                >
                   <span v-if="step.kind === 'reveal'">🌍</span>
                   <span v-else>💀</span>
-                  <span v-if="step.kind === 'reveal' && step.revealThreat" class="threat-corner">⚠</span>
                 </button>
               </td>
               <td v-if="isHost" class="r-add">
-                <button class="add-btn" @click="addStep('reveal')" title="Добавить шаг вскрытия">＋🌍</button>
-                <button class="add-btn" @click="addStep('vote')" title="Добавить голосование">＋💀</button>
+                <button class="add-btn" @click="addStep('reveal')" title="Добавить шаг вскрытия">
+                  ＋🌍
+                </button>
+                <button class="add-btn" @click="addStep('vote')" title="Добавить голосование">
+                  ＋💀
+                </button>
               </td>
             </tr>
             <tr>
               <th class="r-label">Вскрыто (всего)</th>
-              <td v-for="(_, i) in settings.roundSteps" :key="'c' + i" class="r-cell readonly-cell">{{ cumReveals[i] }}</td>
+              <td v-for="(_, i) in settings.roundSteps" :key="'c' + i" class="r-cell readonly-cell">
+                {{ cumReveals[i] }}
+              </td>
               <td v-if="isHost"></td>
             </tr>
             <tr>
               <th class="r-label">Останется игроков</th>
-              <td v-for="(_, i) in settings.roundSteps" :key="'r' + i" class="r-cell readonly-cell">{{ remaining[i] }}</td>
+              <td v-for="(_, i) in settings.roundSteps" :key="'r' + i" class="r-cell readonly-cell">
+                {{ remaining[i] }}
+              </td>
               <td v-if="isHost"></td>
             </tr>
             <tr>
@@ -221,7 +303,6 @@ const survivorsHint = computed(() =>
           </tbody>
         </table>
       </div>
-
     </div>
   </section>
 </template>
@@ -391,13 +472,6 @@ const survivorsHint = computed(() =>
 }
 .kind-btn.vote {
   background: color-mix(in srgb, var(--danger) 12%, var(--surface));
-}
-.threat-corner {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  font-size: 11px;
-  color: var(--warn);
 }
 .reveal-input {
   width: 46px;

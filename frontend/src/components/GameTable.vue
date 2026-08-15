@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
+import InlineConfirm from '@/components/InlineConfirm.vue'
 import { BIOLOGY_CATEGORY, fallbackCharLayout, type Biology, type CharSlot, type PublicPlayer } from '@shared/types'
 
 /**
@@ -79,9 +80,17 @@ function canReveal(p: PublicPlayer, slot: CharSlot): boolean {
   )
 }
 
+const pendingReveal = ref<string | null>(null)
+function revealKey(p: PublicPlayer, slot: CharSlot): string {
+  return `${p.id}:${slot.type}#${slot.occ}`
+}
 function tryReveal(p: PublicPlayer, slot: CharSlot) {
   if (!canReveal(p, slot)) return
-  if (!window.confirm(`Открыть характеристику «${slot.label}» для всех?`)) return
+  pendingReveal.value = revealKey(p, slot)
+}
+function confirmReveal(p: PublicPlayer, slot: CharSlot) {
+  if (pendingReveal.value !== revealKey(p, slot) || !canReveal(p, slot)) return
+  pendingReveal.value = null
   game.reveal(slot.type as never, slot.occ)
 }
 
@@ -164,6 +173,7 @@ function toggleVoters(id: string) {
             'mine-revealed': isMe(p) && isRevealed(p, slot),
             clickable: canReveal(p, slot),
             locked: isMe(p) && !isRevealed(p, slot) && !canReveal(p, slot),
+            confirming: pendingReveal === revealKey(p, slot),
           }"
           @click="tryReveal(p, slot)"
         >
@@ -179,12 +189,20 @@ function toggleVoters(id: string) {
               <span class="hidden-dot">••••</span>
             </template>
           </span>
+          <InlineConfirm
+            v-if="pendingReveal === revealKey(p, slot)"
+            @confirm="confirmReveal(p, slot)"
+            @cancel="pendingReveal = null"
+          />
           <span
-            v-if="getHint(p, slot) && (isRevealed(p, slot) || isMe(p))"
+            v-else-if="getHint(p, slot) && (isRevealed(p, slot) || isMe(p))"
             class="char-hint"
-            :title="getHint(p, slot) ?? ''"
-            >ⓘ</span
+            tabindex="0"
+            @click.stop
           >
+            ⓘ
+            <span class="hint-popup" role="tooltip">{{ getHint(p, slot) }}</span>
+          </span>
         </li>
       </ul>
 
@@ -320,6 +338,9 @@ function toggleVoters(id: string) {
   font-size: 13px;
   min-height: 34px;
 }
+.char-row.confirming {
+  grid-template-columns: 92px 1fr auto;
+}
 .char-row.revealed {
   background: color-mix(in srgb, var(--success) 16%, var(--surface));
 }
@@ -372,10 +393,54 @@ function toggleVoters(id: string) {
   color: var(--text-faint);
 }
 .char-hint {
+  position: relative;
+  display: inline-flex;
   cursor: help;
   color: #2980b9;
   justify-self: center;
   padding-top: 1px;
+  outline: none;
+}
+.hint-popup {
+  position: absolute;
+  right: -8px;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  width: max-content;
+  max-width: min(280px, 75vw);
+  padding: 8px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-md);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  overflow-wrap: anywhere;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(3px);
+  transition:
+    opacity var(--dur-fast),
+    transform var(--dur-fast);
+}
+.hint-popup::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 10px;
+  border: 6px solid transparent;
+  border-top-color: var(--surface);
+}
+.char-hint:hover .hint-popup,
+.char-hint:focus-visible .hint-popup,
+.char-hint:focus .hint-popup {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 .reveal-cue {
   font-size: 14px;
@@ -419,6 +484,9 @@ function toggleVoters(id: string) {
   }
   .char-row {
     grid-template-columns: 72px 1fr 22px;
+  }
+  .char-row.confirming {
+    grid-template-columns: 72px 1fr auto;
   }
 }
 </style>

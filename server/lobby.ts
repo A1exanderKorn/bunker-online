@@ -29,6 +29,22 @@ import { dealActionCards, makeCardByCatalogId, loadCards } from './cards'
 
 type IO = Server<ClientToServerEvents, ServerToClientEvents>
 
+interface LastPlayedEffect {
+  card: ActionCard
+  targets: CardTargets
+  byPlayerId: string
+}
+
+interface VoteInterrupt {
+  rewoundVoterId: string
+  resumeVoterId: string
+  resumeIndex: number
+}
+
+function cloneCardTargets(targets: CardTargets): CardTargets {
+  return JSON.parse(JSON.stringify(targets)) as CardTargets
+}
+
 const EMPTY_TURN: TurnState = {
   currentPlayerId: null,
   round: 0,
@@ -83,8 +99,8 @@ export class Lobby {
   // ── Карты действия ──
   /** playerId -> карты игрока. */
   private cards = new Map<string, ActionCard[]>()
-  /** Последняя сыгранная карта (для replayLast). */
-  private lastPlayedCode: string | null = null
+  /** Последний реально применённый эффект (карта replayLast сюда не записывается). */
+  private lastPlayedEffect: LastPlayedEffect | null = null
   private cardInstanceCounter = 1000
   /** playerId -> последняя вскрытая характеристика. */
   private lastRevealed = new Map<string, { category: string; occ: number }>()
@@ -99,6 +115,8 @@ export class Lobby {
   private protectedFromVote = new Set<string>()
   /** Постоянная защита: voterId -> не может голосовать против protectedId. */
   private voteBans: { voterId: string; protectedId: string }[] = []
+  /** Стек возврата к прерванным голосующим после карт doubleVote. */
+  private voteInterrupts: VoteInterrupt[] = []
 
   constructor(io: IO, code: string) {
     this.io = io
@@ -314,11 +332,12 @@ export class Lobby {
 
     // Раздаём карты действия, если включены.
     this.cards.clear()
-    this.lastPlayedCode = null
+    this.lastPlayedEffect = null
     this.cancelledVoters.clear()
     this.voteWeight.clear()
     this.protectedFromVote.clear()
     this.voteBans = []
+    this.voteInterrupts = []
     if (this.settings.actionCardsEnabled) {
       const dealt = dealActionCards(this.players, this.settings.cardsPower)
       for (const [pid, card] of dealt.entries()) this.cards.set(pid, [card])
@@ -386,7 +405,7 @@ export class Lobby {
     this.bunker = { catastrophe: '', years: 0, threats: [], conditions: [] }
     this.pendingThreats = []
     this.cards.clear()
-    this.lastPlayedCode = null
+    this.lastPlayedEffect = null
     this.lastRevealed.clear()
     this.revoteFrom.clear()
     this.charLayout = []
@@ -394,6 +413,7 @@ export class Lobby {
     this.voteWeight.clear()
     this.protectedFromVote.clear()
     this.voteBans = []
+    this.voteInterrupts = []
     this.stepIndex = 0
     this.regenerateDefaultSteps()
     this.broadcastPlayers()
@@ -498,6 +518,7 @@ export class Lobby {
       return
     }
 
+    const replaySource = card.action === 'replayLast' ? this.lastPlayedEffect : null
     const effect = this.applyCardEffect(playerId, card, targets)
     if (!effect.ok) {
       this.emitError(playerId, effect.error ?? 'Неверные цели карты')
@@ -505,7 +526,19 @@ export class Lobby {
     }
 
     card.used = true
-    this.lastPlayedCode = card.code
+    if (card.action === 'replayLast' && replaySource) {
+      this.lastPlayedEffect = {
+        card: { ...replaySource.card },
+        targets: cloneCardTargets(replaySource.targets),
+        byPlayerId: playerId,
+      }
+    } else if (card.action !== 'replayLast') {
+      this.lastPlayedEffect = {
+        card: { ...card },
+        targets: cloneCardTargets(targets),
+        byPlayerId: playerId,
+      }
+    }
     this.sendCardsTo(playerId)
 
     const byName = this.players.find((p) => p.id === playerId)?.name ?? '?'
@@ -534,6 +567,35 @@ export class Lobby {
   /** Имена игроков по id (для текста эффекта). */
   private nameOf(id: string): string {
     return this.players.find((p) => p.id === id)?.name ?? '?'
+  }
+
+  /** Удваивает голос и, если он уже был отдан, возвращает игроку право выбора. */
+  private applyDoubleVote(playerId: string): { ok: boolean; text: string } {
+    this.voteWeight.set(playerId, 2)
+    if (!this.votes.has(playerId)) {
+      return { ok: true, text: `Голос ${this.nameOf(playerId)} считается за два` }
+    }
+
+    this.votes.delete(playerId)
+    if (this.isVoting()) this.broadcastVotes()
+
+    if (this.isVoting() && this.settings.voteMode === 'sequential') {
+      const rewindIndex = this.voteOrder.indexOf(playerId)
+      const resumeVoterId = this.turn.currentVoterId
+      if (rewindIndex >= 0 && resumeVoterId && resumeVoterId !== playerId) {
+        this.voteInterrupts.push({
+          rewoundVoterId: playerId,
+          resumeVoterId,
+          resumeIndex: this.voteOrderIndex,
+        })
+        this.startVoterTurn(rewindIndex)
+      }
+    }
+
+    return {
+      ok: true,
+      text: `Голос ${this.nameOf(playerId)} считается за два — выберите заново`,
+    }
   }
 
   private catToCategory(cat: string): string {
@@ -701,7 +763,18 @@ export class Lobby {
         return { ok: true, text: `Вылечено бесплодие: ${this.nameOf(targetId)}` }
       }
       case 'replayLast': {
-        return { ok: true, text: this.lastPlayedCode ? 'Повтор последней карты' : 'Нет карты для повтора' }
+        const previous = this.lastPlayedEffect
+        if (!previous) return { ok: false, error: 'Нет карты для повтора' }
+        if (previous.byPlayerId === playerId) {
+          return { ok: false, error: 'Можно повторить только карту другого игрока' }
+        }
+        const replayed = this.applyCardEffect(
+          playerId,
+          previous.card,
+          cloneCardTargets(previous.targets),
+        )
+        if (!replayed.ok) return replayed
+        return { ok: true, text: `Повтор последней карты: ${replayed.text ?? previous.card.title}` }
       }
       case 'changeCatastrophe': {
         this.bunker.catastrophe = pickCatastrophe()
@@ -733,8 +806,7 @@ export class Lobby {
         return { ok: true, text: `Голоса не учитываются: ${ids.map((i) => this.nameOf(i)).join(', ')}` }
       }
       case 'doubleVote': {
-        this.voteWeight.set(playerId, 2)
-        return { ok: true, text: `Голос ${this.nameOf(playerId)} считается за два` }
+        return this.applyDoubleVote(playerId)
       }
       case 'selfProtection': {
         const otherId = t.players?.[0]
@@ -972,6 +1044,7 @@ export class Lobby {
     this.votes.clear()
     this.voteCandidates = null
     this.revoteFrom.clear()
+    this.voteInterrupts = []
     this.turn = { ...this.turn, currentPlayerId: null, currentVoterId: null }
 
     if (this.settings.voteMode === 'sequential') {
@@ -995,6 +1068,7 @@ export class Lobby {
   private beginSequentialVote(): void {
     this.voteOrder = this.alive().map((p) => p.id)
     this.voteOrderIndex = 0
+    this.voteInterrupts = []
     this.io.to(this.code).emit('stageChanged', {
       stage: this.stage,
       timer: 0,
@@ -1033,6 +1107,30 @@ export class Lobby {
 
   private advanceVoter(): void {
     if (!this.isVoting() || this.settings.voteMode !== 'sequential') return
+
+    const interrupted = this.voteInterrupts[this.voteInterrupts.length - 1]
+    if (interrupted?.rewoundVoterId === this.turn.currentVoterId) {
+      this.voteInterrupts.pop()
+      let resumeIndex = this.voteOrder.indexOf(interrupted.resumeVoterId)
+      if (
+        resumeIndex < 0 ||
+        !this.players.some((p) => p.id === interrupted.resumeVoterId && p.isAlive)
+      ) {
+        resumeIndex = this.voteOrder.findIndex(
+          (id, index) =>
+            index >= interrupted.resumeIndex &&
+            !this.votes.has(id) &&
+            this.players.some((p) => p.id === id && p.isAlive),
+        )
+      }
+      if (resumeIndex >= 0) {
+        this.startVoterTurn(resumeIndex)
+        return
+      }
+      this.finishVote()
+      return
+    }
+
     const next = this.voteOrderIndex + 1
     if (next >= this.voteOrder.length) {
       this.stopTimer()
@@ -1151,6 +1249,7 @@ export class Lobby {
   private finishVote(): void {
     if (!this.isVoting()) return
     this.stopTimer()
+    this.voteInterrupts = []
     this.turn = { ...this.turn, currentVoterId: null }
 
     const tally = this.tally()
@@ -1220,6 +1319,7 @@ export class Lobby {
     this.cancelledVoters.clear()
     this.voteWeight.clear()
     this.protectedFromVote.clear()
+    this.voteInterrupts = []
   }
 
   // ─── Условие победы ────────────────────────────────────────────────────

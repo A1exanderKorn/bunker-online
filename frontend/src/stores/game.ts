@@ -153,10 +153,10 @@ export const useGameStore = defineStore('game', {
 
       socket.on('cardPlayed', (payload) => {
         this.cardPopup = payload
-        // Попап автоматически скрывается через несколько секунд.
+        // Попап автоматически скрывается через 10 секунд.
         window.setTimeout(() => {
           if (this.cardPopup === payload) this.cardPopup = null
-        }, 6000)
+        }, 10_000)
       })
 
       socket.on('newGameStarted', () => {

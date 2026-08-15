@@ -148,7 +148,14 @@ const survivorNames = computed(() =>
       <template v-else>Никто не выбыл</template>
     </div>
 
-    <!-- Кнопка завершения хода для игрока в его ход -->
+    <!-- Поочерёдное голосование: подсказка текущему голосующему -->
+    <div v-if="isMyVoteTurn" class="vote-turn-hint fade-in">
+      🗳 Ваша очередь — выберите, за кого голосуете (кнопка на карточке игрока)
+    </div>
+
+    <GameTable />
+
+    <!-- Кнопка завершения хода под карточками игроков -->
     <div v-if="isMyTurn" class="my-turn-controls">
       <button
         class="btn btn--success"
@@ -159,13 +166,6 @@ const survivorNames = computed(() =>
         Завершить ход
       </button>
     </div>
-
-    <!-- Поочерёдное голосование: подсказка текущему голосующему -->
-    <div v-if="isMyVoteTurn" class="vote-turn-hint fade-in">
-      🗳 Ваша очередь — выберите, за кого голосуете (кнопка на карточке игрока)
-    </div>
-
-    <GameTable />
 
     <!-- Мини-админка теста карт (только хост) -->
     <!-- <CardAdminPanel v-if="isHost" /> -->
@@ -182,7 +182,7 @@ const survivorNames = computed(() =>
         v-if="isVoting"
         @click="game.resolveVote()"
         customClass="danger-button"
-        text="Подвести итог голосования"
+        text="Завершить голосование"
       />
     </div>
   </div>
@@ -406,7 +406,7 @@ const survivorNames = computed(() =>
 .my-turn-controls {
   display: flex;
   justify-content: center;
-  margin-bottom: 12px;
+  margin-top: 14px;
 }
 
 .result-banner {

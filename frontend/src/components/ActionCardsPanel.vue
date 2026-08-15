@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import type { ActionCard } from '@shared/types'
 import CardPlayModal from '@/components/CardPlayModal.vue'
+import InlineConfirm from '@/components/InlineConfirm.vue'
 
 /**
  * Панель карт действия игрока. Клик по карте → подтверждение → выбор целей
@@ -13,6 +14,7 @@ const game = useGameStore()
 const { myCards, settings, started } = storeToRefs(game)
 
 const activeCard = ref<ActionCard | null>(null)
+const pendingCardId = ref<string | null>(null)
 
 function canPlay(c: ActionCard): boolean {
   if (c.used) return false
@@ -28,11 +30,16 @@ function stageLabel(c: ActionCard): string {
 function onClickCard(c: ActionCard) {
   if (!canPlay(c)) return
   if (c.pickSpecs.length === 0) {
-    if (!window.confirm(`Сыграть карту «${c.title}»?`)) return
-    game.playCard(c.instanceId, {})
+    pendingCardId.value = c.instanceId
     return
   }
   activeCard.value = c
+}
+
+function confirmCard(c: ActionCard) {
+  if (pendingCardId.value !== c.instanceId || !canPlay(c)) return
+  pendingCardId.value = null
+  game.playCard(c.instanceId, {})
 }
 </script>
 
@@ -45,23 +52,31 @@ function onClickCard(c: ActionCard) {
     <div v-if="myCards.length === 0" class="ac-empty-msg">Карт нет.</div>
 
     <div v-else class="ac-list">
-      <button
+      <div
         v-for="c in myCards"
         :key="c.instanceId"
         class="ac-item"
         :class="{ used: c.used, playable: canPlay(c) }"
-        :disabled="c.used"
+        :role="canPlay(c) ? 'button' : undefined"
+        :tabindex="canPlay(c) ? 0 : -1"
         @click="onClickCard(c)"
+        @keydown.enter.prevent="onClickCard(c)"
+        @keydown.space.prevent="onClickCard(c)"
       >
         <div class="ac-cat">Категория {{ c.category }}</div>
         <div class="ac-title">{{ c.title }}</div>
         <div class="ac-foot">
           <span class="ac-stage">{{ stageLabel(c) }}</span>
-          <span v-if="c.used" class="ac-used">использована</span>
+          <InlineConfirm
+            v-if="pendingCardId === c.instanceId"
+            @confirm="confirmCard(c)"
+            @cancel="pendingCardId = null"
+          />
+          <span v-else-if="c.used" class="ac-used">использована</span>
           <span v-else-if="canPlay(c)" class="ac-play">играть →</span>
           <span v-else class="ac-wait">ждёт этапа</span>
         </div>
-      </button>
+      </div>
     </div>
 
     <CardPlayModal
@@ -102,6 +117,7 @@ function onClickCard(c: ActionCard) {
   padding: 12px;
   cursor: default;
   color: var(--text);
+  outline: none;
   transition: transform var(--dur-fast), box-shadow var(--dur-fast), border-color var(--dur-fast);
 }
 .ac-item.playable {
@@ -111,6 +127,9 @@ function onClickCard(c: ActionCard) {
 .ac-item.playable:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
+}
+.ac-item.playable:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 .ac-item.used {
   opacity: 0.5;
