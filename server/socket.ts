@@ -8,6 +8,7 @@ type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>
 interface HandshakeQuery {
   name: string
   lobbyCode: string
+  clientId: string
   /** 'create' — создать новое лобби, 'join' — войти в существующее. */
   mode: 'create' | 'join'
 }
@@ -22,9 +23,10 @@ export function registerSocketHandlers(io: IO): void {
     const q = socket.handshake.query as Partial<HandshakeQuery>
     const name = (q.name ?? '').trim()
     const lobbyCode = (q.lobbyCode ?? '').toUpperCase()
+    const clientId = (q.clientId ?? '').trim()
     const mode = q.mode === 'create' ? 'create' : 'join'
 
-    if (!name || !CODE_RE.test(lobbyCode)) {
+    if (!name || !clientId || clientId.length > 128 || !CODE_RE.test(lobbyCode)) {
       socket.emit('errorMessage', { message: 'Некорректное имя или код лобби' })
       socket.disconnect()
       return
@@ -33,7 +35,10 @@ export function registerSocketHandlers(io: IO): void {
     // Разделяем создание и присоединение, чтобы опечатка в коде не плодила
     // пустые лобби, а вход в несуществующее лобби давал внятную ошибку.
     let lobby = manager.get(lobbyCode)
-    if (mode === 'create') {
+    // Тот же clientId — реконнект, даже если disconnect старого сокета ещё не пришёл.
+    // Это важно при быстром F5 и после разморозки мобильной вкладки.
+    const isReconnect = !!lobby && lobby.hasClient(clientId)
+    if (mode === 'create' && !isReconnect) {
       if (lobby && !lobby.isEmpty()) {
         socket.emit('errorMessage', { message: 'Лобби с таким кодом уже существует' })
         socket.disconnect()
@@ -50,13 +55,12 @@ export function registerSocketHandlers(io: IO): void {
 
     // Входим в комнату ДО добавления игрока, чтобы broadcast со списком дошёл и до нас (I.5).
     socket.join(lobbyCode)
-    const playerId = lobby.addOrReconnect(socket.id, name)
+    const joinResult = lobby.addOrReconnect(socket.id, clientId, name)
+    const playerId = joinResult.playerId
     if (!playerId) {
       socket.leave(lobbyCode)
       socket.emit('errorMessage', {
-        message: lobby.started
-          ? 'Игра уже началась, вход закрыт (или имя занято)'
-          : 'Не удалось присоединиться к лобби (имя занято или лобби заполнено)',
+        message: joinResult.error ?? 'Не удалось присоединиться к лобби',
       })
       socket.disconnect()
       return
@@ -88,7 +92,7 @@ export function registerSocketHandlers(io: IO): void {
     socket.on('resetTimer', () => lobby!.resetTimer(playerId))
 
     socket.on('disconnect', () => {
-      lobby!.handleDisconnect(playerId)
+      lobby!.handleDisconnect(playerId, socket.id)
       if (lobby!.isEmpty()) manager.remove(lobbyCode)
       console.log(`${name} (${playerId}) отключился от лобби ${lobbyCode}`)
     })

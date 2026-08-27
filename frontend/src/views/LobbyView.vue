@@ -33,6 +33,7 @@ const {
   survivorIds,
   publicPlayers,
   amSurvivor,
+  survival,
   settings,
   error,
 } = storeToRefs(game)
@@ -62,7 +63,7 @@ function copyCode() {
 }
 
 onMounted(() => {
-  session.loadName()
+  session.loadSession()
   if (session.hasName) {
     nameInput.value = session.name
     join()
@@ -89,6 +90,13 @@ const survivorNames = computed(() =>
     )
     .filter(Boolean),
 )
+
+const survivalColor = computed(() => {
+  const chance = survival.value?.chance ?? 0
+  return `hsl(${Math.round(chance * 1.2)} 72% 42%)`
+})
+
+const isDev = import.meta.env.DEV
 </script>
 
 <template>
@@ -116,6 +124,55 @@ const survivorNames = computed(() =>
       <ul class="survivors-list">
         <li v-for="n in survivorNames" :key="n">{{ n }}</li>
       </ul>
+
+      <section v-if="survival" class="survival-report">
+        <div class="survival-score" :style="{ '--survival-color': survivalColor }">
+          <small>Базовая вероятность до модификаторов: {{ survival.baseChance }}%</small>
+          <span>Вероятность выживания</span>
+          <strong>{{ survival.chance }}%</strong>
+          <div class="survival-meter" aria-hidden="true">
+            <div :style="{ width: `${survival.chance}%` }"></div>
+          </div>
+        </div>
+
+        <div class="survival-section">
+          <h2>Состояние группы</h2>
+          <div class="survival-list">
+            <article v-for="item in survival.factors" :key="item.id" class="survival-item">
+              <span class="survival-icon" :class="item.delta >= 0 ? 'positive' : 'negative'">
+                {{ item.delta >= 0 ? '✓' : '✕' }}
+              </span>
+              <div>
+                <h3>{{ item.label }}: {{ item.status }}</h3>
+                <p v-if="item.detail">{{ item.detail }}</p>
+              </div>
+              <b v-if="isDev" class="survival-delta" :class="item.delta >= 0 ? 'positive' : 'negative'">
+                {{ item.delta >= 0 ? '+' : '' }}{{ item.delta }}%
+              </b>
+            </article>
+          </div>
+        </div>
+
+        <div class="survival-section">
+          <h2>Катастрофа и угрозы</h2>
+          <div class="survival-list">
+            <article v-for="(item, index) in survival.challenges" :key="`${item.kind}-${index}`" class="survival-item challenge-item">
+              <span class="survival-icon" :class="item.success ? 'positive' : 'negative'">
+                {{ item.success ? '✓' : '✕' }}
+              </span>
+              <div>
+                <h3>{{ item.kind === 'catastrophe' ? 'Катастрофа' : `Угроза ${index}` }} — {{ item.success ? 'справились' : 'не справились' }}</h3>
+                <p>{{ item.text }}</p>
+                <p class="challenge-detail">{{ item.detail }}</p>
+              </div>
+              <b v-if="isDev" class="survival-delta" :class="item.delta >= 0 ? 'positive' : 'negative'">
+                {{ item.delta >= 0 ? '+' : '' }}{{ item.delta }}%
+              </b>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <button v-if="isHost" class="btn btn--primary new-game-btn" @click="game.newGame()">
         🔄 Новая игра
       </button>
@@ -463,6 +520,95 @@ const survivorNames = computed(() =>
   border-radius: var(--radius-sm);
   padding: 6px 14px;
   font-weight: 600;
+}
+.survival-report {
+  max-width: 900px;
+  margin: 28px auto 0;
+  text-align: left;
+}
+.survival-score {
+  color: var(--survival-color);
+  text-align: center;
+  margin-bottom: 28px;
+}
+.survival-score span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 16px;
+}
+.survival-score small {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+.survival-score strong {
+  display: block;
+  font-size: clamp(44px, 9vw, 76px);
+  line-height: 1.05;
+}
+.survival-meter {
+  width: min(520px, 100%);
+  height: 10px;
+  margin: 12px auto 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.survival-meter div {
+  height: 100%;
+  background: var(--survival-color);
+  transition: width 500ms ease;
+}
+.survival-section {
+  margin-top: 24px;
+}
+.survival-section h2 {
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.survival-list {
+  display: grid;
+  gap: 8px;
+}
+.survival-item {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 10px;
+  align-items: start;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.survival-item h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+.survival-item p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.challenge-item p:first-of-type {
+  color: var(--text);
+}
+.challenge-detail {
+  margin-top: 5px !important;
+}
+.survival-icon,
+.survival-delta {
+  font-weight: 800;
+}
+.positive {
+  color: var(--success);
+}
+.negative {
+  color: var(--danger);
+}
+.survival-delta {
+  white-space: nowrap;
 }
 
 @media (max-width: 760px) {

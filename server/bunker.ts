@@ -10,6 +10,33 @@ export interface BunkerData {
   threats: string[]
   catastrophes: string[]
   conditions: string[]
+  challenges: BunkerChallenge[]
+}
+
+export interface BunkerChallenge {
+  id: string
+  kind: 'threat' | 'catastrophe' | 'condition'
+  text: string
+  /** Каждая группа обязательна; внутри группы достаточно одного тега. */
+  requirements: string[][]
+  grants: string[]
+  successDelta: number
+  failureDelta: number
+}
+
+function parseRequirements(value: unknown): string[][] {
+  return String(value ?? '').split(';').map((group) =>
+    group.split('|').map((tag) => tag.trim()).filter(Boolean),
+  ).filter((group) => group.length > 0)
+}
+
+function parseTags(value: unknown): string[] {
+  return String(value ?? '').split(',').map((tag) => tag.trim()).filter(Boolean)
+}
+
+function numberValue(value: unknown): number {
+  const parsed = Number(String(value ?? 0).replace(',', '.'))
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
 const SHEET_NAME = 'Угрозы, Катастрофы, Условия'
@@ -24,7 +51,7 @@ export function loadBunkerData(): BunkerData {
     workbook.Sheets[SHEET_NAME] ??
     workbook.Sheets[workbook.SheetNames.find((n) => n.includes('Угроз')) ?? '']
   if (!sheet) {
-    cache = { threats: [], catastrophes: [], conditions: [] }
+    cache = { threats: [], catastrophes: [], conditions: [], challenges: [] }
     return cache
   }
 
@@ -32,18 +59,34 @@ export function loadBunkerData(): BunkerData {
   const threats: string[] = []
   const catastrophes: string[] = []
   const conditions: string[] = []
+  const challenges: BunkerChallenge[] = []
 
-  for (const row of rows) {
+  for (const [index, row] of rows.entries()) {
     const type = (row?.[0] ?? '').toString().trim()
     const text = (row?.[1] ?? '').toString().trim()
     if (!type || !text) continue
-    if (type.startsWith('Угроз')) threats.push(text)
-    else if (type.startsWith('Катастроф')) catastrophes.push(text)
-    else if (type.startsWith('Доп')) conditions.push(text)
+    const kind = type.startsWith('Угроз') ? 'threat' : type.startsWith('Катастроф') ? 'catastrophe' : type.startsWith('Доп') ? 'condition' : null
+    if (!kind) continue
+    if (kind === 'threat') threats.push(text)
+    else if (kind === 'catastrophe') catastrophes.push(text)
+    else conditions.push(text)
+    challenges.push({
+      id: String(row?.[2] ?? `${kind}_${index + 1}`),
+      kind,
+      text,
+      requirements: parseRequirements(row?.[3]),
+      grants: parseTags(row?.[4]),
+      successDelta: numberValue(row?.[5]),
+      failureDelta: numberValue(row?.[6]),
+    })
   }
 
-  cache = { threats, catastrophes, conditions }
+  cache = { threats, catastrophes, conditions, challenges }
   return cache
+}
+
+export function challengeByText(text: string): BunkerChallenge | undefined {
+  return loadBunkerData().challenges.find((challenge) => challenge.text === text)
 }
 
 /** Возвращает перемешанную копию массива (не мутирует исходный). */

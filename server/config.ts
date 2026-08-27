@@ -26,7 +26,10 @@ export const MIN_PLAYERS = 2
 export const MAX_PLAYERS = 16
 
 /** Сколько секунд хранить отключившегося игрока перед удалением (для реконнекта). */
-export const RECONNECT_GRACE_MS = 60_000
+export const RECONNECT_GRACE_MS = 180_000
+
+/** Короткое окно для F5 в лобби, чтобы закрытая вкладка не блокировала его надолго. */
+export const LOBBY_RECONNECT_GRACE_MS = 30_000
 
 /** I.4: доп. время (сек) после авто-вскрытия по истечении таймера хода. */
 export const TURN_GRACE_SECONDS = 15

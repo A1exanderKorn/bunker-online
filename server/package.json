@@ -7,7 +7,7 @@
     "dev": "ts-node index.ts",
     "build": "tsc && node -e \"const fs=require('fs'); const p=require('path'); const dest=p.join('dist','server'); fs.mkdirSync(dest,{recursive:true}); fs.copyFileSync('data.xlsx', p.join(dest,'data.xlsx'));\"",
     "start": "node dist/server/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run build && node --test tests/*.test.cjs"
   },
   "keywords": [],
   "author": "",

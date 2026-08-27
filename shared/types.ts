@@ -81,6 +81,8 @@ export interface Characteristic {
   isVisible: boolean
   /** 0-based индекс среди характеристик того же типа у игрока. */
   occ: number
+  /** Служебные теги для финального расчёта выживания. */
+  tags?: string[]
 }
 
 export interface Biology {
@@ -96,6 +98,8 @@ export interface Biology {
 /** Полные данные игрока (живут только на сервере). */
 export interface Player {
   id: string
+  /** Стабильный идентификатор вкладки из sessionStorage — по нему идёт реконнект. */
+  clientId: string
   name: string
   characteristics: Characteristic[]
   biology: Biology | null
@@ -459,6 +463,31 @@ export interface VoteResultPayload {
 export interface GameEndedPayload {
   survivorIds: string[]
   players: PublicPlayer[]
+  survival: SurvivalReport
+}
+
+export interface SurvivalChallengeResult {
+  kind: 'catastrophe' | 'threat'
+  text: string
+  success: boolean
+  delta: number
+  detail: string
+}
+
+export interface SurvivalFactor {
+  id: 'age' | 'needs' | 'health' | 'sex' | 'danger' | 'conditions'
+  label: string
+  status: string
+  delta: number
+  detail: string
+}
+
+export interface SurvivalReport {
+  /** Стартовая вероятность до факторов группы, катастрофы и угроз. */
+  baseChance: number
+  chance: number
+  challenges: SurvivalChallengeResult[]
+  factors: SurvivalFactor[]
 }
 
 export interface YourCharacteristicsPayload {

@@ -1,7 +1,7 @@
 import type { Biology, Characteristic, CharacteristicCategory, CharSlot, Player, Sex } from '../shared/types'
-import { slotsFromTypes } from '../shared/types'
+import { BIOLOGY_CATEGORY, slotsFromTypes } from '../shared/types'
 import { CATEGORY_ORDER } from './config'
-import { dealCategories, displayCategoryOrder, rowsByCategory, type ExcelRow } from './data'
+import { dealCategories, displayCategoryOrder, parseSurvivalTags, rowsByCategory, type ExcelRow } from './data'
 
 /** Фишер–Йейтс, тасует массив на месте и возвращает его же. */
 export function shuffleArray<T>(array: T[]): T[] {
@@ -10,6 +10,34 @@ export function shuffleArray<T>(array: T[]): T[] {
     ;[array[i], array[j]] = [array[j], array[i]]
   }
   return array
+}
+
+const clamp01 = (value: number): number => Math.max(0, Math.min(1, value))
+
+/** Насколько категория участвует в балансе общего коэффициента игрока. */
+export function characteristicWeight(category: string): number {
+  const weights: Record<string, number> = {
+    Здоровье: 1,
+    Профессия: 1,
+    Биология: 1,
+    Фобия: 0.75,
+    Факт: 0.75,
+    Багаж: 0.5,
+  }
+  return weights[category] ?? 1
+}
+
+/** Стаж дополняет возрастной КФ, но не доминирует над ним. */
+export function experienceModifier(age: number, experience: number): number {
+  const availableYears = Math.max(0, age - 16)
+  if (availableYears === 0) return -0.05
+  const ratio = Math.max(0, Math.min(1, experience / availableYears))
+  return 0.1 - 0.6 * (ratio - 0.5) ** 2
+}
+
+function rollExperience(age: number): number {
+  const maxExperience = Math.max(0, age - 16)
+  return Math.floor(Math.random() * (maxExperience * 2 + 1)) / 2
 }
 
 /** Генерирует биологию игрока с учётом уже выданных (уникальность андроида/гермафродита). */
@@ -30,37 +58,37 @@ export function generateBiology(existing: Biology[]): Biology {
   }
 
   let age = Math.floor(Math.random() * (85 - 19 + 1)) + 19
-  let experience = Math.floor(Math.random() * (age - 16.5) * 2) / 2
+  let experience = rollExperience(age)
 
-  let coef = 0.5
+  let baseCoef = 0.5
   if (sex === 'Ж') {
-    coef = age <= 49 ? 1.0 - 0.04 * Math.abs(33 - age) : 0.4 - 0.01 * Math.abs(50 - age)
+    baseCoef = age <= 49 ? 1.0 - 0.04 * Math.abs(33 - age) : 0.4 - 0.01 * Math.abs(50 - age)
   } else if (sex === 'М') {
-    coef = age <= 59 ? 1.0 - 0.03 * Math.abs(36 - age) : 0.4 - 0.01 * Math.abs(60 - age)
+    baseCoef = age <= 59 ? 1.0 - 0.03 * Math.abs(36 - age) : 0.4 - 0.01 * Math.abs(60 - age)
   }
 
   let infertile = false
   if ((sex === 'Ж' && age <= 49) || (sex === 'М' && age <= 59)) {
     if (Math.random() < 0.25) {
-      coef -= 0.4
       infertile = true
     }
   }
 
   if (sex === 'Андроид') {
-    coef = 1.15
+    baseCoef = 0.95
     age = Math.floor(Math.random() * 20)
-    experience = age
+    experience = rollExperience(age)
     hint = 'Обнуляет проблемы со здоровьем и фобии'
   }
 
   if (sex === 'Гермафродит') {
-    coef = 1.25
+    baseCoef = 0.95
     age = Math.floor(Math.random() * 15) + 25
-    experience = Math.floor(Math.random() * (age - 16.5) * 2) / 2
+    experience = rollExperience(age)
     hint = 'Выступает в роли и мужчины, и женщины'
   }
 
+  const coef = clamp01(baseCoef + experienceModifier(age, experience) - (infertile ? 0.4 : 0))
   return { sex, age, experience, coef, infertile, isVisible: false, hint }
 }
 
@@ -72,6 +100,7 @@ function parseRow(row: ExcelRow): Characteristic {
     hint: String(row['Подсказка'] ?? ''),
     isVisible: false,
     occ: 0,
+    tags: parseSurvivalTags(row['Теги выживания']),
   }
 }
 
@@ -97,32 +126,40 @@ export function findChar(
  * Выбирает кандидата со смещением так, чтобы средний коэффициент набора
  * стремился к целевому (targetCoef).
  */
+/**
+ * Сила притяжения к целевому КФ. Чем меньше, тем больше рандома в выборе.
+ * BIAS_STRENGTH регулирует, насколько резко падает вес кандидата при удалении
+ * его КФ от желаемого; FLOOR_WEIGHT гарантирует, что любой кандидат сохраняет
+ * ненулевой шанс (никакого жёсткого обнуления и случайного фолбэка).
+ */
+const BIAS_STRENGTH = 1.2
+const FLOOR_WEIGHT = 0.35
+
 function pickWithBias<T extends { coef: number }>(
   candidates: T[],
-  currentAvg: number,
-  count: number,
+  weightedSum: number,
+  currentTotalWeight: number,
   targetCoef: number,
+  candidateWeight: number,
 ): T {
-  const total = currentAvg * count
-  const desiredCoef = targetCoef * (count + 1) - total
+  // Какой КФ кандидата нужен, чтобы новое взвешенное среднее стало targetCoef.
+  const desiredCoef =
+    (targetCoef * (currentTotalWeight + candidateWeight) - weightedSum) / candidateWeight
 
+  // Мягкий вес: 1/(1+k*|Δ|) плавно убывает и никогда не обнуляется, плюс пол.
+  // Так смещение к целевому среднему работает, но выбор остаётся заметно случайным.
   const weights = candidates.map((c) => ({
     candidate: c,
-    weight: Math.max(0, 1 - Math.abs(c.coef - desiredCoef)),
+    weight: FLOOR_WEIGHT + (1 - FLOOR_WEIGHT) / (1 + BIAS_STRENGTH * Math.abs(c.coef - desiredCoef)),
   }))
 
-  const filtered = weights.filter((w) => w.weight > 0)
-  if (filtered.length === 0) {
-    return candidates[Math.floor(Math.random() * candidates.length)]
-  }
-
-  const totalWeight = filtered.reduce((sum, w) => sum + w.weight, 0)
+  const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0)
   let rnd = Math.random() * totalWeight
-  for (const { candidate, weight } of filtered) {
+  for (const { candidate, weight } of weights) {
     if (rnd < weight) return candidate
     rnd -= weight
   }
-  return filtered[0].candidate
+  return weights[weights.length - 1].candidate
 }
 
 /** Раздаёт одному игроку биологию и полный набор характеристик по заданной программе категорий. */
@@ -137,17 +174,20 @@ function dealToPlayer(
 } {
   const biology = generateBiology(biologies)
   const characteristics: Characteristic[] = []
-  let currentCoef = biology.coef
+  let weightedSum = biology.coef * characteristicWeight(BIOLOGY_CATEGORY)
+  let totalWeight = characteristicWeight(BIOLOGY_CATEGORY)
 
-  for (const category of categoryProgram) {
+  for (const category of shuffleArray([...categoryProgram])) {
     const available = rowsByCategory(category)
       .map(parseRow)
       .filter((c) => !usedValues.has(c.value))
     if (available.length === 0) continue
 
-    const chosen = pickWithBias(available, currentCoef, characteristics.length, targetCoef)
+    const weight = characteristicWeight(category)
+    const chosen = pickWithBias(available, weightedSum, totalWeight, targetCoef, weight)
     usedValues.add(chosen.value)
-    currentCoef = (currentCoef * characteristics.length + chosen.coef) / (characteristics.length + 1)
+    weightedSum += chosen.coef * weight
+    totalWeight += weight
     characteristics.push(chosen)
   }
 

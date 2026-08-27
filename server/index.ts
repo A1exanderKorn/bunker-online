@@ -21,6 +21,10 @@ app.get('/health', (_req, res) => {
 const server = http.createServer(app)
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: { origin: '*' },
+  // Мобильные браузеры замораживают свёрнутую вкладку (JS и WebSocket-пинги встают).
+  // Даём больше времени на пинг, чтобы короткое сворачивание не рвало соединение.
+  pingInterval: 25_000,
+  pingTimeout: 60_000,
 })
 
 try {

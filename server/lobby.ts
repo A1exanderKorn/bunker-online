@@ -13,6 +13,7 @@ import type {
   PublicPlayer,
   RoundStep,
   ServerToClientEvents,
+  SurvivalReport,
   TurnState,
 } from '../shared/types'
 import {
@@ -21,11 +22,18 @@ import {
   SETTINGS_LIMITS,
   defaultRoundSteps,
 } from '../shared/types'
-import { MAX_PLAYERS, MIN_PLAYERS, RECONNECT_GRACE_MS, TURN_GRACE_SECONDS } from './config'
+import {
+  LOBBY_RECONNECT_GRACE_MS,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
+  RECONNECT_GRACE_MS,
+  TURN_GRACE_SECONDS,
+} from './config'
 import { dealCharacteristics, buildCharLayout, findChar, generateBiology } from './characteristics'
 import { rowsByCategory } from './data'
 import { pickCatastrophe, threatQueue, loadBunkerData } from './bunker'
 import { dealActionCards, makeCardByCatalogId, loadCards } from './cards'
+import { calculateSurvival } from './survival'
 
 type IO = Server<ClientToServerEvents, ServerToClientEvents>
 
@@ -95,6 +103,7 @@ export class Lobby {
   private bunker: BunkerState = { catastrophe: '', years: 0, threats: [], conditions: [] }
   private pendingThreats: string[] = []
   private charLayout: CharSlot[] = []
+  private survivalReport: SurvivalReport | null = null
 
   // ── Карты действия ──
   /** playerId -> карты игрока. */
@@ -118,7 +127,7 @@ export class Lobby {
   /** Стек возврата к прерванным голосующим после карт doubleVote. */
   private voteInterrupts: VoteInterrupt[] = []
 
-  constructor(io: IO, code: string) {
+  constructor(io: IO, code: string, private readonly onEmpty: () => void = () => {}) {
     this.io = io
     this.code = code
   }
@@ -145,27 +154,69 @@ export class Lobby {
     return this.sockets.get(playerId)
   }
 
-  addOrReconnect(socketId: string, name: string): string | null {
-    const existing = this.players.find((p) => p.name === name && !p.connected)
+  /** Есть ли игрок этого браузера, включая ещё не успевший отключиться старый сокет. */
+  hasClient(clientId: string): boolean {
+    return this.players.some((p) => p.clientId === clientId)
+  }
+
+  /**
+   * Добавляет нового игрока или переподключает существующего.
+   * Игрок идентифицируется по стабильному clientId (а не по имени или socket.id),
+   * поэтому разные вкладки/устройства — разные игроки, а чужого нельзя перехватить по имени.
+   * Результат: { playerId, error? }. При ошибке playerId = null и есть внятный error.
+   */
+  addOrReconnect(
+    socketId: string,
+    clientId: string,
+    name: string,
+  ): { playerId: string | null; error?: string } {
+    // Реконнект: игрок с таким clientId уже есть. Ловим оба случая:
+    // 1) старый сокет уже отвалился (connected=false) — обычный реконнект;
+    // 2) событие disconnect ещё не пришло (мобильное замерзание вкладки) —
+    //    новое соединение заменяет зависший сокет того же клиента.
+    const existing = this.players.find((p) => p.clientId === clientId)
     if (existing) {
+      // Проверяем новое имя до любых изменений сокетов.
+      if (!this.started && name && existing.name !== name) {
+        if (this.players.some((p) => p.id !== existing.id && p.name === name)) {
+          return { playerId: null, error: 'Имя уже занято — выберите другое' }
+        }
+        existing.name = name
+      }
       const pending = this.removalTimers.get(existing.id)
       if (pending) {
         clearTimeout(pending)
         this.removalTimers.delete(existing.id)
       }
-      existing.connected = true
+      // Сначала назначаем новый сокет: синхронный disconnect старого увидит,
+      // что он уже не текущий, и не удалит игрока из лобби.
+      const oldSocketId = this.sockets.get(existing.id)
       this.sockets.set(existing.id, socketId)
+      // Если был старый живой сокет этого же клиента — разрываем (дубль вкладки).
+      if (oldSocketId && oldSocketId !== socketId) {
+        const oldSock = this.io.sockets.sockets.get(oldSocketId)
+        if (oldSock) {
+          oldSock.data.playerId = undefined
+          oldSock.disconnect()
+        }
+      }
+      existing.connected = true
       this.broadcastPlayers()
-      return existing.id
+      return { playerId: existing.id }
     }
 
-    if (this.started) return null
-    if (this.players.length >= MAX_PLAYERS) return null
-    if (this.players.some((p) => p.name === name)) return null
+    // Новый игрок (clientId ещё не видели).
+    if (this.started) return { playerId: null, error: 'Игра уже началась, вход закрыт' }
+    if (this.players.length >= MAX_PLAYERS) return { playerId: null, error: 'Лобби заполнено' }
+    // Имя — только для отображения; запрещаем дубли имён, чтобы игроков не путали.
+    if (this.players.some((p) => p.name === name)) {
+      return { playerId: null, error: 'Имя уже занято — выберите другое' }
+    }
 
     const playerId = `p_${Math.random().toString(36).slice(2, 10)}`
     this.players.push({
       id: playerId,
+      clientId,
       name,
       characteristics: [],
       biology: null,
@@ -177,21 +228,23 @@ export class Lobby {
     this.regenerateDefaultSteps()
     this.broadcastPlayers()
     this.io.to(this.code).emit('settingsUpdated', { settings: this.settings })
-    return playerId
+    return { playerId }
   }
 
-  handleDisconnect(playerId: string): void {
+  handleDisconnect(playerId: string, socketId?: string): void {
     const player = this.players.find((p) => p.id === playerId)
     if (!player) return
+    // Защита от гонки: если игрок уже переподключился новым сокетом,
+    // а это событие пришло от старого (заменённого) — игнорируем его.
+    if (socketId && this.sockets.get(playerId) !== socketId) return
     this.sockets.delete(playerId)
 
-    if (!this.started) {
-      this.removePlayerNow(playerId)
-      return
-    }
     player.connected = false
     this.broadcastPlayers()
-    const t = setTimeout(() => this.removePlayerNow(playerId), RECONNECT_GRACE_MS)
+    // До старта держим место недолго: этого хватает для F5, но закрытая
+    // вкладка не оставит остальных ждать офлайн-хоста несколько минут.
+    const graceMs = this.started ? RECONNECT_GRACE_MS : LOBBY_RECONNECT_GRACE_MS
+    const t = setTimeout(() => this.removePlayerNow(playerId), graceMs)
     this.removalTimers.set(playerId, t)
   }
 
@@ -207,7 +260,10 @@ export class Lobby {
       clearTimeout(rt)
       this.removalTimers.delete(playerId)
     }
-    if (this.isEmpty()) return
+    if (this.isEmpty()) {
+      this.onEmpty()
+      return
+    }
 
     if (!this.started) this.regenerateDefaultSteps()
     this.broadcastPlayers()
@@ -326,6 +382,7 @@ export class Lobby {
       threats: [],
       conditions: [],
     }
+    this.survivalReport = null
     this.charLayout = buildCharLayout(this.settings)
     this.lastRevealed.clear()
     this.revoteFrom.clear()
@@ -403,6 +460,7 @@ export class Lobby {
     this.votes.clear()
     this.voteCandidates = null
     this.bunker = { catastrophe: '', years: 0, threats: [], conditions: [] }
+    this.survivalReport = null
     this.pendingThreats = []
     this.cards.clear()
     this.lastPlayedEffect = null
@@ -430,11 +488,16 @@ export class Lobby {
     return false
   }
 
-  private randomCharValue(category: string): { value: string; coef: number; hint: string } | null {
+  private randomCharValue(category: string): { value: string; coef: number; hint: string; tags: string[] } | null {
     const rows = rowsByCategory(category)
     if (!rows || rows.length === 0) return null
     const r = rows[Math.floor(Math.random() * rows.length)]
-    return { value: String(r['Название']), coef: Number(r['КФ']) || 0, hint: String(r['Подсказка'] ?? '') }
+    return {
+      value: String(r['Название']),
+      coef: Number(r['КФ']) || 0,
+      hint: String(r['Подсказка'] ?? ''),
+      tags: String(r['Теги выживания'] ?? '').split(',').map((tag) => tag.trim()).filter(Boolean),
+    }
   }
 
   private replaceChar(pl: Player, category: string, occ = 0): boolean {
@@ -446,6 +509,7 @@ export class Lobby {
     ch.value = rc.value
     ch.coef = rc.coef
     ch.hint = rc.hint
+    ch.tags = rc.tags
     return true
   }
 
@@ -758,7 +822,7 @@ export class Lobby {
         const pl = this.players.find((p) => p.id === targetId)
         if (pl?.biology) {
           pl.biology.infertile = false
-          pl.biology.coef += 0.4
+          pl.biology.coef = Math.min(1, pl.biology.coef + 0.4)
         }
         return { ok: true, text: `Вылечено бесплодие: ${this.nameOf(targetId)}` }
       }
@@ -1343,9 +1407,11 @@ export class Lobby {
       p.characteristics.forEach((c) => (c.isVisible = true))
       if (p.biology) p.biology.isVisible = true
     }
+    this.survivalReport = calculateSurvival(this.players, this.bunker)
     this.io.to(this.code).emit('gameEnded', {
       survivorIds: this.alive().map((p) => p.id),
       players: this.publicPlayers(),
+      survival: this.survivalReport,
     })
     this.io.to(this.code).emit('charactersUpdated', { players: this.publicPlayers() })
     this.io.to(this.code).emit('stageChanged', {
@@ -1466,9 +1532,11 @@ export class Lobby {
     })
     if (this.isVoting()) this.broadcastVotes()
     if (this.stage === 'end') {
+      this.survivalReport ??= calculateSurvival(this.players, this.bunker)
       this.io.to(sid).emit('gameEnded', {
         survivorIds: this.alive().map((p) => p.id),
         players: this.publicPlayers(),
+        survival: this.survivalReport,
       })
     }
   }
@@ -1491,7 +1559,7 @@ export class LobbyManager {
   constructor(private io: IO) {}
 
   create(code: string): Lobby {
-    const lobby = new Lobby(this.io, code)
+    const lobby = new Lobby(this.io, code, () => this.remove(code))
     this.lobbies.set(code, lobby)
     return lobby
   }

@@ -11,6 +11,7 @@ import type {
   GameStage,
   LobbySettings,
   PublicPlayer,
+  SurvivalReport,
   TurnState,
   VoteResultPayload,
 } from '@shared/types'
@@ -69,6 +70,7 @@ export const useGameStore = defineStore('game', {
     lastResult: null as VoteResultPayload | null,
 
     survivorIds: [] as string[],
+    survival: null as SurvivalReport | null,
 
     error: '' as string,
   }),
@@ -137,6 +139,7 @@ export const useGameStore = defineStore('game', {
         this.actionCards = payload.actionCards
         this.lastResult = null
         this.survivorIds = []
+        this.survival = null
       })
 
       socket.on('bunkerUpdated', (payload) => {
@@ -175,6 +178,7 @@ export const useGameStore = defineStore('game', {
         this.myVote = ''
         this.lastResult = null
         this.survivorIds = []
+        this.survival = null
         this.bunker = { catastrophe: '', years: 0, threats: [], conditions: [] }
         this.charLayout = []
         this.actionCards = []
@@ -252,6 +256,7 @@ export const useGameStore = defineStore('game', {
         this.stage = 'end'
         this.survivorIds = payload.survivorIds
         this.publicPlayers = payload.players
+        this.survival = payload.survival
       })
 
       socket.on('errorMessage', (payload) => {

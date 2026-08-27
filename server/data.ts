@@ -7,9 +7,20 @@ export interface ExcelRow {
   Название: string
   КФ: number
   Подсказка: string
+  'Теги выживания'?: string
+}
+
+export function parseSurvivalTags(value: unknown): string[] {
+  return String(value ?? '').split(',').map((tag) => tag.trim()).filter(Boolean)
 }
 
 let cache: ExcelRow[] | null = null
+
+function decimal(value: unknown): number {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  const parsed = Number(String(value ?? '').trim().replace(',', '.'))
+  return Number.isFinite(parsed) ? parsed : 0
+}
 
 /**
  * Загружает характеристики из Excel один раз и кэширует результат в памяти.
@@ -20,7 +31,10 @@ export function loadCharacteristics(): ExcelRow[] {
 
   const workbook = XLSX.readFile(DATA_PATH)
   const sheet = workbook.Sheets[workbook.SheetNames[0]]
-  cache = XLSX.utils.sheet_to_json<ExcelRow>(sheet)
+  cache = XLSX.utils.sheet_to_json<ExcelRow>(sheet).map((row) => ({
+    ...row,
+    КФ: decimal(row.КФ),
+  }))
   return cache
 }
 

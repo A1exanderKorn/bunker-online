@@ -7,6 +7,7 @@ import type {
   CardsPower,
   Player,
 } from '../shared/types'
+import { characteristicWeight } from './characteristics'
 
 /**
  * Загрузка каталога карт действия из 2-го листа data.xlsx и раздача карт
@@ -54,6 +55,13 @@ const SHEET = 'Карты действия'
 
 let cache: CardDef[] | null = null
 
+/** Excel обычно возвращает number, но поддерживаем и текстовые "0,4". */
+function decimal(value: unknown): number {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  const parsed = Number(String(value ?? '').trim().replace(',', '.'))
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
 export function loadCards(): CardDef[] {
   if (cache) return cache
   const wb = XLSX.readFile(DATA_PATH)
@@ -73,13 +81,11 @@ export function loadCards(): CardDef[] {
       action: r.action,
       target: r.target,
       scope: r.scope,
-      picks: Number(r.picks) || 0,
+      picks: decimal(r.picks),
       stage: (r.stage as CardStage) ?? 'any',
       unique: Number(r.unique) === 1,
       note: r.note ?? '',
-      probs: [r.prob025, r.prob035, r.prob04, r.prob045, r.prob05, r.prob06, r.prob06p].map(
-        (x) => Number(x) || 0,
-      ),
+      probs: [r.prob025, r.prob035, r.prob04, r.prob045, r.prob05, r.prob06, r.prob06p].map(decimal),
     }))
   return cache
 }
@@ -293,10 +299,19 @@ export function makeCardByCatalogId(cardId: string, instanceId: string): ActionC
 
 /** Средний коэффициент набора характеристик игрока (для ролла категории). */
 export function averageCoef(player: Player): number {
-  const coefs: number[] = player.characteristics.map((c) => c.coef)
-  if (player.biology) coefs.push(player.biology.coef)
-  if (coefs.length === 0) return 0.5
-  return coefs.reduce((a, b) => a + b, 0) / coefs.length
+  let weightedSum = 0
+  let totalWeight = 0
+  for (const characteristic of player.characteristics) {
+    const weight = characteristicWeight(characteristic.type)
+    weightedSum += characteristic.coef * weight
+    totalWeight += weight
+  }
+  if (player.biology) {
+    const weight = characteristicWeight('Биология')
+    weightedSum += player.biology.coef * weight
+    totalWeight += weight
+  }
+  return totalWeight > 0 ? weightedSum / totalWeight : 0.5
 }
 
 /** Полный каталог для админ-панели. */

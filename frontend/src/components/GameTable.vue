@@ -37,7 +37,8 @@ function isCurrent(p: PublicPlayer) {
 
 function formatBiology(bio: Biology | null | undefined): string | null {
   if (!bio) return null
-  return `${bio.sex}, ${bio.age} лет` + (bio.infertile ? ', бесплоден' : '')
+  return `${bio.sex}, ${bio.age} лет, стаж ${bio.experience} лет` +
+    (bio.infertile ? ', бесплоден' : '')
 }
 
 function findSlotChar(p: PublicPlayer, slot: CharSlot) {
