@@ -105,7 +105,7 @@ function coefBucket(coef: number): number {
 function categories(defs: CardDef[]): string[] {
   const seen: string[] = []
   for (const d of defs) if (!seen.includes(d.category)) seen.push(d.category)
-  const rank = new Map(['A', 'B', 'C', 'D'].map((category, index) => [category, index]))
+  const rank = new Map(['A', 'B', 'D', 'C'].map((category, index) => [category, index]))
   return seen.sort(
     (a, b) => (rank.get(a) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b) ?? Number.MAX_SAFE_INTEGER),
   )
@@ -121,7 +121,7 @@ function bucketWithPower(bucket: number, power: CardsPower): number {
   return bucket
 }
 
-/** Ролл категории A → B → C → D по весам K–Q из первой карты каждой категории. */
+/** Ролл категории A → B → D → C по весам K–Q из первой карты каждой категории. */
 export function rollCategory(
   defs: CardDef[],
   coef: number,

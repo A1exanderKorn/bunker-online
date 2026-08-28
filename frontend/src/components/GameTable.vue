@@ -61,6 +61,37 @@ function getHint(p: PublicPlayer, slot: CharSlot): string | null {
   return findSlotChar(p, slot)?.hint ?? null
 }
 
+function getCoef(p: PublicPlayer, slot: CharSlot): number | null {
+  if (slot.type === BIOLOGY_CATEGORY) {
+    return (isMe(p) ? game.myBiology?.coef : p.biology?.coef) ?? null
+  }
+  return findSlotChar(p, slot)?.coef ?? null
+}
+
+/** Совпадает с серверным расчётом КФ, по которому раздаются карты действия. */
+function overallCoef(p: PublicPlayer): number | null {
+  const weights: Record<string, number> = {
+    Здоровье: 1,
+    Профессия: 1,
+    Биология: 1,
+    Фобия: 0.75,
+    Факт: 0.75,
+    Багаж: 0.5,
+  }
+  const weightFor = (type: string) => weights[type] ?? 1
+  const characteristics = isMe(p) ? game.myCharacteristics : p.characteristics
+  const biology = isMe(p) ? game.myBiology : p.biology
+  const weighted = characteristics.reduce(
+    (sum, characteristic) => sum + characteristic.coef * weightFor(characteristic.type),
+    0,
+  ) + (biology ? biology.coef * weightFor(BIOLOGY_CATEGORY) : 0)
+  const totalWeight = characteristics.reduce(
+    (sum, characteristic) => sum + weightFor(characteristic.type),
+    0,
+  ) + (biology ? weightFor(BIOLOGY_CATEGORY) : 0)
+  return totalWeight > 0 ? weighted / totalWeight : null
+}
+
 function isRevealed(p: PublicPlayer, slot: CharSlot): boolean {
   if (slot.type === BIOLOGY_CATEGORY) {
     return isMe(p) ? !!game.myBiology?.isVisible : !!p.biology
@@ -147,6 +178,9 @@ function toggleVoters(id: string) {
           <span v-if="!p.connected" class="offline-badge" title="Игрок отключился">⚠</span>
         </div>
         <div class="head-right">
+          <span v-if="stage === 'end' && overallCoef(p) !== null" class="total-coef">
+            Общий КФ {{ overallCoef(p)!.toFixed(2) }}
+          </span>
           <span v-if="isCurrent(p)" class="turn-badge">🎯 ходит</span>
           <span v-else-if="isVoterTurn(p)" class="turn-badge">🗳 голосует</span>
           <span v-if="!p.isAlive" class="dead-badge">исключён</span>
@@ -185,6 +219,9 @@ function toggleVoters(id: string) {
           <span class="char-value">
             <template v-if="isRevealed(p, slot) || isMe(p)">
               {{ getValue(p, slot) ?? '—' }}
+              <small v-if="stage === 'end' && getCoef(p, slot) !== null" class="char-coef">
+                КФ {{ getCoef(p, slot)!.toFixed(2) }}
+              </small>
             </template>
             <template v-else>
               <span class="hidden-dot">••••</span>
@@ -295,6 +332,15 @@ function toggleVoters(id: string) {
   gap: 6px;
   flex-wrap: wrap;
 }
+.total-coef {
+  font-size: 11px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-weight: 700;
+  white-space: nowrap;
+}
 .turn-badge {
   font-size: 11px;
   background: #ffb300;
@@ -388,6 +434,13 @@ function toggleVoters(id: string) {
   word-break: normal;
   hyphens: auto;
   line-height: 1.3;
+}
+.char-coef {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
 }
 .hidden-dot {
   letter-spacing: 3px;

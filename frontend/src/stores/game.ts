@@ -203,6 +203,7 @@ export const useGameStore = defineStore('game', {
             mine.value = vis.value
             mine.coef = vis.coef
             mine.hint = vis.hint
+            mine.tags = vis.tags
           }
         }
         if (me.biology && this.myBiology) {

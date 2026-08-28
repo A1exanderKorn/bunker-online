@@ -613,7 +613,7 @@ export class Lobby {
       effectText: effect.text ?? card.title,
     })
     // Обновляем публичное состояние и бункер.
-    this.io.to(this.code).emit('charactersUpdated', { players: this.publicPlayers() })
+    this.broadcastCharacters()
     this.io.to(this.code).emit('bunkerUpdated', { bunker: this.bunker })
     // Приватно обновляем характеристики затронутых игроков.
     for (const p of this.players) {
@@ -805,13 +805,15 @@ export class Lobby {
         const a = findChar(self.characteristics, category, occ)
         const b = findChar(other.characteristics, category, occ)
         if (!a || !b) return { ok: false, error: 'Нет такой характеристики у обоих игроков' }
-        const tmp = { value: a.value, coef: a.coef, hint: a.hint }
+        const tmp = { value: a.value, coef: a.coef, hint: a.hint, tags: [...(a.tags ?? [])] }
         a.value = b.value
         a.coef = b.coef
         a.hint = b.hint
+        a.tags = [...(b.tags ?? [])]
         b.value = tmp.value
         b.coef = tmp.coef
         b.hint = tmp.hint
+        b.tags = tmp.tags
         return {
           ok: true,
           text: `Обмен «${this.slotLabel(category, occ, self)}» с ${this.nameOf(otherId)}`,
@@ -980,7 +982,7 @@ export class Lobby {
     if (this.turn.revealedThisTurn < this.turn.revealsThisTurn && !this.turnGraceGiven) {
       const revealed = this.revealRandomFor(playerId)
       if (revealed) {
-        this.io.to(this.code).emit('charactersUpdated', { players: this.publicPlayers() })
+        this.broadcastCharacters()
         this.io.to(this.code).emit('turnChanged', {
           turn: this.turn,
           timer: this.timer,
@@ -1071,7 +1073,7 @@ export class Lobby {
     if (!ok) return
 
     this.turn.revealedThisTurn += 1
-    this.io.to(this.code).emit('charactersUpdated', { players: this.publicPlayers() })
+    this.broadcastCharacters()
     this.pushCharacteristicsTo(playerId)
     this.io.to(this.code).emit('turnChanged', {
       turn: this.turn,
@@ -1372,7 +1374,7 @@ export class Lobby {
     this.resetRoundVoteModifiers()
     this.io.to(this.code).emit('voteResult', { eliminatedId, tie: false, tiedIds: [], tally })
     this.broadcastPlayers()
-    this.io.to(this.code).emit('charactersUpdated', { players: this.publicPlayers() })
+    this.broadcastCharacters()
 
     if (this.checkWinCondition()) return
     this.nextStep()
@@ -1413,7 +1415,7 @@ export class Lobby {
       players: this.publicPlayers(),
       survival: this.survivalReport,
     })
-    this.io.to(this.code).emit('charactersUpdated', { players: this.publicPlayers() })
+    this.broadcastCharacters()
     this.io.to(this.code).emit('stageChanged', {
       stage: 'end',
       timer: 0,
@@ -1475,15 +1477,27 @@ export class Lobby {
 
   // ─── Публичное представление ────────────────────────────────────────────
 
-  private publicPlayers(): PublicPlayer[] {
+  private publicPlayers(viewerId?: string): PublicPlayer[] {
+    const viewer = viewerId ? this.players.find((p) => p.id === viewerId) : undefined
+    const revealAll = this.stage === 'end' || viewer?.isAlive === false
     return this.players.map((p) => ({
       id: p.id,
       name: p.name,
       isAlive: p.isAlive,
       connected: p.connected,
-      characteristics: p.characteristics.filter((c) => c.isVisible),
-      biology: p.biology?.isVisible ? p.biology : null,
+      characteristics: revealAll ? p.characteristics : p.characteristics.filter((c) => c.isVisible),
+      biology: revealAll ? p.biology : p.biology?.isVisible ? p.biology : null,
     }))
+  }
+
+  /** Выбывшие игроки получают spectator-представление со всеми характеристиками. */
+  private broadcastCharacters(): void {
+    for (const player of this.players) {
+      const sid = this.sockets.get(player.id)
+      if (sid) {
+        this.io.to(sid).emit('charactersUpdated', { players: this.publicPlayers(player.id) })
+      }
+    }
   }
 
   snapshotFor(playerId: string): void {
@@ -1515,7 +1529,7 @@ export class Lobby {
     }
     this.io.to(sid).emit('yourCards', { cards: this.cards.get(playerId) ?? [] })
     this.io.to(sid).emit('gameStarted', {
-      players: this.publicPlayers(),
+      players: this.publicPlayers(playerId),
       stage: this.stage,
       settings: this.settings,
       turn: this.turn,
@@ -1535,7 +1549,7 @@ export class Lobby {
       this.survivalReport ??= calculateSurvival(this.players, this.bunker)
       this.io.to(sid).emit('gameEnded', {
         survivorIds: this.alive().map((p) => p.id),
-        players: this.publicPlayers(),
+        players: this.publicPlayers(playerId),
         survival: this.survivalReport,
       })
     }
