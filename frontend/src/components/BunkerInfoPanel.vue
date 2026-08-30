@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { STAGE_LABELS } from '@shared/types'
+import ActionCardsPanel from '@/components/ActionCardsPanel.vue'
 
 /**
  * Информационное окно: катастрофа, срок в бункере, доп. условия,
@@ -56,6 +57,8 @@ const conditions = computed(() => bunker.value.conditions ?? [])
       </TransitionGroup>
       <p v-else class="no-threats">Пока угроз нет.</p>
     </div>
+
+    <ActionCardsPanel class="actions" />
   </section>
 </template>
 
@@ -63,7 +66,7 @@ const conditions = computed(() => bunker.value.conditions ?? [])
 .bunker-info {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
-  grid-template-areas: 'conditions conditions' 'cat state' 'threats threats';
+  grid-template-areas: 'conditions conditions' 'cat state' 'threats actions';
   gap: 12px;
   width: 100%;
 }
@@ -82,6 +85,10 @@ const conditions = computed(() => bunker.value.conditions ?? [])
 }
 .threats {
   grid-area: threats;
+}
+.actions {
+  grid-area: actions;
+  min-width: 0;
 }
 .info-block h4 {
   margin: 0 0 8px;
@@ -148,7 +155,7 @@ const conditions = computed(() => bunker.value.conditions ?? [])
 @media (max-width: 640px) {
   .bunker-info {
     grid-template-columns: 1fr;
-    grid-template-areas: 'conditions' 'cat' 'state' 'threats';
+    grid-template-areas: 'conditions' 'cat' 'state' 'threats' 'actions';
   }
 }
 </style>

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterView } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import CardPlayedPopup from '@/components/CardPlayedPopup.vue'
+import ThreatPopup from '@/components/ThreatPopup.vue'
 
 const theme = useThemeStore()
 const icon = computed(() =>
@@ -20,6 +21,7 @@ const label = computed(() =>
       <span class="theme-label">{{ label }}</span>
     </button>
     <RouterView />
+    <ThreatPopup />
     <CardPlayedPopup />
   </div>
 </template>

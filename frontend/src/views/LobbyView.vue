@@ -10,7 +10,6 @@ import GameTable from '@/components/GameTable.vue'
 import GameStageMessage from '@/components/GameStageMessage.vue'
 import LobbySettingsPanel from '@/components/LobbySettingsPanel.vue'
 import BunkerInfoPanel from '@/components/BunkerInfoPanel.vue'
-import ActionCardsPanel from '@/components/ActionCardsPanel.vue'
 import CardAdminPanel from '@/components/CardAdminPanel.vue'
 
 const route = useRoute()
@@ -196,8 +195,6 @@ const isDev = import.meta.env.DEV
 
     <BunkerInfoPanel class="info-mb" />
     <p v-if="error" class="error game-error">{{ error }}</p>
-
-    <ActionCardsPanel class="info-mb" />
 
     <div v-if="lastResult" class="result-banner">
       <template v-if="lastResult.tie">Ничья — назначено переголосование</template>

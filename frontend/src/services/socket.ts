@@ -10,12 +10,22 @@ let socket: GameSocket | null = null
 let visibilityHooked = false
 const CLIENT_ID_KEY = 'bunker.tabClientId'
 
-/** Стабильный id вкладки: переживает F5, но не делится с другими вкладками. */
+/**
+ * Стабильный id браузера: переживает F5 и закрытие вкладки.
+ * Старое значение из sessionStorage переносим при первом запуске новой версии.
+ */
 function clientId(): string {
-  let value = sessionStorage.getItem(CLIENT_ID_KEY)
+  let value = localStorage.getItem(CLIENT_ID_KEY)
+  if (!value) {
+    value = sessionStorage.getItem(CLIENT_ID_KEY)
+    if (value) {
+      localStorage.setItem(CLIENT_ID_KEY, value)
+      sessionStorage.removeItem(CLIENT_ID_KEY)
+    }
+  }
   if (!value) {
     value = globalThis.crypto?.randomUUID?.() ?? `c_${Date.now()}_${Math.random().toString(36).slice(2)}`
-    sessionStorage.setItem(CLIENT_ID_KEY, value)
+    localStorage.setItem(CLIENT_ID_KEY, value)
   }
   return value
 }

@@ -92,6 +92,7 @@ function confirmCard(c: ActionCard) {
 .action-cards {
   padding: 14px 16px;
   width: 100%;
+  min-width: 0;
 }
 .ac-head h4 {
   margin: 0 0 10px;
@@ -108,8 +109,8 @@ function confirmCard(c: ActionCard) {
   flex-wrap: wrap;
 }
 .ac-item {
-  flex: 1 1 200px;
-  max-width: 280px;
+  flex: 1 1 180px;
+  max-width: none;
   text-align: left;
   background: var(--surface-2);
   border: 1px solid var(--border);

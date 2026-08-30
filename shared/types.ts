@@ -98,7 +98,7 @@ export interface Biology {
 /** Полные данные игрока (живут только на сервере). */
 export interface Player {
   id: string
-  /** Стабильный идентификатор вкладки из sessionStorage — по нему идёт реконнект. */
+  /** Стабильный идентификатор браузера из localStorage — по нему идёт реконнект. */
   clientId: string
   name: string
   characteristics: Characteristic[]
@@ -475,7 +475,7 @@ export interface SurvivalChallengeResult {
 }
 
 export interface SurvivalFactor {
-  id: 'age' | 'needs' | 'health' | 'sex' | 'danger' | 'conditions'
+  id: 'age' | 'needs' | 'health' | 'sex' | 'traits' | 'bunker_assistance' | 'danger' | 'conditions'
   label: string
   status: string
   delta: number

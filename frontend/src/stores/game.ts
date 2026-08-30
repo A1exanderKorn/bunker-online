@@ -54,6 +54,7 @@ export const useGameStore = defineStore('game', {
     actionCards: [] as ActionCard[],
     myCards: [] as ActionCard[],
     cardPopup: null as CardPlayedPayload | null,
+    threatPopup: null as string | null,
     catalog: [] as CatalogCard[],
 
     roster: [] as RosterPlayer[],
@@ -143,6 +144,17 @@ export const useGameStore = defineStore('game', {
       })
 
       socket.on('bunkerUpdated', (payload) => {
+        const previous = new Map<string, number>()
+        for (const threat of this.bunker.threats) {
+          previous.set(threat, (previous.get(threat) ?? 0) + 1)
+        }
+        const added = payload.bunker.threats.filter((threat) => {
+          const count = previous.get(threat) ?? 0
+          if (count === 0) return true
+          previous.set(threat, count - 1)
+          return false
+        })
+        if (added.length > 0) this.threatPopup = added[added.length - 1] ?? null
         this.bunker = payload.bunker
       })
 
@@ -156,10 +168,10 @@ export const useGameStore = defineStore('game', {
 
       socket.on('cardPlayed', (payload) => {
         this.cardPopup = payload
-        // Попап автоматически скрывается через 10 секунд.
+        // Попап автоматически скрывается через 8 секунд.
         window.setTimeout(() => {
           if (this.cardPopup === payload) this.cardPopup = null
-        }, 10_000)
+        }, 8_000)
       })
 
       socket.on('newGameStarted', () => {
@@ -169,6 +181,7 @@ export const useGameStore = defineStore('game', {
         this.publicPlayers = []
         this.myCards = []
         this.cardPopup = null
+        this.threatPopup = null
         this.myCharacteristics = []
         this.myBiology = null
         this.turn = { currentPlayerId: null, round: 0, revealsThisTurn: 0, revealedThisTurn: 0, currentVoterId: null }
@@ -292,6 +305,9 @@ export const useGameStore = defineStore('game', {
     },
     dismissCardPopup() {
       this.cardPopup = null
+    },
+    dismissThreatPopup() {
+      this.threatPopup = null
     },
     newGame() {
       getSocket()?.emit('newGame')

@@ -27,12 +27,12 @@ export function characteristicWeight(category: string): number {
   return weights[category] ?? 1
 }
 
-/** Стаж дополняет возрастной КФ, но не доминирует над ним. */
+/** Стаж слегка дополняет возрастной КФ: неизвестно, насколько полезна профессия. */
 export function experienceModifier(age: number, experience: number): number {
   const availableYears = Math.max(0, age - 16)
-  if (availableYears === 0) return -0.05
+  if (availableYears === 0) return -0.02
   const ratio = Math.max(0, Math.min(1, experience / availableYears))
-  return 0.1 - 0.6 * (ratio - 0.5) ** 2
+  return 0.06 - 0.32 * (ratio - 0.5) ** 2
 }
 
 function rollExperience(age: number): number {
@@ -62,13 +62,17 @@ export function generateBiology(existing: Biology[]): Biology {
 
   let baseCoef = 0.5
   if (sex === 'Ж') {
-    baseCoef = age <= 49 ? 1.0 - 0.04 * Math.abs(33 - age) : 0.4 - 0.01 * Math.abs(50 - age)
+    // Молодой возраст сам по себе остаётся сильной биологической характеристикой,
+    // даже если стаж пока небольшой.
+    baseCoef = age <= 49 ? 1.0 - 0.025 * Math.abs(33 - age) : 0.4 - 0.012 * Math.abs(50 - age)
   } else if (sex === 'М') {
     baseCoef = age <= 59 ? 1.0 - 0.03 * Math.abs(36 - age) : 0.4 - 0.01 * Math.abs(60 - age)
   }
 
   let infertile = false
-  if ((sex === 'Ж' && age <= 49) || (sex === 'М' && age <= 59)) {
+  if ((sex === 'Ж' && age > 50) || (sex === 'М' && age > 60)) {
+    infertile = true
+  } else if ((sex === 'Ж' && age <= 49) || (sex === 'М' && age <= 59)) {
     if (Math.random() < 0.25) {
       infertile = true
     }
@@ -88,7 +92,7 @@ export function generateBiology(existing: Biology[]): Biology {
     hint = 'Выступает в роли и мужчины, и женщины'
   }
 
-  const coef = clamp01(baseCoef + experienceModifier(age, experience) - (infertile ? 0.4 : 0))
+  const coef = clamp01(baseCoef + experienceModifier(age, experience) - (infertile ? 0.32 : 0))
   return { sex, age, experience, coef, infertile, isVisible: false, hint }
 }
 

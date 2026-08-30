@@ -94,12 +94,12 @@ function overallCoef(p: PublicPlayer): number | null {
 
 function isRevealed(p: PublicPlayer, slot: CharSlot): boolean {
   if (slot.type === BIOLOGY_CATEGORY) {
-    return isMe(p) ? !!game.myBiology?.isVisible : !!p.biology
+    return isMe(p) ? !!game.myBiology?.isVisible : !!p.biology?.isVisible
   }
   if (isMe(p)) {
     return !!findSlotChar(p, slot)?.isVisible
   }
-  return !!findSlotChar(p, slot)
+  return !!findSlotChar(p, slot)?.isVisible
 }
 
 /** Можно ли вскрыть эту характеристику: моя, ещё не вскрыта, мой ход, лимит не исчерпан. */
@@ -208,6 +208,7 @@ function toggleVoters(id: string) {
             'mine-revealed': isMe(p) && isRevealed(p, slot),
             clickable: canReveal(p, slot),
             locked: isMe(p) && !isRevealed(p, slot) && !canReveal(p, slot),
+            'spectator-hidden': !amAlive && !isRevealed(p, slot),
             confirming: pendingReveal === revealKey(p, slot),
           }"
           @click="tryReveal(p, slot)"
@@ -217,7 +218,7 @@ function toggleVoters(id: string) {
             <span v-if="isMe(p) && isRevealed(p, slot)" class="revealed-tick" title="Вы вскрыли эту характеристику">✓</span>
           </span>
           <span class="char-value">
-            <template v-if="isRevealed(p, slot) || isMe(p)">
+            <template v-if="isRevealed(p, slot) || isMe(p) || !amAlive">
               {{ getValue(p, slot) ?? '—' }}
               <small v-if="stage === 'end' && getCoef(p, slot) !== null" class="char-coef">
                 КФ {{ getCoef(p, slot)!.toFixed(2) }}
@@ -233,7 +234,7 @@ function toggleVoters(id: string) {
             @cancel="pendingReveal = null"
           />
           <span
-            v-else-if="getHint(p, slot) && (isRevealed(p, slot) || isMe(p))"
+            v-else-if="getHint(p, slot) && (isRevealed(p, slot) || isMe(p) || !amAlive)"
             class="char-hint"
             tabindex="0"
             @click.stop
@@ -395,6 +396,15 @@ function toggleVoters(id: string) {
   background: color-mix(in srgb, var(--success) 24%, var(--surface));
   border-left: 3px solid var(--success);
   padding-left: 5px;
+}
+.char-row.spectator-hidden {
+  background: color-mix(in srgb, var(--text-faint) 13%, var(--surface));
+  border-left: 3px solid var(--text-faint);
+  padding-left: 5px;
+}
+.char-row.spectator-hidden .char-value,
+.char-row.spectator-hidden .char-type {
+  color: var(--text-faint);
 }
 .revealed-tick {
   color: #2e9e4f;

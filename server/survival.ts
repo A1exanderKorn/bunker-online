@@ -8,7 +8,7 @@ import type {
 import { challengeByText, type BunkerChallenge } from './bunker'
 
 const TAG_LABELS: Record<string, string> = {
-  agriculture: 'сельское хозяйство', food: 'пища', fishing: 'рыбалка', water: 'чистая вода',
+  agriculture: 'сельское хозяйство', food: 'пища', water: 'чистая вода',
   medical: 'медицина', infectious: 'инфекционные заболевания', biology: 'биология', science: 'наука',
   engineering: 'инженерия', repair: 'ремонт', tools: 'инструменты', plumbing: 'сантехника',
   power: 'энергия', ventilation: 'вентиляция', chemistry: 'химия', radiation: 'радиация',
@@ -18,6 +18,8 @@ const TAG_LABELS: Record<string, string> = {
   culture: 'культура', geology: 'геология', navigation: 'навигация', communication: 'связь',
   animals: 'работа с животными', fire: 'пожарная безопасность', logistics: 'логистика',
   reproductive_edge: 'условие репродуктивного сканера',
+  bunker_assistance_big: 'сильная помощь бункеру',
+  bunker_assistance_small: 'небольшая помощь бункеру',
 }
 
 function labelTag(tag: string): string {
@@ -46,7 +48,10 @@ function buildTeamTags(players: Player[], bunker: BunkerState): TeamTags {
     if (!biology) continue
     if (biology.sex === 'М' || biology.sex === 'Гермафродит') add('male', player.name)
     if (biology.sex === 'Ж' || biology.sex === 'Гермафродит') add('female', player.name)
-    if (biology.sex === 'Андроид') add('engineering', `${player.name}: андроид`)
+    if (biology.sex === 'Андроид') {
+      add('engineering', `${player.name}: андроид`)
+      add('bunker_assistance_big', `${player.name}: андроид`)
+    }
     if (
       biology.infertile ||
       ((biology.sex === 'Ж' || biology.sex === 'Гермафродит') && biology.age > 50) ||
@@ -104,6 +109,15 @@ function healthCharacteristic(player: Player) {
   return player.characteristics.find((characteristic) => characteristic.type === 'Здоровье')
 }
 
+/** Возрастные границы соответствуют правилам: Ж > 50 и М > 60 бесплодны. */
+function isEffectivelyInfertile(player: Player): boolean {
+  const biology = player.biology
+  if (!biology || biology.sex === 'Андроид') return true
+  return biology.infertile ||
+    ((biology.sex === 'Ж' || biology.sex === 'Гермафродит') && biology.age > 50) ||
+    (biology.sex === 'М' && biology.age > 60)
+}
+
 function factor(
   id: SurvivalFactor['id'], label: string, status: string, delta: number, detail: string,
 ): SurvivalFactor {
@@ -119,8 +133,8 @@ export function calculateSurvival(players: Player[], bunker: BunkerState): Survi
 
   const ages = survivors.flatMap((player) => player.biology ? [player.biology.age] : [])
   const averageAge = ages.length ? ages.reduce((sum, age) => sum + age, 0) / ages.length : 50
-  const ageStatus = averageAge <= 40 ? 'Отличный' : averageAge <= 60 ? 'Удовлетворительный' : 'Ужасный'
-  const ageDelta = averageAge <= 40 ? 8 : averageAge <= 60 ? 0 : -10
+  const ageStatus = averageAge <= 40 ? 'Отличный' : averageAge <= 58 ? 'Удовлетворительный' : averageAge <= 68 ? 'Плохой' : 'Ужасный'
+  const ageDelta = averageAge <= 40 ? 5 : averageAge <= 58 ? 0 : averageAge <= 68 ? -8 : -15
   factors.push(factor('age', 'Возраст группы', ageStatus, ageDelta, `Средний возраст: ${averageAge.toFixed(1)}.`))
 
   const health = survivors.map(healthCharacteristic).filter((item) => item != null)
@@ -129,9 +143,9 @@ export function calculateSurvival(players: Player[], bunker: BunkerState): Survi
   const critical = health.filter((item) => item.tags?.includes('critical')).length
   const hasMedicine = team.tags.has('medical')
   const hasInfectious = team.tags.has('infectious')
-  let healthDelta = averageHealth >= 0.75 ? 8 : averageHealth >= 0.5 ? 3 : averageHealth >= 0.3 ? -5 : -12
-  if (contagious > 0) healthDelta += hasMedicine && hasInfectious ? -2 : -12
-  if (critical > 0) healthDelta -= Math.min(15, critical * (hasMedicine ? 2 : 5))
+  let healthDelta = averageHealth >= 0.75 ? 6 : averageHealth >= 0.5 ? 2 : averageHealth >= 0.3 ? -6 : -14
+  if (contagious > 0) healthDelta += hasMedicine && hasInfectious ? -3 : -13
+  if (critical > 0) healthDelta -= Math.min(18, critical * (hasMedicine ? 2 : 6))
   const healthStatus = contagious && !(hasMedicine && hasInfectious)
     ? 'Критическое' : averageHealth >= 0.7 && critical === 0 ? 'Хорошее' : averageHealth >= 0.4 ? 'Удовлетворительное' : 'Плохое'
   factors.push(factor('health', 'Здоровье группы', healthStatus, healthDelta,
@@ -144,12 +158,65 @@ export function calculateSurvival(players: Player[], bunker: BunkerState): Survi
   if (needMedicine) needs.push(hasMedicine)
   const satisfiedNeeds = needs.filter(Boolean).length
   const needsStatus = satisfiedNeeds === needs.length ? 'Удовлетворены' : satisfiedNeeds === 0 ? 'Не удовлетворены' : 'Частично удовлетворены'
-  const needsDelta = satisfiedNeeds === needs.length ? 10 : satisfiedNeeds === 0 ? -10 : 0
+  const needsDelta = satisfiedNeeds === needs.length ? 8 : satisfiedNeeds === 0 ? -12 : -2
   factors.push(factor('needs', 'Базовые потребности', needsStatus, needsDelta, ''))
 
+  const fertileMale = survivors.some((player) =>
+    !isEffectivelyInfertile(player) &&
+    (player.biology?.sex === 'М' || player.biology?.sex === 'Гермафродит'))
+  const fertileFemale = survivors.some((player) =>
+    !isEffectivelyInfertile(player) &&
+    (player.biology?.sex === 'Ж' || player.biology?.sex === 'Гермафродит'))
+  const fertilePair = fertileMale && fertileFemale
   const mixedSexes = team.tags.has('male') && team.tags.has('female')
-  factors.push(factor('sex', 'Половой состав', mixedSexes ? 'Удовлетворительный' : 'Плохой', mixedSexes ? 2 : -2,
-    mixedSexes ? 'В группе представлены мужчины и женщины.' : 'В группе нет хотя бы одного мужчины и одной женщины.'))
+  const reproductionDelta = fertilePair ? 2 : mixedSexes ? -6 : -10
+  factors.push(factor(
+    'sex',
+    'Репродуктивный потенциал',
+    fertilePair ? 'Удовлетворительный' : mixedSexes ? 'Бесплодная группа' : 'Критический',
+    reproductionDelta,
+    fertilePair
+      ? 'В группе есть фертильные мужчина и женщина.'
+      : 'Для расчёта Ж старше 50 и М старше 60 считаются бесплодными по умолчанию.',
+  ))
+
+  const weakCharacteristics = survivors.flatMap((player) =>
+    player.characteristics
+      .filter((item) => item.type !== 'Здоровье' && item.coef < 0.35)
+      .map((item) => ({ player, item })),
+  )
+  const weaknessScore = weakCharacteristics.reduce((sum, { item }) =>
+    sum + (item.coef <= 0.1 ? 3 : item.coef <= 0.2 ? 2 : 1), 0)
+  const traitsDelta = -Math.min(12, weaknessScore)
+  factors.push(factor(
+    'traits',
+    'Слабые характеристики',
+    weakCharacteristics.length === 0 ? 'Не обнаружены' : weakCharacteristics.length <= 2 ? 'Заметны' : 'Опасны',
+    traitsDelta,
+    weakCharacteristics.length
+      ? `Негативно влияют: ${weakCharacteristics.map(({ player, item }) => `${player.name}: ${item.value}`).join('; ')}.`
+      : 'Откровенно слабых характеристик у выживших нет.',
+  ))
+
+  // Каждый тип помощи учитывается один раз на всю команду: повторяющиеся карты
+  // с тем же тегом не складываются, но big и small могут сработать одновременно.
+  const assistanceBonuses = [
+    { tag: 'bunker_assistance_big', delta: 5 },
+    { tag: 'bunker_assistance_small', delta: 3 },
+  ].filter(({ tag }) => team.tags.has(tag))
+  if (assistanceBonuses.length > 0) {
+    const assistanceDelta = assistanceBonuses.reduce((sum, bonus) => sum + bonus.delta, 0)
+    const assistanceSources = assistanceBonuses.flatMap(({ tag }) =>
+      [...(team.sources.get(tag) ?? [])].map((source) => `${labelTag(tag)} — ${source}`),
+    )
+    factors.push(factor(
+      'bunker_assistance',
+      'Особая помощь бункеру',
+      assistanceBonuses.length === 2 ? 'Сильная и небольшая' : assistanceBonuses[0].delta === 5 ? 'Сильная' : 'Небольшая',
+      assistanceDelta,
+      `Уникальные бонусы команды: ${assistanceSources.join('; ')}.`,
+    ))
+  }
 
   const dangerousPlayers = survivors.filter((player) => player.characteristics.some((item) =>
     item.tags?.some((tag) => ['dangerous', 'psychopath', 'maniac', 'suicidal'].includes(tag)),

@@ -824,7 +824,7 @@ export class Lobby {
         const pl = this.players.find((p) => p.id === targetId)
         if (pl?.biology) {
           pl.biology.infertile = false
-          pl.biology.coef = Math.min(1, pl.biology.coef + 0.4)
+          pl.biology.coef = Math.min(1, pl.biology.coef + 0.32)
         }
         return { ok: true, text: `Вылечено бесплодие: ${this.nameOf(targetId)}` }
       }

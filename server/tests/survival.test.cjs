@@ -88,3 +88,67 @@ test('reproductive_edge выдаётся гермафродиту старше 5
   const item = challengeDelta(calculateSurvival(players, bunker), REPRO_THREAT)
   assert.equal(item.success, true)
 })
+
+test('возрастное и явное бесплодие ухудшают репродуктивный потенциал группы', () => {
+  const fertile = [
+    survivor('m', 'Мужчина', 'М', [], 35),
+    survivor('f', 'Женщина', 'Ж', [], 30),
+  ]
+  const infertile = [
+    survivor('m', 'Мужчина', 'М', [], 61),
+    survivor('f', 'Женщина', 'Ж', [], 51),
+  ]
+  const bunker = { catastrophe: '', years: 1, threats: [], conditions: [] }
+  const fertileFactor = calculateSurvival(fertile, bunker).factors.find((item) => item.id === 'sex')
+  const infertileFactor = calculateSurvival(infertile, bunker).factors.find((item) => item.id === 'sex')
+
+  assert.equal(fertileFactor.delta, 2)
+  assert.equal(infertileFactor.delta, -6)
+})
+
+test('откровенно слабые характеристики дают отдельный штраф', () => {
+  const player = survivor('weak', 'Слабый', 'М', [], 30)
+  player.characteristics.push({
+    type: 'Багаж', value: 'Бесполезный хлам', coef: 0.1, hint: '', isVisible: true, occ: 0,
+  })
+  const report = calculateSurvival([player], { catastrophe: '', years: 1, threats: [], conditions: [] })
+  const traits = report.factors.find((item) => item.id === 'traits')
+
+  assert.equal(traits.delta, -3)
+})
+
+test('одинаковый bunker_assistance_big учитывается один раз на всю команду', () => {
+  const players = [
+    survivor('one', 'Первый', 'М', ['food', 'bunker_assistance_big']),
+    survivor('two', 'Вторая', 'Ж', ['bunker_assistance_big']),
+  ]
+  const report = calculateSurvival(players, { catastrophe: '', years: 1, threats: [], conditions: [] })
+  const assistance = report.factors.find((item) => item.id === 'bunker_assistance')
+
+  assert.equal(assistance.delta, 5)
+  assert.equal(report.chance % 1, 0)
+})
+
+test('разные bunker_assistance теги складываются до 8 процентных пунктов', () => {
+  const players = [
+    survivor('one', 'Первый', 'М', ['food', 'bunker_assistance_big']),
+    survivor('two', 'Вторая', 'Ж', ['bunker_assistance_small']),
+  ]
+  const report = calculateSurvival(players, { catastrophe: '', years: 1, threats: [], conditions: [] })
+  const assistance = report.factors.find((item) => item.id === 'bunker_assistance')
+
+  assert.equal(assistance.delta, 8)
+  assert.equal(report.chance % 1, 0)
+})
+
+test('андроид автоматически даёт уникальный bunker_assistance_big', () => {
+  const players = [
+    survivor('android', 'Андроид', 'Андроид', ['food']),
+    survivor('human', 'Человек', 'Ж', []),
+  ]
+  const report = calculateSurvival(players, { catastrophe: '', years: 1, threats: [], conditions: [] })
+  const assistance = report.factors.find((item) => item.id === 'bunker_assistance')
+
+  assert.equal(assistance.delta, 5)
+  assert.match(assistance.detail, /Андроид: андроид/)
+})
