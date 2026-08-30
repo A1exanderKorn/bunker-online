@@ -83,12 +83,13 @@ function evaluateChallenge(challenge: BunkerChallenge, team: TeamTags): Survival
   const total = challenge.requirements.length
   const closed = matched.length
   const success = missing.length === 0
-  // Частичный зачёт: линейно между провалом и успехом по доле закрытых групп.
-  // Если требований нет — считаем полным успехом.
+  // Неполное решение всегда остаётся штрафом. Закрытые группы уменьшают его
+  // пропорционально, а положительный бонус выдаётся только за полное решение.
   const ratio = total === 0 ? 1 : closed / total
-  const delta = Math.round(
-    challenge.failureDelta + (challenge.successDelta - challenge.failureDelta) * ratio,
-  )
+  const maximumPenalty = -Math.round(Math.abs(challenge.failureDelta) * 1.2)
+  const delta = success
+    ? challenge.successDelta
+    : -Math.max(1, Math.round(Math.abs(maximumPenalty) * (1 - ratio)))
   const detail = total === 0
     ? 'Специальные ресурсы не требуются.'
     : success
@@ -124,7 +125,7 @@ function factor(
   return { id, label, status, delta, detail }
 }
 
-const BASE_SURVIVAL_CHANCE = 50
+const BASE_SURVIVAL_CHANCE = 40
 
 export function calculateSurvival(players: Player[], bunker: BunkerState): SurvivalReport {
   const survivors = players.filter((player) => player.isAlive)
@@ -222,11 +223,15 @@ export function calculateSurvival(players: Player[], bunker: BunkerState): Survi
     item.tags?.some((tag) => ['dangerous', 'psychopath', 'maniac', 'suicidal'].includes(tag)),
   ))
   const conflictPlayers = survivors.filter((player) => player.characteristics.some((item) => item.tags?.includes('conflict')))
-  const mitigation = team.tags.has('psychology') || team.tags.has('leadership')
-  const dangerDelta = -Math.min(20, dangerousPlayers.length * (mitigation ? 3 : 6) + conflictPlayers.length * 2)
+  const hasLeadership = team.tags.has('leadership')
+  const dangerousPenalty = dangerousPlayers.length * 6
+  const conflictPenalty = conflictPlayers.length * (hasLeadership ? 1 : 2)
+  const dangerDelta = -Math.min(20, dangerousPenalty + conflictPenalty)
   const dangerNames = [...new Set([...dangerousPlayers, ...conflictPlayers].map((player) => player.name))]
-  factors.push(factor('danger', 'Внутренние риски', dangerNames.length ? (mitigation ? 'Контролируемые' : 'Опасные') : 'Не обнаружены', dangerDelta,
-    dangerNames.length ? `Риск создают: ${dangerNames.join(', ')}.${mitigation ? ' Есть лидерство или психологическая поддержка.' : ''}` : 'Психопаты, маньяки и выраженно конфликтные участники не обнаружены.'))
+  factors.push(factor('danger', 'Внутренние риски', dangerNames.length ? 'Опасные' : 'Не обнаружены', dangerDelta,
+    dangerNames.length
+      ? `Риск создают: ${dangerNames.join(', ')}. Опасные характеристики: −${dangerousPenalty}%, конфликтность: −${conflictPenalty}%.${hasLeadership && conflictPlayers.length ? ' Лидерство смягчает только конфликтность.' : ''}`
+      : 'Психопаты, маньяки и выраженно конфликтные участники не обнаружены.'))
 
   const conditionDelta = bunker.conditions.reduce((sum, condition) => sum + (challengeByText(condition.text)?.successDelta ?? 0), 0)
   factors.push(factor('conditions', 'Условия бункера', bunker.conditions.length ? 'Использованы' : 'Нет дополнительных', conditionDelta,
@@ -235,7 +240,7 @@ export function calculateSurvival(players: Player[], bunker: BunkerState): Survi
   const challengeTexts = [bunker.catastrophe, ...bunker.threats].filter(Boolean)
   const challenges = challengeTexts.map((text) => {
     const challenge = challengeByText(text)
-    if (!challenge) return { kind: text === bunker.catastrophe ? 'catastrophe' as const : 'threat' as const, text, success: false, delta: -8, detail: 'Для события не настроены требования в Excel.' }
+    if (!challenge) return { kind: text === bunker.catastrophe ? 'catastrophe' as const : 'threat' as const, text, success: false, delta: -10, detail: 'Для события не настроены требования в Excel.' }
     return evaluateChallenge(challenge, team)
   })
 

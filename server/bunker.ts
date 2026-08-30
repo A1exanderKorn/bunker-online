@@ -107,17 +107,20 @@ export function pickCatastrophe(): string {
 }
 
 /**
- * Возвращает перемешанную очередь угроз нужной длины (уникальные, затем по кругу).
- * Используется, чтобы заранее подготовить угрозы для помеченных раундов.
+ * Возвращает перемешанную очередь уникальных угроз. Если запрошено больше,
+ * чем есть в колоде, очередь заканчивается без перехода на второй круг.
  */
 export function threatQueue(count: number): string[] {
   const data = loadBunkerData()
   if (data.threats.length === 0) return []
-  const result: string[] = []
-  let pool: string[] = []
-  for (let i = 0; i < count; i++) {
-    if (pool.length === 0) pool = shuffled(data.threats)
-    result.push(pool.pop()!)
-  }
-  return result
+  const uniqueThreats = [...new Set(data.threats)]
+  return shuffled(uniqueThreats).slice(0, Math.max(0, count))
+}
+
+/** Случайное дополнительное условие, которого ещё нет в бункере. */
+export function pickUnusedCondition(openedTexts: Iterable<string>): string | undefined {
+  const opened = new Set(openedTexts)
+  const available = [...new Set(loadBunkerData().conditions)].filter((text) => !opened.has(text))
+  if (available.length === 0) return undefined
+  return available[Math.floor(Math.random() * available.length)]
 }

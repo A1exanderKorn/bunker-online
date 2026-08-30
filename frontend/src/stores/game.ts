@@ -25,6 +25,14 @@ interface RosterPlayer {
   connected: boolean
 }
 
+let cardPopupTimer: number | null = null
+
+function clearCardPopupTimer() {
+  if (cardPopupTimer === null) return
+  window.clearTimeout(cardPopupTimer)
+  cardPopupTimer = null
+}
+
 /**
  * Единый стор игры: состояние комнаты, свои характеристики, стадия/таймер,
  * ходы и голосование. Всё обновляется по событиям сервера (сервер — источник правды).
@@ -111,6 +119,7 @@ export const useGameStore = defineStore('game', {
   actions: {
     /** Подключается к лобби и навешивает обработчики серверных событий. */
     connect(name: string, lobbyCode: string, mode: JoinMode) {
+      clearCardPopupTimer()
       this.$reset()
       const socket = connectSocket(name, lobbyCode, mode)
 
@@ -130,6 +139,7 @@ export const useGameStore = defineStore('game', {
       })
 
       socket.on('gameStarted', (payload) => {
+        clearCardPopupTimer()
         this.started = true
         this.stage = payload.stage
         this.publicPlayers = payload.players
@@ -167,14 +177,17 @@ export const useGameStore = defineStore('game', {
       })
 
       socket.on('cardPlayed', (payload) => {
+        clearCardPopupTimer()
         this.cardPopup = payload
         // Попап автоматически скрывается через 8 секунд.
-        window.setTimeout(() => {
-          if (this.cardPopup === payload) this.cardPopup = null
+        cardPopupTimer = window.setTimeout(() => {
+          this.cardPopup = null
+          cardPopupTimer = null
         }, 8_000)
       })
 
       socket.on('newGameStarted', () => {
+        clearCardPopupTimer()
         // Сброс к лобби, но сохраняем подключение/идентичность.
         this.started = false
         this.stage = 'lobby'
@@ -304,6 +317,7 @@ export const useGameStore = defineStore('game', {
       getSocket()?.emit('requestCatalog')
     },
     dismissCardPopup() {
+      clearCardPopupTimer()
       this.cardPopup = null
     },
     dismissThreatPopup() {

@@ -27,7 +27,7 @@ test('базовые потребности не требуют воду, а с�
   const shortStay = calculateSurvival(players, bunker)
   const longStay = calculateSurvival(players, { ...bunker, years: 15 })
 
-  assert.equal(shortStay.baseChance, 50)
+  assert.equal(shortStay.baseChance, 40)
   assert.equal(shortStay.chance, longStay.chance)
   // Фактора длительности пребывания в модели нет — срок не должен создавать фактор.
   assert.equal(shortStay.factors.some((item) => item.id === 'duration'), false)
@@ -68,15 +68,16 @@ test('катастрофа: частично закрытые требовани
   const bunker = { catastrophe: SUPERVULCANO, years: 1, threats: [], conditions: [] }
   const item = challengeDelta(calculateSurvival(players, bunker), SUPERVULCANO)
   assert.equal(item.success, false)
-  // failure=-16, success=+6, ratio=0.5 => round(-16 + 22*0.5) = -5
-  assert.equal(item.delta, -5)
+  // Максимальный штраф усилен до round(16*1.2)=19, одна из двух групп
+  // закрыта: остаётся половина штрафа, округлённая от нуля => -10.
+  assert.equal(item.delta, -10)
   // Полностью проваленный вариант должен быть строго хуже частичного.
   const noneClosed = calculateSurvival(
     [survivor('a', 'A', 'М', []), survivor('b', 'B', 'Ж', [])],
     bunker,
   )
   assert.ok(challengeDelta(noneClosed, SUPERVULCANO).delta < item.delta)
-  assert.equal(challengeDelta(noneClosed, SUPERVULCANO).delta, -16)
+  assert.equal(challengeDelta(noneClosed, SUPERVULCANO).delta, -19)
 })
 
 test('reproductive_edge выдаётся гермафродиту старше 50, как женщине', () => {
@@ -151,4 +152,35 @@ test('андроид автоматически даёт уникальный bu
 
   assert.equal(assistance.delta, 5)
   assert.match(assistance.detail, /Андроид: андроид/)
+})
+
+test('leadership не уменьшает штраф danger, но смягчает conflict', () => {
+  const bunker = { catastrophe: '', years: 1, threats: [], conditions: [] }
+  const dangerWithoutLeader = calculateSurvival(
+    [survivor('danger', 'Опасный', 'М', ['dangerous'])],
+    bunker,
+  ).factors.find((item) => item.id === 'danger')
+  const dangerWithLeader = calculateSurvival(
+    [
+      survivor('danger', 'Опасный', 'М', ['dangerous']),
+      survivor('leader', 'Лидер', 'Ж', ['leadership']),
+    ],
+    bunker,
+  ).factors.find((item) => item.id === 'danger')
+  const conflictWithoutLeader = calculateSurvival(
+    [survivor('conflict', 'Конфликтный', 'М', ['conflict'])],
+    bunker,
+  ).factors.find((item) => item.id === 'danger')
+  const conflictWithLeader = calculateSurvival(
+    [
+      survivor('conflict', 'Конфликтный', 'М', ['conflict']),
+      survivor('leader', 'Лидер', 'Ж', ['leadership']),
+    ],
+    bunker,
+  ).factors.find((item) => item.id === 'danger')
+
+  assert.equal(dangerWithoutLeader.delta, -6)
+  assert.equal(dangerWithLeader.delta, -6)
+  assert.equal(conflictWithoutLeader.delta, -2)
+  assert.equal(conflictWithLeader.delta, -1)
 })

@@ -31,7 +31,7 @@ import {
 } from './config'
 import { dealCharacteristics, buildCharLayout, findChar, generateBiology } from './characteristics'
 import { rowsByCategory } from './data'
-import { pickCatastrophe, threatQueue, loadBunkerData } from './bunker'
+import { pickCatastrophe, pickUnusedCondition, threatQueue } from './bunker'
 import { dealActionCards, makeCardByCatalogId, loadCards } from './cards'
 import { calculateSurvival } from './survival'
 
@@ -847,9 +847,8 @@ export class Lobby {
         return { ok: true, text: 'Катастрофа изменена' }
       }
       case 'revealCondition': {
-        const data = loadBunkerData()
-        if (data.conditions.length === 0) return { ok: false, error: 'В колоде нет доп. условий' }
-        const cond = data.conditions[Math.floor(Math.random() * data.conditions.length)]
+        const cond = pickUnusedCondition(this.bunker.conditions.map((condition) => condition.text))
+        if (!cond) return { ok: false, error: 'Все дополнительные условия уже открыты' }
         const entry: BunkerCondition = {
           text: cond,
           byPlayerId: playerId,

@@ -95,7 +95,6 @@ const survivalColor = computed(() => {
   return `hsl(${Math.round(chance * 1.2)} 72% 42%)`
 })
 
-const isDev = import.meta.env.DEV
 </script>
 
 <template>
@@ -126,7 +125,6 @@ const isDev = import.meta.env.DEV
 
       <section v-if="survival" class="survival-report">
         <div class="survival-score" :style="{ '--survival-color': survivalColor }">
-          <small>Базовая вероятность до модификаторов: {{ survival.baseChance }}%</small>
           <span>Вероятность выживания</span>
           <strong>{{ survival.chance }}%</strong>
           <div class="survival-meter" aria-hidden="true">
@@ -145,7 +143,7 @@ const isDev = import.meta.env.DEV
                 <h3>{{ item.label }}: {{ item.status }}</h3>
                 <p v-if="item.detail">{{ item.detail }}</p>
               </div>
-              <b v-if="isDev" class="survival-delta" :class="item.delta >= 0 ? 'positive' : 'negative'">
+              <b class="survival-delta" :class="item.delta >= 0 ? 'positive' : 'negative'">
                 {{ item.delta >= 0 ? '+' : '' }}{{ item.delta }}%
               </b>
             </article>
@@ -164,7 +162,7 @@ const isDev = import.meta.env.DEV
                 <p>{{ item.text }}</p>
                 <p class="challenge-detail">{{ item.detail }}</p>
               </div>
-              <b v-if="isDev" class="survival-delta" :class="item.delta >= 0 ? 'positive' : 'negative'">
+              <b class="survival-delta" :class="item.delta >= 0 ? 'positive' : 'negative'">
                 {{ item.delta >= 0 ? '+' : '' }}{{ item.delta }}%
               </b>
             </article>
@@ -532,13 +530,6 @@ const isDev = import.meta.env.DEV
   display: block;
   color: var(--text-muted);
   font-size: 16px;
-}
-.survival-score small {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--text-muted);
-  font-size: 14px;
-  font-weight: 600;
 }
 .survival-score strong {
   display: block;

@@ -68,6 +68,14 @@ function getCoef(p: PublicPlayer, slot: CharSlot): number | null {
   return findSlotChar(p, slot)?.coef ?? null
 }
 
+function isFinalDanger(p: PublicPlayer, slot: CharSlot): boolean {
+  if (stage.value !== 'end' || slot.type === BIOLOGY_CATEGORY) return false
+  const tags = findSlotChar(p, slot)?.tags ?? []
+  const isDangerous = tags.some((tag) => ['dangerous', 'psychopath', 'maniac', 'suicidal'].includes(tag))
+  const isContagiousHealth = slot.type === 'Здоровье' && tags.includes('contagious')
+  return isDangerous || isContagiousHealth
+}
+
 /** Совпадает с серверным расчётом КФ, по которому раздаются карты действия. */
 function overallCoef(p: PublicPlayer): number | null {
   const weights: Record<string, number> = {
@@ -209,6 +217,7 @@ function toggleVoters(id: string) {
             clickable: canReveal(p, slot),
             locked: isMe(p) && !isRevealed(p, slot) && !canReveal(p, slot),
             'spectator-hidden': !amAlive && !isRevealed(p, slot),
+            'final-danger': isFinalDanger(p, slot),
             confirming: pendingReveal === revealKey(p, slot),
           }"
           @click="tryReveal(p, slot)"
@@ -405,6 +414,27 @@ function toggleVoters(id: string) {
 .char-row.spectator-hidden .char-value,
 .char-row.spectator-hidden .char-type {
   color: var(--text-faint);
+}
+.char-row.final-danger {
+  border: 2px solid var(--danger);
+  padding: 4px 6px;
+  animation: final-danger-pulse 850ms ease-in-out infinite alternate;
+}
+@keyframes final-danger-pulse {
+  from {
+    background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 10%, transparent);
+  }
+  to {
+    background: color-mix(in srgb, var(--danger) 35%, var(--surface));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 22%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .char-row.final-danger {
+    animation: none;
+    background: color-mix(in srgb, var(--danger) 25%, var(--surface));
+  }
 }
 .revealed-tick {
   color: #2e9e4f;
