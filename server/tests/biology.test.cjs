@@ -24,7 +24,20 @@ test('молодая женщина с малым стажем и бесплод
   assert.equal(biology.age, 20)
   assert.equal(biology.experience, 1)
   assert.equal(biology.infertile, true)
-  assert.ok(biology.coef >= 0.39 && biology.coef <= 0.4)
+  assert.ok(biology.coef >= 0.63 && biology.coef <= 0.65)
+})
+
+test('пожилой мужчина с большим стажем не проваливается в чрезмерно низкий КФ', () => {
+  const biology = withRandom(
+    [0.5, 0.4, 0.84, 0.59],
+    () => generateBiology([]),
+  )
+
+  assert.equal(biology.sex, 'М')
+  assert.equal(biology.age, 75)
+  assert.equal(biology.experience, 35)
+  assert.equal(biology.infertile, true)
+  assert.ok(biology.coef >= 0.57 && biology.coef <= 0.6)
 })
 
 test('женщина старше 50 получает возрастное бесплодие по умолчанию', () => {

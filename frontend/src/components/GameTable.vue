@@ -80,7 +80,7 @@ function isFinalDanger(p: PublicPlayer, slot: CharSlot): boolean {
 function overallCoef(p: PublicPlayer): number | null {
   const weights: Record<string, number> = {
     Здоровье: 1,
-    Профессия: 1,
+    Профессия: 0.8,
     Биология: 1,
     Фобия: 0.75,
     Факт: 0.75,

@@ -29,7 +29,13 @@ import {
   RECONNECT_GRACE_MS,
   TURN_GRACE_SECONDS,
 } from './config'
-import { dealCharacteristics, buildCharLayout, findChar, generateBiology } from './characteristics'
+import {
+  dealCharacteristics,
+  buildCharLayout,
+  drawUniqueCharacteristics,
+  findChar,
+  generateBiology,
+} from './characteristics'
 import { rowsByCategory } from './data'
 import { pickCatastrophe, pickUnusedCondition, threatQueue } from './bunker'
 import { dealActionCards, makeCardByCatalogId, loadCards } from './cards'
@@ -55,6 +61,7 @@ function cloneCardTargets(targets: CardTargets): CardTargets {
 
 const EMPTY_TURN: TurnState = {
   currentPlayerId: null,
+  stepIndex: 0,
   round: 0,
   revealsThisTurn: 0,
   revealedThisTurn: 0,
@@ -334,6 +341,7 @@ export class Lobby {
         ),
       ),
       targetCoef: clampNum(s.targetCoef, L.targetCoef.min, L.targetCoef.max, DEFAULT_SETTINGS.targetCoef),
+      randomTargetCoef: !!s.randomTargetCoef,
       survivorsCount: Math.round(
         clampNum(s.survivorsCount, L.survivorsCount.min, L.survivorsCount.max, DEFAULT_SETTINGS.survivorsCount),
       ),
@@ -363,7 +371,7 @@ export class Lobby {
     }
 
     dealCharacteristics(this.players, {
-      targetCoef: this.settings.targetCoef,
+      targetCoef: this.settings.randomTargetCoef ? null : this.settings.targetCoef,
       extraBaggage: this.settings.extraBaggage,
       noPhobias: this.settings.noPhobias,
     })
@@ -510,6 +518,31 @@ export class Lobby {
     ch.coef = rc.coef
     ch.hint = rc.hint
     ch.tags = rc.tags
+    return true
+  }
+
+  /** Массовая перераздача без повторов между получателями. */
+  private replaceCategoryAll(category: string, occ = 0): boolean {
+    const recipients = this.alive()
+      .map((player) => ({ player, characteristic: findChar(player.characteristics, category, occ) }))
+      .filter((entry) => entry.characteristic != null)
+    if (recipients.length === 0) return false
+
+    const excluded = this.alive().flatMap((player) =>
+      player.characteristics
+        .filter((characteristic) => characteristic.type === category && (characteristic.occ ?? 0) !== occ)
+        .map((characteristic) => characteristic.value),
+    )
+    const replacements = drawUniqueCharacteristics(category, recipients.length, excluded)
+    if (replacements.length < recipients.length) return false
+
+    recipients.forEach(({ characteristic }, index) => {
+      const replacement = replacements[index]
+      characteristic!.value = replacement.value
+      characteristic!.coef = replacement.coef
+      characteristic!.hint = replacement.hint
+      characteristic!.tags = replacement.tags
+    })
     return true
   }
 
@@ -710,10 +743,7 @@ export class Lobby {
             this.rerollBiologyAll()
             return { ok: true, text: 'Пересдана биология всем игрокам' }
           }
-          let okAny = false
-          for (const pl of this.alive()) {
-            if (this.replaceChar(pl, category, occ)) okAny = true
-          }
+          const okAny = this.replaceCategoryAll(category, occ)
           if (!okAny) return { ok: false, error: `Не удалось пересдать «${category}»` }
           const label = this.slotLabel(category, occ, self)
           return { ok: true, text: `Пересдана категория «${label}» всем игрокам` }
@@ -906,6 +936,7 @@ export class Lobby {
     }
     const step = this.settings.roundSteps[index]
     this.stepIndex = index
+    this.turn = { ...this.turn, stepIndex: index }
     if (step.kind === 'reveal') {
       if (step.revealThreat && this.settings.threatsEnabled) this.revealNextThreat()
       this.beginRevealStep(step)
@@ -942,6 +973,7 @@ export class Lobby {
     this.turnIndex = 0
     this.turn = {
       currentPlayerId: null,
+      stepIndex: this.stepIndex,
       round: this.roundNumber(),
       revealsThisTurn: 1, // reveal-шаг = ровно 1 характеристика
       revealedThisTurn: 0,
@@ -1036,7 +1068,14 @@ export class Lobby {
 
   endTurn(playerId: string): void {
     if (this.stage !== 'reveal') return
-    if (this.turn.currentPlayerId !== playerId) return
+    const currentPlayerId = this.turn.currentPlayerId
+    if (!currentPlayerId) return
+    const isOwnTurn = currentPlayerId === playerId
+    const isHostOverride = this.isHost(playerId) && !isOwnTurn
+    if (!isOwnTurn && !isHostOverride) return
+    if (this.turn.revealedThisTurn < 1 && isHostOverride) {
+      if (this.revealRandomFor(currentPlayerId)) this.broadcastCharacters()
+    }
     if (this.turn.revealedThisTurn < 1) {
       this.emitError(playerId, 'Нужно вскрыть хотя бы одну характеристику, прежде чем завершить ход')
       return
@@ -1046,7 +1085,7 @@ export class Lobby {
 
   // ─── Вскрытие характеристик ──────────────────────────────────────────────
 
-  reveal(playerId: string, type: string, occ = 0): void {
+  reveal(playerId: string, type: string, occ = 0, autoEndTurn = false): void {
     if (this.stage !== 'reveal') return
     if (this.turn.currentPlayerId !== playerId) return
     if (this.turn.revealedThisTurn >= this.turn.revealsThisTurn) return
@@ -1074,13 +1113,15 @@ export class Lobby {
     this.turn.revealedThisTurn += 1
     this.broadcastCharacters()
     this.pushCharacteristicsTo(playerId)
+    if (autoEndTurn) {
+      this.advanceTurn()
+      return
+    }
     this.io.to(this.code).emit('turnChanged', {
       turn: this.turn,
       timer: this.timer,
       isPaused: this.isPaused,
     })
-    // П.2: ход НЕ завершается автоматически после вскрытия —
-    // только по кнопке «Завершить ход» или по истечении таймера.
   }
 
   private pushCharacteristicsTo(playerId: string): void {
@@ -1320,17 +1361,23 @@ export class Lobby {
     const tally = this.tally()
     const entries = Object.entries(tally)
 
+    const max = entries.length > 0 ? Math.max(...entries.map(([, c]) => c)) : 0
+    const leaders: string[] = entries.length > 0
+      ? entries.filter(([, c]) => c === max).map(([id]) => id)
+      : []
     if (entries.length === 0) {
+      const noVotePool = this.candidatePool()
+      const randomCandidate = noVotePool[Math.floor(Math.random() * noVotePool.length)]
+      if (randomCandidate) leaders.push(randomCandidate.id)
+    }
+
+    if (leaders.length === 0) {
       this.io.to(this.code).emit('voteResult', { eliminatedId: null, tie: false, tiedIds: [], tally })
-      if (this.checkWinCondition()) return
       this.nextStep()
       return
     }
 
-    const max = Math.max(...entries.map(([, c]) => c))
-    const leaders = entries.filter(([, c]) => c === max).map(([id]) => id)
-
-    if (leaders.length > 1 && this.stage === 'vote1') {
+    if (entries.length > 0 && leaders.length > 1 && this.stage === 'vote1') {
       this.io.to(this.code).emit('voteResult', { eliminatedId: null, tie: true, tiedIds: leaders, tally })
       this.stage = 'vote2'
       this.votes.clear()

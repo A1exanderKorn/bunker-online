@@ -133,6 +133,8 @@ export interface LobbySettings {
   voteSeconds: number
   /** Целевой средний коэффициент набора характеристик (баланс псевдорандома). */
   targetCoef: number
+  /** Полностью случайная раздача характеристик без притяжения к targetCoef. */
+  randomTargetCoef: boolean
   /**
    * Сколько игроков остаётся в конце (проходят в бункер).
    * Классически — половина от начального состава.
@@ -197,6 +199,7 @@ export const DEFAULT_SETTINGS: LobbySettings = {
   turnSeconds: 60,
   voteSeconds: 60,
   targetCoef: 0.5,
+  randomTargetCoef: false,
   survivorsCount: 0,
   voteMode: 'simultaneous',
   sequentialVoteSeconds: 30,
@@ -394,6 +397,8 @@ export const STAGE_LABELS: Record<GameStage, string> = {
 export interface TurnState {
   /** id игрока, чей сейчас ход (null — ход никого не активен, напр. одновременное голосование). */
   currentPlayerId: string | null
+  /** Индекс текущего шага в программе раундов (с 0). */
+  stepIndex: number
   /** Номер текущего раунда вскрытия (с 1). */
   round: number
   /** Сколько характеристик игрок должен вскрыть за этот ход. */
@@ -499,6 +504,8 @@ export interface RevealPayload {
   characteristicType: CharacteristicCategory | typeof BIOLOGY_CATEGORY
   /** Слот однотипной характеристики (второй багаж). */
   occ?: number
+  /** Личная настройка игрока: сразу завершить ход после успешного вскрытия. */
+  autoEndTurn?: boolean
 }
 
 export interface VotePayload {

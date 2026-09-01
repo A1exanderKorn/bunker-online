@@ -11,6 +11,7 @@ import GameStageMessage from '@/components/GameStageMessage.vue'
 import LobbySettingsPanel from '@/components/LobbySettingsPanel.vue'
 import BunkerInfoPanel from '@/components/BunkerInfoPanel.vue'
 import CardAdminPanel from '@/components/CardAdminPanel.vue'
+import RoundProgress from '@/components/RoundProgress.vue'
 
 const route = useRoute()
 const session = useSessionStore()
@@ -27,6 +28,7 @@ const {
   isReview,
   isMyTurn,
   isMyVoteTurn,
+  amAlive,
   roster,
   lastResult,
   survivorIds,
@@ -35,6 +37,8 @@ const {
   survival,
   settings,
   error,
+  autoEndTurn,
+  currentPlayerName,
 } = storeToRefs(game)
 
 const code = computed(() => (route.params.code as string) ?? session.lobbyCode)
@@ -192,6 +196,7 @@ const survivalColor = computed(() => {
     </div>
 
     <BunkerInfoPanel class="info-mb" />
+    <RoundProgress v-if="!isReview" />
     <p v-if="error" class="error game-error">{{ error }}</p>
 
     <div v-if="lastResult" class="result-banner">
@@ -206,6 +211,11 @@ const survivalColor = computed(() => {
     </div>
 
     <GameTable />
+
+    <label v-if="amAlive && stage === 'reveal'" class="auto-end-control">
+      <input v-model="autoEndTurn" type="checkbox" />
+      <span>Автозавершение хода после раскрытия</span>
+    </label>
 
     <!-- Кнопка завершения хода под карточками игроков -->
     <div v-if="isMyTurn" class="my-turn-controls">
@@ -235,6 +245,12 @@ const survivalColor = computed(() => {
         @click="game.resolveVote()"
         customClass="danger-button"
         text="Завершить голосование"
+      />
+      <LobbyButton
+        v-if="stage === 'reveal' && !isMyTurn && game.turn.currentPlayerId"
+        @click="game.endTurn()"
+        customClass="danger-button"
+        :text="`Завершить ход: ${currentPlayerName || 'игрок'}`"
       />
     </div>
   </div>
@@ -459,6 +475,22 @@ const survivalColor = computed(() => {
   display: flex;
   justify-content: center;
   margin-top: 14px;
+}
+.auto-end-control {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 8px;
+  margin: 12px auto 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+.auto-end-control input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
 }
 
 .result-banner {

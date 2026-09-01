@@ -81,8 +81,8 @@ export function registerSocketHandlers(io: IO): void {
     socket.on('playCard', ({ instanceId, targets }) => lobby!.playCard(playerId, instanceId, targets))
     socket.on('adminGiveCard', ({ cardId }) => lobby!.adminGiveCard(playerId, cardId))
     socket.on('requestCatalog', () => lobby!.sendCatalog(playerId))
-    socket.on('revealCharacteristic', ({ characteristicType, occ }) =>
-      lobby!.reveal(playerId, characteristicType, occ ?? 0),
+    socket.on('revealCharacteristic', ({ characteristicType, occ, autoEndTurn }) =>
+      lobby!.reveal(playerId, characteristicType, occ ?? 0, !!autoEndTurn),
     )
     socket.on('endTurn', () => lobby!.endTurn(playerId))
     socket.on('vote', ({ targetId }) => lobby!.vote(playerId, targetId))

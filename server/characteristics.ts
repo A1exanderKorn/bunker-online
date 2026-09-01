@@ -18,7 +18,7 @@ const clamp01 = (value: number): number => Math.max(0, Math.min(1, value))
 export function characteristicWeight(category: string): number {
   const weights: Record<string, number> = {
     Здоровье: 1,
-    Профессия: 1,
+    Профессия: 0.8,
     Биология: 1,
     Фобия: 0.75,
     Факт: 0.75,
@@ -62,11 +62,13 @@ export function generateBiology(existing: Biology[]): Biology {
 
   let baseCoef = 0.5
   if (sex === 'Ж') {
-    // Молодой возраст сам по себе остаётся сильной биологической характеристикой,
-    // даже если стаж пока небольшой.
-    baseCoef = age <= 49 ? 1.0 - 0.025 * Math.abs(33 - age) : 0.4 - 0.012 * Math.abs(50 - age)
+    baseCoef = age <= 50
+      ? 0.92 - 0.012 * Math.abs(30 - age)
+      : 0.78 - 0.006 * (age - 50)
   } else if (sex === 'М') {
-    baseCoef = age <= 59 ? 1.0 - 0.03 * Math.abs(36 - age) : 0.4 - 0.01 * Math.abs(60 - age)
+    baseCoef = age <= 60
+      ? 0.9 - 0.008 * Math.abs(35 - age)
+      : 0.8 - 0.005 * (age - 60)
   }
 
   let infertile = false
@@ -92,7 +94,9 @@ export function generateBiology(existing: Biology[]): Biology {
     hint = 'Выступает в роли и мужчины, и женщины'
   }
 
-  const coef = clamp01(baseCoef + experienceModifier(age, experience) - (infertile ? 0.32 : 0))
+  // Репродуктивный штраф отдельно учитывается в финальном выживании, поэтому
+  // здесь он не должен обнулять в остальном полезную биологию персонажа.
+  const coef = clamp01(baseCoef + experienceModifier(age, experience) - (infertile ? 0.2 : 0))
   return { sex, age, experience, coef, infertile, isVisible: false, hint }
 }
 
@@ -136,8 +140,8 @@ export function findChar(
  * его КФ от желаемого; FLOOR_WEIGHT гарантирует, что любой кандидат сохраняет
  * ненулевой шанс (никакого жёсткого обнуления и случайного фолбэка).
  */
-const BIAS_STRENGTH = 1.2
-const FLOOR_WEIGHT = 0.35
+const BIAS_STRENGTH = 4
+const FLOOR_WEIGHT = 0.15
 
 function pickWithBias<T extends { coef: number }>(
   candidates: T[],
@@ -170,7 +174,7 @@ function pickWithBias<T extends { coef: number }>(
 function dealToPlayer(
   usedValues: Set<string>,
   biologies: Biology[],
-  targetCoef: number,
+  targetCoef: number | null,
   categoryProgram: CharacteristicCategory[],
 ): {
   biology: Biology
@@ -188,7 +192,9 @@ function dealToPlayer(
     if (available.length === 0) continue
 
     const weight = characteristicWeight(category)
-    const chosen = pickWithBias(available, weightedSum, totalWeight, targetCoef, weight)
+    const chosen = targetCoef === null
+      ? available[Math.floor(Math.random() * available.length)]
+      : pickWithBias(available, weightedSum, totalWeight, targetCoef, weight)
     usedValues.add(chosen.value)
     weightedSum += chosen.coef * weight
     totalWeight += weight
@@ -201,7 +207,8 @@ function dealToPlayer(
 
 /** Настройки раздачи, влияющие на набор категорий. */
 export interface DealOptions {
-  targetCoef?: number
+  /** null отключает притяжение раздачи к целевому коэффициенту. */
+  targetCoef?: number | null
   /** III.3: добавить второй «Багаж» (8-я характеристика). */
   extraBaggage?: boolean
   /** III.4: не раздавать «Фобию». */
@@ -238,7 +245,7 @@ export function buildCharLayout(opts: DealOptions): CharSlot[] {
 
 /** Раздаёт характеристики всем игрокам (мутирует объекты игроков). */
 export function dealCharacteristics(players: Player[], opts: DealOptions = {}): void {
-  const targetCoef = opts.targetCoef ?? 0.5
+  const targetCoef = opts.targetCoef === null ? null : (opts.targetCoef ?? 0.5)
   const program = buildCategoryProgram(opts)
   const used = new Set<string>()
   const biologies: Biology[] = []
@@ -249,4 +256,21 @@ export function dealCharacteristics(players: Player[], opts: DealOptions = {}): 
     player.biology = biology
     player.characteristics = characteristics
   }
+}
+
+/** Случайные уникальные значения категории для массовой перераздачи. */
+export function drawUniqueCharacteristics(
+  category: string,
+  count: number,
+  excludedValues: Iterable<string> = [],
+): Characteristic[] {
+  const excluded = new Set(excludedValues)
+  const unique = new Map<string, Characteristic>()
+  for (const row of rowsByCategory(category)) {
+    const characteristic = parseRow(row)
+    if (characteristic.value && !excluded.has(characteristic.value) && !unique.has(characteristic.value)) {
+      unique.set(characteristic.value, characteristic)
+    }
+  }
+  return shuffleArray([...unique.values()]).slice(0, Math.max(0, count))
 }

@@ -128,7 +128,7 @@ const survivorsHint = computed(() =>
           :value="settings.targetCoef"
           :min="L.targetCoef.min"
           :max="L.targetCoef.max"
-          :disabled="!isHost"
+          :disabled="!isHost || settings.randomTargetCoef"
           @change="updateNum('targetCoef', ($event.target as HTMLInputElement).value)"
         />
       </label>
@@ -164,6 +164,18 @@ const survivorsHint = computed(() =>
         </div>
       </div>
 
+      <label class="check" :class="{ ro: !isHost }">
+        <input
+          type="checkbox"
+          :checked="settings.randomTargetCoef"
+          :disabled="!isHost"
+          @change="patch({ randomTargetCoef: ($event.target as HTMLInputElement).checked })"
+        />
+        <span>
+          Случайная раздача
+          <em class="mini">(без учёта целевого КФ)</em>
+        </span>
+      </label>
       <label class="check" :class="{ ro: !isHost }">
         <input
           type="checkbox"

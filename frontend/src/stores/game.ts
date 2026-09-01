@@ -51,6 +51,7 @@ export const useGameStore = defineStore('game', {
 
     turn: {
       currentPlayerId: null,
+      stepIndex: 0,
       round: 0,
       revealsThisTurn: 0,
       revealedThisTurn: 0,
@@ -80,6 +81,7 @@ export const useGameStore = defineStore('game', {
 
     survivorIds: [] as string[],
     survival: null as SurvivalReport | null,
+    autoEndTurn: false,
 
     error: '' as string,
   }),
@@ -197,7 +199,7 @@ export const useGameStore = defineStore('game', {
         this.threatPopup = null
         this.myCharacteristics = []
         this.myBiology = null
-        this.turn = { currentPlayerId: null, round: 0, revealsThisTurn: 0, revealedThisTurn: 0, currentVoterId: null }
+        this.turn = { currentPlayerId: null, stepIndex: 0, round: 0, revealsThisTurn: 0, revealedThisTurn: 0, currentVoterId: null }
         this.voteTally = {}
         this.votedIds = []
         this.votesByTarget = {}
@@ -327,7 +329,11 @@ export const useGameStore = defineStore('game', {
       getSocket()?.emit('newGame')
     },
     reveal(characteristicType: Characteristic['type'] | 'Биология', occ = 0) {
-      getSocket()?.emit('revealCharacteristic', { characteristicType, occ })
+      getSocket()?.emit('revealCharacteristic', {
+        characteristicType,
+        occ,
+        autoEndTurn: this.autoEndTurn,
+      })
     },
     endTurn() {
       getSocket()?.emit('endTurn')
