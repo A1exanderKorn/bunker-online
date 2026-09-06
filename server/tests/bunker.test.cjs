@@ -25,3 +25,23 @@ test('дополнительные условия выбираются без п
   assert.equal(pickUnusedCondition(opened), undefined)
   assert.equal(new Set(opened).size, opened.length)
 })
+
+test('катастрофы, угрозы и условия парсятся независимо от порядка строк', () => {
+  const data = loadBunkerData()
+  assert.ok(data.catastrophes.length >= 10)
+  assert.ok(data.threats.length >= 30)
+  assert.ok(data.conditions.length >= 8)
+  assert.equal(data.challenges.length, data.catastrophes.length + data.threats.length + data.conditions.length)
+  assert.equal(new Set(data.challenges.map((item) => item.id)).size, data.challenges.length)
+  for (const challenge of data.challenges) {
+    assert.ok(challenge.text)
+    assert.ok(['catastrophe', 'threat', 'condition'].includes(challenge.kind))
+    assert.ok(challenge.requirements.every((group) => group.length > 0))
+  }
+})
+
+test('лист данных отсортирован: катастрофы, затем угрозы и доп. условия', () => {
+  const rank = { catastrophe: 0, threat: 1, condition: 2 }
+  const kinds = loadBunkerData().challenges.map((challenge) => rank[challenge.kind])
+  assert.equal(kinds.some((value, index) => index > 0 && value < kinds[index - 1]), false)
+})

@@ -615,21 +615,17 @@ export class Lobby {
       return
     }
 
-    const replaySource = card.action === 'replayLast' ? this.lastPlayedEffect : null
     const effect = this.applyCardEffect(playerId, card, targets)
     if (!effect.ok) {
       this.emitError(playerId, effect.error ?? 'Неверные цели карты')
       return
     }
 
-    card.used = true
-    if (card.action === 'replayLast' && replaySource) {
-      this.lastPlayedEffect = {
-        card: { ...replaySource.card },
-        targets: cloneCardTargets(replaySource.targets),
-        byPlayerId: playerId,
-      }
-    } else if (card.action !== 'replayLast') {
+    if (card.action === 'replayLast') {
+      const index = arr?.findIndex((candidate) => candidate.instanceId === instanceId) ?? -1
+      if (index >= 0) arr!.splice(index, 1)
+    } else {
+      card.used = true
       this.lastPlayedEffect = {
         card: { ...card },
         targets: cloneCardTargets(targets),
@@ -819,12 +815,26 @@ export class Lobby {
         if (!otherId || otherId === playerId) return { ok: false, error: 'Выберите другого игрока' }
         const other = this.players.find((p) => p.id === otherId)
         if (!other) return { ok: false, error: 'Игрок не найден' }
-        const pick = t.characteristics?.[0]
-        const category = card.target === 'item' ? 'Багаж' : pick?.category
-        const occ = pick?.occ ?? 0
-        if (!category) return { ok: false, error: 'Не выбрана характеристика' }
+        const give = t.characteristics?.[0]
+        const receive = t.characteristics?.[1]
+        if (!give || !receive) {
+          return { ok: false, error: 'Выберите, что отдаёте и что получаете' }
+        }
+        if (give.playerId !== playerId || receive.playerId !== otherId) {
+          return { ok: false, error: 'Неверно выбраны владельцы характеристик' }
+        }
+        if (give.category !== receive.category) {
+          return { ok: false, error: 'Обмен возможен только внутри одной категории' }
+        }
+        const category = give.category
+        if (card.target === 'item' && category !== 'Багаж') {
+          return { ok: false, error: 'Этой картой можно обменивать только багаж' }
+        }
         if (category === BIOLOGY_CATEGORY) {
           if (!self.biology || !other.biology) return { ok: false, error: 'Нет биологии для обмена' }
+          if (!self.biology.isVisible || !other.biology.isVisible) {
+            return { ok: false, error: 'Обменивать можно только открытые характеристики' }
+          }
           const tmp = { ...self.biology }
           const visA = self.biology.isVisible
           const visB = other.biology.isVisible
@@ -832,9 +842,12 @@ export class Lobby {
           other.biology = { ...tmp, isVisible: visB }
           return { ok: true, text: `Обмен биологии с ${this.nameOf(otherId)}` }
         }
-        const a = findChar(self.characteristics, category, occ)
-        const b = findChar(other.characteristics, category, occ)
-        if (!a || !b) return { ok: false, error: 'Нет такой характеристики у обоих игроков' }
+        const a = findChar(self.characteristics, category, give.occ ?? 0)
+        const b = findChar(other.characteristics, category, receive.occ ?? 0)
+        if (!a || !b) return { ok: false, error: 'Не найдена выбранная характеристика' }
+        if (!a.isVisible || !b.isVisible) {
+          return { ok: false, error: 'Обменивать можно только открытые характеристики' }
+        }
         const tmp = { value: a.value, coef: a.coef, hint: a.hint, tags: [...(a.tags ?? [])] }
         a.value = b.value
         a.coef = b.coef
@@ -846,7 +859,7 @@ export class Lobby {
         b.tags = tmp.tags
         return {
           ok: true,
-          text: `Обмен «${this.slotLabel(category, occ, self)}» с ${this.nameOf(otherId)}`,
+          text: `Обмен с ${this.nameOf(otherId)}: отдан «${this.slotLabel(category, give.occ ?? 0, self)}», получен «${this.slotLabel(category, receive.occ ?? 0, other)}»`,
         }
       }
       case 'healFertile': {
@@ -864,13 +877,19 @@ export class Lobby {
         if (previous.byPlayerId === playerId) {
           return { ok: false, error: 'Можно повторить только карту другого игрока' }
         }
-        const replayed = this.applyCardEffect(
-          playerId,
-          previous.card,
-          cloneCardTargets(previous.targets),
-        )
-        if (!replayed.ok) return replayed
-        return { ok: true, text: `Повтор последней карты: ${replayed.text ?? previous.card.title}` }
+        const copy: ActionCard = {
+          ...previous.card,
+          instanceId: `ci_${this.cardInstanceCounter++}`,
+          pickSpecs: previous.card.pickSpecs.map((spec) => ({
+            ...spec,
+            categories: spec.categories ? [...spec.categories] : undefined,
+          })),
+          used: false,
+        }
+        const hand = this.cards.get(playerId) ?? []
+        hand.push(copy)
+        this.cards.set(playerId, hand)
+        return { ok: true, text: `Получена копия карты «${copy.title}» — её можно сыграть от своего лица` }
       }
       case 'changeCatastrophe': {
         this.bunker.catastrophe = pickCatastrophe()
@@ -967,9 +986,26 @@ export class Lobby {
     return n
   }
 
+  /**
+   * Порядок живых игроков со стартовой позицией, сдвинутой на один исходный
+   * слот для каждой следующей стадии того же типа. Выбывшие пропускаются, но
+   * не сдвигают исходную «точку старта» следующих раундов.
+   */
+  private rotatedAliveOrder(kind: RoundStep['kind']): string[] {
+    if (this.players.length === 0) return []
+    let occurrence = 0
+    for (let i = 0; i <= this.stepIndex && i < this.settings.roundSteps.length; i++) {
+      if (this.settings.roundSteps[i].kind === kind) occurrence += 1
+    }
+    const offset = Math.max(0, occurrence - 1) % this.players.length
+    return [...this.players.slice(offset), ...this.players.slice(0, offset)]
+      .filter((player) => player.isAlive)
+      .map((player) => player.id)
+  }
+
   private beginRevealStep(step: RoundStep): void {
     this.stage = 'reveal'
-    this.turnOrder = this.alive().map((p) => p.id)
+    this.turnOrder = this.rotatedAliveOrder('reveal')
     this.turnIndex = 0
     this.turn = {
       currentPlayerId: null,
@@ -1167,12 +1203,12 @@ export class Lobby {
     this.broadcastVotes()
   }
 
-  // Поочерёдное голосование: порядок = порядок ходов (живые игроки).
+  // Поочерёдное голосование: стартовый игрок сдвигается в каждом новом голосовании.
   private voteOrder: string[] = []
   private voteOrderIndex = 0
 
   private beginSequentialVote(): void {
-    this.voteOrder = this.alive().map((p) => p.id)
+    this.voteOrder = this.rotatedAliveOrder('vote')
     this.voteOrderIndex = 0
     this.voteInterrupts = []
     this.io.to(this.code).emit('stageChanged', {

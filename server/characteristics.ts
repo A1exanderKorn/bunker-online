@@ -27,17 +27,51 @@ export function characteristicWeight(category: string): number {
   return weights[category] ?? 1
 }
 
-/** Стаж слегка дополняет возрастной КФ: неизвестно, насколько полезна профессия. */
+/** Стаж линейно растёт от −0.02 за 1 год до +0.06 за максимально возможный стаж. */
 export function experienceModifier(age: number, experience: number): number {
   const availableYears = Math.max(0, age - 16)
-  if (availableYears === 0) return -0.02
-  const ratio = Math.max(0, Math.min(1, experience / availableYears))
-  return 0.06 - 0.32 * (ratio - 0.5) ** 2
+  if (availableYears <= 0 || experience <= 1) return -0.02
+  if (availableYears <= 1) return 0.06
+  const progress = Math.max(0, Math.min(1, (experience - 1) / (availableYears - 1)))
+  return -0.02 + 0.08 * progress
 }
 
 function rollExperience(age: number): number {
   const maxExperience = Math.max(0, age - 16)
   return Math.floor(Math.random() * (maxExperience * 2 + 1)) / 2
+}
+
+export const MIN_BIOLOGY_AGE = 19
+export const MAX_BIOLOGY_AGE = 90
+const OLDEST_AGE_WEIGHT = 0.45
+
+/** Относительный вес возраста: плавно уменьшается от 1.0 в 19 лет до 0.45 в 90. */
+export function biologyAgeWeight(age: number): number {
+  const clampedAge = Math.max(MIN_BIOLOGY_AGE, Math.min(MAX_BIOLOGY_AGE, age))
+  const progress = (clampedAge - MIN_BIOLOGY_AGE) / (MAX_BIOLOGY_AGE - MIN_BIOLOGY_AGE)
+  return 1 - (1 - OLDEST_AGE_WEIGHT) * progress
+}
+
+const BIOLOGY_AGES = Array.from(
+  { length: MAX_BIOLOGY_AGE - MIN_BIOLOGY_AGE + 1 },
+  (_, index) => MIN_BIOLOGY_AGE + index,
+)
+const TOTAL_AGE_WEIGHT = BIOLOGY_AGES.reduce((sum, age) => sum + biologyAgeWeight(age), 0)
+
+/** Вероятность выпадения конкретного возраста в обычной биологии. */
+export function biologyAgeProbability(age: number): number {
+  if (!Number.isInteger(age) || age < MIN_BIOLOGY_AGE || age > MAX_BIOLOGY_AGE) return 0
+  return biologyAgeWeight(age) / TOTAL_AGE_WEIGHT
+}
+
+/** Взвешенный возраст: каждый следующий год немного менее вероятен предыдущего. */
+export function rollBiologyAge(randomValue = Math.random()): number {
+  let cursor = Math.max(0, Math.min(1 - Number.EPSILON, randomValue)) * TOTAL_AGE_WEIGHT
+  for (const age of BIOLOGY_AGES) {
+    cursor -= biologyAgeWeight(age)
+    if (cursor < 0) return age
+  }
+  return MAX_BIOLOGY_AGE
 }
 
 /** Генерирует биологию игрока с учётом уже выданных (уникальность андроида/гермафродита). */
@@ -51,14 +85,18 @@ export function generateBiology(existing: Biology[]): Biology {
 
   if (rand <= 1.75 && !hasHerm) {
     sex = 'Гермафродит'
-  } else if (rand <= 1.75 + 2.75 && !hasAndroid) {
+  } else if (rand <= 1.75 + 2.25 && !hasAndroid) {
     sex = 'Андроид'
   } else {
     sex = Math.random() < 0.5 ? 'М' : 'Ж'
   }
 
-  let age = Math.floor(Math.random() * (85 - 19 + 1)) + 19
-  let experience = rollExperience(age)
+  const age = sex === 'Андроид'
+    ? Math.floor(Math.random() * 20)
+    : sex === 'Гермафродит'
+      ? Math.floor(Math.random() * 15) + 25
+      : rollBiologyAge()
+  const experience = rollExperience(age)
 
   let baseCoef = 0.5
   if (sex === 'Ж') {
@@ -71,26 +109,18 @@ export function generateBiology(existing: Biology[]): Biology {
       : 0.8 - 0.005 * (age - 60)
   }
 
-  let infertile = false
-  if ((sex === 'Ж' && age > 50) || (sex === 'М' && age > 60)) {
-    infertile = true
-  } else if ((sex === 'Ж' && age <= 49) || (sex === 'М' && age <= 59)) {
-    if (Math.random() < 0.25) {
-      infertile = true
-    }
-  }
+  const guaranteedInfertility =
+    ((sex === 'Ж' || sex === 'Гермафродит') && age > 50) ||
+    (sex === 'М' && age > 60)
+  const infertile = sex !== 'Андроид' && (guaranteedInfertility || Math.random() < 0.1)
 
   if (sex === 'Андроид') {
     baseCoef = 0.95
-    age = Math.floor(Math.random() * 20)
-    experience = rollExperience(age)
     hint = 'Обнуляет проблемы со здоровьем и фобии'
   }
 
   if (sex === 'Гермафродит') {
     baseCoef = 0.95
-    age = Math.floor(Math.random() * 15) + 25
-    experience = rollExperience(age)
     hint = 'Выступает в роли и мужчины, и женщины'
   }
 
@@ -140,8 +170,13 @@ export function findChar(
  * его КФ от желаемого; FLOOR_WEIGHT гарантирует, что любой кандидат сохраняет
  * ненулевой шанс (никакого жёсткого обнуления и случайного фолбэка).
  */
-const BIAS_STRENGTH = 4
-const FLOOR_WEIGHT = 0.15
+const BIAS_STRENGTH = 5
+const FLOOR_WEIGHT = 0.12
+
+/** Относительный вес кандидата по расстоянию от требуемого коэффициента. */
+export function targetCandidateWeight(distance: number): number {
+  return FLOOR_WEIGHT + (1 - FLOOR_WEIGHT) / (1 + BIAS_STRENGTH * Math.abs(distance))
+}
 
 function pickWithBias<T extends { coef: number }>(
   candidates: T[],
@@ -158,7 +193,7 @@ function pickWithBias<T extends { coef: number }>(
   // Так смещение к целевому среднему работает, но выбор остаётся заметно случайным.
   const weights = candidates.map((c) => ({
     candidate: c,
-    weight: FLOOR_WEIGHT + (1 - FLOOR_WEIGHT) / (1 + BIAS_STRENGTH * Math.abs(c.coef - desiredCoef)),
+    weight: targetCandidateWeight(c.coef - desiredCoef),
   }))
 
   const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0)

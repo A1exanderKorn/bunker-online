@@ -49,8 +49,12 @@ const alivePlayers = computed(() => {
   return list
 })
 
+const selectedPlayerId = computed(() => chosenPlayers.value[chosenPlayers.value.length - 1])
+
 const charTargetPlayer = computed(() => {
-  return chosenPlayers.value[chosenPlayers.value.length - 1] ?? myId.value
+  if (current.value?.characteristicOwner === 'self') return myId.value
+  if (current.value?.characteristicOwner === 'selectedPlayer') return selectedPlayerId.value ?? ''
+  return selectedPlayerId.value ?? myId.value
 })
 
 function isSlotRevealed(playerId: string, slot: CharSlot): boolean {
@@ -73,6 +77,10 @@ const availableSlots = computed<CharSlot[]>(() => {
   let slots = layout.value
   if (spec.kind === 'characteristic' && spec.categories?.length) {
     slots = slots.filter((s) => spec.categories!.includes(s.type))
+  }
+  if (spec.kind === 'characteristic' && spec.matchPreviousCategory) {
+    const previous = chosenChars.value[chosenChars.value.length - 1]
+    if (previous) slots = slots.filter((s) => s.type === previous.category)
   }
   if (spec.kind === 'catCategory') {
     // все слоты раскладки, включая биологию
@@ -103,7 +111,7 @@ function pickPlayer(id: string) {
 }
 function pickCharacteristic(slot: CharSlot) {
   chosenChars.value.push({
-    playerId: charTargetPlayer.value ?? '',
+    playerId: charTargetPlayer.value,
     category: slot.type,
     occ: slot.occ,
   })

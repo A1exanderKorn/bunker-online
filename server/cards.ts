@@ -154,21 +154,27 @@ export function pickSpecsFor(def: CardDef): CardPickSpec[] {
   const revealedOnly = /открыт/i.test(`${def.title} ${def.note}`)
 
   if (def.action === 'swap' && def.scope === 'fixed') {
-    specs.push({ kind: 'player', label: 'Выберите игрока для обмена', excludeSelf: true })
-    if (def.target === 'any') {
-      specs.push({
-        kind: 'characteristic',
-        label: 'Выберите открытую характеристику',
-        revealedOnly: true,
-      })
-    } else if (def.target === 'item') {
-      specs.push({
-        kind: 'characteristic',
-        label: 'Выберите багаж для обмена',
-        categories: ['Багаж'],
-        revealedOnly: true,
-      })
-    }
+    const categories = def.target === 'item' ? ['Багаж'] : undefined
+    specs.push({ kind: 'player', label: 'С кем вы хотите обменяться?', excludeSelf: true })
+    specs.push({
+      kind: 'characteristic',
+      label: def.target === 'item'
+        ? 'Что вы отдаёте: выберите свой открытый багаж'
+        : 'Что вы отдаёте: выберите свою открытую характеристику',
+      categories,
+      revealedOnly: true,
+      characteristicOwner: 'self',
+    })
+    specs.push({
+      kind: 'characteristic',
+      label: def.target === 'item'
+        ? 'Что получаете: выберите открытый багаж другого игрока'
+        : 'Что получаете: выберите открытую характеристику той же категории',
+      categories,
+      revealedOnly: true,
+      characteristicOwner: 'selectedPlayer',
+      matchPreviousCategory: def.target === 'any',
+    })
     return specs
   }
 

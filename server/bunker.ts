@@ -3,7 +3,8 @@ import { DATA_PATH } from './config'
 
 /**
  * Парсинг третьего листа Excel: «Угрозы, Катастрофы, Условия».
- * Формат: первый столбец — тип (Угроза/Катастрофа/Доп. Условия), второй — текст.
+ * Столбцы определяются по заголовкам, поэтому порядок строк и добавление новых
+ * катастроф/угроз/условий не влияют на парсинг.
  */
 
 export interface BunkerData {
@@ -39,6 +40,21 @@ function numberValue(value: unknown): number {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+function valueByHeaders(row: Record<string, unknown>, ...headers: string[]): unknown {
+  for (const header of headers) {
+    if (Object.prototype.hasOwnProperty.call(row, header)) return row[header]
+  }
+  return undefined
+}
+
+function challengeKind(value: unknown): BunkerChallenge['kind'] | null {
+  const type = String(value ?? '').trim().toLocaleLowerCase('ru-RU').replace(/\./g, '')
+  if (type.startsWith('катастроф')) return 'catastrophe'
+  if (type.startsWith('угроз')) return 'threat'
+  if (type.startsWith('доп') || type.startsWith('услов')) return 'condition'
+  return null
+}
+
 const SHEET_NAME = 'Угрозы, Катастрофы, Условия'
 
 let cache: BunkerData | null = null
@@ -55,29 +71,28 @@ export function loadBunkerData(): BunkerData {
     return cache
   }
 
-  const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 })
+  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
   const threats: string[] = []
   const catastrophes: string[] = []
   const conditions: string[] = []
   const challenges: BunkerChallenge[] = []
 
   for (const [index, row] of rows.entries()) {
-    const type = (row?.[0] ?? '').toString().trim()
-    const text = (row?.[1] ?? '').toString().trim()
-    if (!type || !text) continue
-    const kind = type.startsWith('Угроз') ? 'threat' : type.startsWith('Катастроф') ? 'catastrophe' : type.startsWith('Доп') ? 'condition' : null
+    const kind = challengeKind(valueByHeaders(row, 'Тип', 'type'))
+    const text = String(valueByHeaders(row, 'Текст', 'text') ?? '').trim()
     if (!kind) continue
+    if (!text) continue
     if (kind === 'threat') threats.push(text)
     else if (kind === 'catastrophe') catastrophes.push(text)
     else conditions.push(text)
     challenges.push({
-      id: String(row?.[2] ?? `${kind}_${index + 1}`),
+      id: String(valueByHeaders(row, 'id', 'ID') || `${kind}_${index + 2}`),
       kind,
       text,
-      requirements: parseRequirements(row?.[3]),
-      grants: parseTags(row?.[4]),
-      successDelta: numberValue(row?.[5]),
-      failureDelta: numberValue(row?.[6]),
+      requirements: parseRequirements(valueByHeaders(row, 'Требования (группы ;, варианты |)', 'Требования')),
+      grants: parseTags(valueByHeaders(row, 'Даёт теги', 'Теги')),
+      successDelta: numberValue(valueByHeaders(row, 'Успех, %', 'Успех')),
+      failureDelta: numberValue(valueByHeaders(row, 'Провал, %', 'Провал')),
     })
   }
 

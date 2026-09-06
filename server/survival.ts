@@ -20,6 +20,7 @@ const TAG_LABELS: Record<string, string> = {
   reproductive_edge: 'условие репродуктивного сканера',
   bunker_assistance_big: 'сильная помощь бункеру',
   bunker_assistance_small: 'небольшая помощь бункеру',
+  light_danger: 'умеренная опасность',
 }
 
 function labelTag(tag: string): string {
@@ -181,9 +182,11 @@ export function calculateSurvival(players: Player[], bunker: BunkerState): Survi
       : 'Для расчёта Ж старше 50 и М старше 60 считаются бесплодными по умолчанию.',
   ))
 
+  // Здоровье оценивается отдельным фактором выше. Из остальных категорий
+  // низкий КФ напрямую штрафует итог только у фобий.
   const weakCharacteristics = survivors.flatMap((player) =>
     player.characteristics
-      .filter((item) => item.type !== 'Здоровье' && item.coef < 0.35)
+      .filter((item) => item.type === 'Фобия' && item.coef < 0.35)
       .map((item) => ({ player, item })),
   )
   const weaknessScore = weakCharacteristics.reduce((sum, { item }) =>
@@ -191,12 +194,12 @@ export function calculateSurvival(players: Player[], bunker: BunkerState): Survi
   const traitsDelta = -Math.min(12, weaknessScore)
   factors.push(factor(
     'traits',
-    'Слабые характеристики',
+    'Опасные фобии',
     weakCharacteristics.length === 0 ? 'Не обнаружены' : weakCharacteristics.length <= 2 ? 'Заметны' : 'Опасны',
     traitsDelta,
     weakCharacteristics.length
       ? `Негативно влияют: ${weakCharacteristics.map(({ player, item }) => `${player.name}: ${item.value}`).join('; ')}.`
-      : 'Откровенно слабых характеристик у выживших нет.',
+      : 'Фобий с низким коэффициентом у выживших нет.',
   ))
 
   // Каждый тип помощи учитывается один раз на всю команду: повторяющиеся карты
@@ -222,15 +225,25 @@ export function calculateSurvival(players: Player[], bunker: BunkerState): Survi
   const dangerousPlayers = survivors.filter((player) => player.characteristics.some((item) =>
     item.tags?.some((tag) => ['dangerous', 'psychopath', 'maniac', 'suicidal'].includes(tag)),
   ))
+  const lightDangerousCharacteristics = survivors.flatMap((player) =>
+    player.characteristics
+      .filter((item) => item.tags?.includes('light_danger'))
+      .map((item) => ({ player, item })),
+  )
   const conflictPlayers = survivors.filter((player) => player.characteristics.some((item) => item.tags?.includes('conflict')))
   const hasLeadership = team.tags.has('leadership')
   const dangerousPenalty = dangerousPlayers.length * 6
+  const lightDangerPenalty = lightDangerousCharacteristics.length * 2
   const conflictPenalty = conflictPlayers.length * (hasLeadership ? 1 : 2)
-  const dangerDelta = -Math.min(20, dangerousPenalty + conflictPenalty)
-  const dangerNames = [...new Set([...dangerousPlayers, ...conflictPlayers].map((player) => player.name))]
+  const dangerDelta = -Math.min(20, dangerousPenalty + lightDangerPenalty + conflictPenalty)
+  const dangerNames = [...new Set([
+    ...dangerousPlayers,
+    ...lightDangerousCharacteristics.map(({ player }) => player),
+    ...conflictPlayers,
+  ].map((player) => player.name))]
   factors.push(factor('danger', 'Внутренние риски', dangerNames.length ? 'Опасные' : 'Не обнаружены', dangerDelta,
     dangerNames.length
-      ? `Риск создают: ${dangerNames.join(', ')}. Опасные характеристики: −${dangerousPenalty}%, конфликтность: −${conflictPenalty}%.${hasLeadership && conflictPlayers.length ? ' Лидерство смягчает только конфликтность.' : ''}`
+      ? `Риск создают: ${dangerNames.join(', ')}. Опасные характеристики: −${dangerousPenalty}%, умеренно опасные: −${lightDangerPenalty}%, конфликтность: −${conflictPenalty}%.${hasLeadership && conflictPlayers.length ? ' Лидерство смягчает только конфликтность.' : ''}`
       : 'Психопаты, маньяки и выраженно конфликтные участники не обнаружены.'))
 
   const conditionDelta = bunker.conditions.reduce((sum, condition) => sum + (challengeByText(condition.text)?.successDelta ?? 0), 0)

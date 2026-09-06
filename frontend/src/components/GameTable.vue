@@ -71,7 +71,9 @@ function getCoef(p: PublicPlayer, slot: CharSlot): number | null {
 function isFinalDanger(p: PublicPlayer, slot: CharSlot): boolean {
   if (stage.value !== 'end' || slot.type === BIOLOGY_CATEGORY) return false
   const tags = findSlotChar(p, slot)?.tags ?? []
-  const isDangerous = tags.some((tag) => ['dangerous', 'psychopath', 'maniac', 'suicidal'].includes(tag))
+  const isDangerous = tags.some((tag) =>
+    ['dangerous', 'psychopath', 'maniac', 'suicidal', 'light_danger'].includes(tag),
+  )
   const isContagiousHealth = slot.type === 'Здоровье' && tags.includes('contagious')
   return isDangerous || isContagiousHealth
 }
@@ -237,11 +239,12 @@ function toggleVoters(id: string) {
               <span class="hidden-dot">••••</span>
             </template>
           </span>
-          <InlineConfirm
-            v-if="pendingReveal === revealKey(p, slot)"
-            @confirm="confirmReveal(p, slot)"
-            @cancel="pendingReveal = null"
-          />
+          <span v-if="pendingReveal === revealKey(p, slot)" class="char-confirm">
+            <InlineConfirm
+              @confirm="confirmReveal(p, slot)"
+              @cancel="pendingReveal = null"
+            />
+          </span>
           <span
             v-else-if="getHint(p, slot) && (isRevealed(p, slot) || isMe(p) || !amAlive)"
             class="char-hint"
@@ -396,7 +399,14 @@ function toggleVoters(id: string) {
   min-height: 34px;
 }
 .char-row.confirming {
-  grid-template-columns: 92px 1fr auto;
+  grid-template-columns: 92px minmax(0, 1fr) 22px;
+}
+.char-confirm {
+  display: flex;
+  grid-column: 2 / -1;
+  justify-content: flex-end;
+  min-width: max-content;
+  padding-top: 2px;
 }
 .char-row.revealed {
   background: color-mix(in srgb, var(--success) 16%, var(--surface));
@@ -580,7 +590,7 @@ function toggleVoters(id: string) {
     grid-template-columns: 72px 1fr 22px;
   }
   .char-row.confirming {
-    grid-template-columns: 72px 1fr auto;
+    grid-template-columns: 72px minmax(0, 1fr) 22px;
   }
 }
 </style>

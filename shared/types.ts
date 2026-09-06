@@ -305,6 +305,10 @@ export interface CardPickSpec {
   categories?: string[]
   /** Только уже открытые характеристики. */
   revealedOnly?: boolean
+  /** Чью характеристику выбираем на этом шаге обмена. */
+  characteristicOwner?: 'self' | 'selectedPlayer'
+  /** Ограничить выбор категорией предыдущей выбранной характеристики. */
+  matchPreviousCategory?: boolean
 }
 
 /** Ссылка на конкретную характеристику игрока (с учётом второго багажа). */

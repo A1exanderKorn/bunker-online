@@ -61,10 +61,10 @@ const remaining = computed(() => remainingPlayers(settings.value.roundSteps, ros
 .round-step {
   position: relative;
   display: grid;
-  flex: 0 0 126px;
-  grid-template-columns: 25px 1fr;
+  flex: 0 0 150px;
+  grid-template-columns: 20px 22px minmax(0, 1fr);
   align-items: center;
-  gap: 1px 6px;
+  gap: 1px 5px;
   min-height: 57px;
   padding: 8px 9px;
   border: 1px solid var(--border);
@@ -89,23 +89,26 @@ const remaining = computed(() => remainingPlayers(settings.value.roundSteps, ros
 }
 .round-step__number {
   grid-row: 1 / span 2;
-  align-self: start;
+  align-self: center;
   color: var(--text-faint);
   font-size: 11px;
   font-weight: 800;
 }
 .round-step__icon {
-  position: absolute;
-  top: 6px;
-  right: 7px;
-  font-size: 13px;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: 15px;
+  line-height: 1;
+  text-align: center;
 }
 .round-step__kind {
+  grid-column: 3;
   font-size: 13px;
   font-weight: 800;
 }
 .round-step__details {
   display: flex;
+  grid-column: 3;
   gap: 5px;
   align-items: center;
   font-size: 11px;

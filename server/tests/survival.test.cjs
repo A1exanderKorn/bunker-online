@@ -2,6 +2,7 @@ const assert = require('node:assert/strict')
 const test = require('node:test')
 
 const { calculateSurvival } = require('../dist/server/survival.js')
+const { loadBunkerData } = require('../dist/server/bunker.js')
 
 function survivor(id, name, sex, professionTags, age = 30) {
   return {
@@ -39,8 +40,7 @@ test('базовые потребности не требуют воду, а с�
 
 // Реальная катастрофа cat_004 «Супервулканы»: 2 группы требований
 // [geology|navigation] и [engineering|computing], успех +6 / провал -16.
-const SUPERVULCANO =
-  'Супервулканы: Активизируются супервулканы, производящие чрезвычайно мощные извержения. Ландшафт и климат резко меняются. Большинство населения сразу погибает от скачков температур, замлетрясений и наводнений. После выхода из бункера вас ждет глобальная засуха, разрушенные города и постоянная сейсмическая активность. Вы можете выжить, только разработав сверхчувствительную систему предсказания землетрясений и роботизированную инфраструктуру.'
+const SUPERVULCANO = loadBunkerData().challenges.find((item) => item.id === 'cat_004').text
 
 function challengeDelta(report, text) {
   const item = report.challenges.find((c) => c.text === text)
@@ -82,8 +82,7 @@ test('катастрофа: частично закрытые требовани
 
 test('reproductive_edge выдаётся гермафродиту старше 50, как женщине', () => {
   // threat_004 требует reproductive_edge. Гермафродит 55 лет должен его закрывать.
-  const REPRO_THREAT =
-    'Алгоритмы сканера на входе в бункер из-за катастрофы  дали сбой. Чтобы вас пропустили внутрь, среди вас должен быть хотя бы один человек с бесплодием(или Ж страше 50/М старше 60)'
+  const REPRO_THREAT = loadBunkerData().challenges.find((item) => item.id === 'threat_004').text
   const players = [survivor('h', 'Герм', 'Гермафродит', [], 55)]
   const bunker = { catastrophe: '', years: 1, threats: [REPRO_THREAT], conditions: [] }
   const item = challengeDelta(calculateSurvival(players, bunker), REPRO_THREAT)
@@ -107,15 +106,34 @@ test('возрастное и явное бесплодие ухудшают р�
   assert.equal(infertileFactor.delta, -6)
 })
 
-test('откровенно слабые характеристики дают отдельный штраф', () => {
+test('низкий коэффициент штрафует фобии, но не багаж и факты', () => {
   const player = survivor('weak', 'Слабый', 'М', [], 30)
   player.characteristics.push({
     type: 'Багаж', value: 'Бесполезный хлам', coef: 0.1, hint: '', isVisible: true, occ: 0,
+  })
+  player.characteristics.push({
+    type: 'Фобия', value: 'Опасная фобия', coef: 0.1, hint: '', isVisible: true, occ: 0,
   })
   const report = calculateSurvival([player], { catastrophe: '', years: 1, threats: [], conditions: [] })
   const traits = report.factors.find((item) => item.id === 'traits')
 
   assert.equal(traits.delta, -3)
+  assert.match(traits.detail, /Опасная фобия/)
+  assert.doesNotMatch(traits.detail, /Бесполезный хлам/)
+})
+
+test('light_danger даёт −2 пункта за каждую помеченную характеристику', () => {
+  const player = survivor('light', 'Рискованный', 'М', ['light_danger'], 30)
+  player.characteristics.push({
+    type: 'Багаж', value: 'Ещё один риск', coef: 0.5, hint: '', isVisible: true, occ: 0,
+    tags: ['light_danger'],
+  })
+  const danger = calculateSurvival(
+    [player],
+    { catastrophe: '', years: 1, threats: [], conditions: [] },
+  ).factors.find((item) => item.id === 'danger')
+
+  assert.equal(danger.delta, -4)
 })
 
 test('одинаковый bunker_assistance_big учитывается один раз на всю команду', () => {

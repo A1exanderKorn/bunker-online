@@ -4,10 +4,18 @@ const test = require('node:test')
 const {
   characteristicWeight,
   drawUniqueCharacteristics,
+  targetCandidateWeight,
 } = require('../dist/server/characteristics.js')
 
 test('профессия имеет вес 0.8 в общем коэффициенте', () => {
   assert.equal(characteristicWeight('Профессия'), 0.8)
+})
+
+test('притяжение к целевому КФ стало плотнее предыдущей кривой', () => {
+  const previousWeightAtHalfPoint = 0.15 + 0.85 / (1 + 4 * 0.5)
+
+  assert.equal(targetCandidateWeight(0), 1)
+  assert.ok(targetCandidateWeight(0.5) < previousWeightAtHalfPoint)
 })
 
 test('массовая перераздача профессий вытаскивает значения без повторов', () => {
