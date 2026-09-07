@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import InlineConfirm from '@/components/InlineConfirm.vue'
-import { BIOLOGY_CATEGORY, fallbackCharLayout, type Biology, type CharSlot, type PublicPlayer } from '@shared/types'
+import { BIOLOGY_CATEGORY, fallbackCharLayout, formatBiology, type CharSlot, type PublicPlayer } from '@shared/types'
 
 /**
  * Игровое поле в виде адаптивной сетки карточек игроков.
@@ -33,12 +33,6 @@ function isMe(p: PublicPlayer) {
 }
 function isCurrent(p: PublicPlayer) {
   return turn.value.currentPlayerId === p.id
-}
-
-function formatBiology(bio: Biology | null | undefined): string | null {
-  if (!bio) return null
-  return `${bio.sex}, ${bio.age} лет, стаж ${bio.experience} лет` +
-    (bio.infertile ? ', бесплоден' : '')
 }
 
 function findSlotChar(p: PublicPlayer, slot: CharSlot) {

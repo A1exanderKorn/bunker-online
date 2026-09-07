@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { STAGE_LABELS } from '@shared/types'
 import ActionCardsPanel from '@/components/ActionCardsPanel.vue'
+import CardHistoryStrip from '@/components/CardHistoryStrip.vue'
 
 /**
  * Информационное окно: катастрофа, срок в бункере, доп. условия,
@@ -24,6 +25,7 @@ const conditions = computed(() => bunker.value.conditions ?? [])
 
 <template>
   <section class="bunker-info fade-in">
+    <CardHistoryStrip class="history" />
     <div class="card info-block conditions" v-if="conditions.length">
       <h4>📜 Доп. условия</h4>
       <ul>
@@ -66,13 +68,17 @@ const conditions = computed(() => bunker.value.conditions ?? [])
 .bunker-info {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
-  grid-template-areas: 'conditions conditions' 'cat state' 'threats actions';
+  grid-template-areas: 'history history' 'conditions conditions' 'cat state' 'threats actions';
   gap: 12px;
   width: 100%;
 }
 .info-block {
   padding: 14px 16px;
   color: var(--text);
+}
+.history {
+  grid-area: history;
+  min-width: 0;
 }
 .conditions {
   grid-area: conditions;
@@ -155,7 +161,7 @@ const conditions = computed(() => bunker.value.conditions ?? [])
 @media (max-width: 640px) {
   .bunker-info {
     grid-template-columns: 1fr;
-    grid-template-areas: 'conditions' 'cat' 'state' 'threats' 'actions';
+    grid-template-areas: 'history' 'conditions' 'cat' 'state' 'threats' 'actions';
   }
 }
 </style>

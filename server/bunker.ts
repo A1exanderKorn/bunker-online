@@ -14,6 +14,7 @@ export interface BunkerData {
 export interface BunkerChallenge {
   id: string
   kind: 'threat' | 'catastrophe' | 'condition'
+  title: string
   text: string
   /** Каждая группа обязательна; внутри группы достаточно одного тега. */
   requirements: string[][]
@@ -25,6 +26,7 @@ export interface BunkerChallenge {
 interface BunkerFile {
   items: {
     id: string
+    title?: string
     text: string
     requirements: string[][]
     grants: string[]
@@ -33,22 +35,35 @@ interface BunkerFile {
   }[]
 }
 
-let cache: BunkerData | null = null
+function deriveTitle(text: string): string {
+  const colon = text.match(/^([^:]{2,48}):\s/)
+  if (colon) return colon[1].trim()
+  const sentence = text.match(/^([^.!?]{2,72})[.!?]/)
+  if (sentence) return sentence[1].trim()
+  return text.slice(0, 48).trim()
+}
 
 function loadKind(kind: BunkerChallenge['kind'], file: string): BunkerChallenge[] {
   const items = readJson<BunkerFile>(`bunker/${file}`).items ?? []
   return items
     .filter((item) => String(item.text ?? '').trim())
-    .map((item) => ({
-      id: String(item.id ?? ''),
-      kind,
-      text: String(item.text).trim(),
-      requirements: Array.isArray(item.requirements) ? item.requirements : [],
-      grants: Array.isArray(item.grants) ? item.grants : [],
-      successDelta: Number(item.successDelta) || 0,
-      failureDelta: Number(item.failureDelta) || 0,
-    }))
+    .map((item) => {
+      const text = String(item.text).trim()
+      const title = String(item.title ?? '').trim() || deriveTitle(text)
+      return {
+        id: String(item.id ?? ''),
+        kind,
+        title,
+        text,
+        requirements: Array.isArray(item.requirements) ? item.requirements : [],
+        grants: Array.isArray(item.grants) ? item.grants : [],
+        successDelta: Number(item.successDelta) || 0,
+        failureDelta: Number(item.failureDelta) || 0,
+      }
+    })
 }
+
+let cache: BunkerData | null = null
 
 export function loadBunkerData(): BunkerData {
   if (cache) return cache
@@ -67,6 +82,12 @@ export function loadBunkerData(): BunkerData {
 
 export function challengeByText(text: string): BunkerChallenge | undefined {
   return loadBunkerData().challenges.find((challenge) => challenge.text === text)
+}
+
+/** Краткое имя катастрофы / угрозы / условия для истории карт. */
+export function challengeTitle(text: string): string {
+  if (!text) return ''
+  return challengeByText(text)?.title || deriveTitle(text)
 }
 
 /** Возвращает перемешанную копию массива (не мутирует исходный). */

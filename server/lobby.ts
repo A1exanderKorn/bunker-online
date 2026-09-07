@@ -4,6 +4,9 @@ import type {
   Biology,
   BunkerCondition,
   BunkerState,
+  CardHistoryCharChange,
+  CardHistoryChangeKind,
+  CardHistoryEntry,
   CardTargets,
   CharSlot,
   ClientToServerEvents,
@@ -21,6 +24,7 @@ import {
   DEFAULT_SETTINGS,
   SETTINGS_LIMITS,
   defaultRoundSteps,
+  formatBiology,
 } from '../shared/types'
 import {
   LOBBY_RECONNECT_GRACE_MS,
@@ -37,9 +41,10 @@ import {
   generateBiology,
 } from './characteristics'
 import { rowsByCategory } from './data'
-import { pickCatastrophe, pickUnusedCondition, threatQueue } from './bunker'
+import { pickCatastrophe, pickUnusedCondition, threatQueue, challengeTitle } from './bunker'
 import { dealActionCards, makeCardByCatalogId, loadCards } from './cards'
 import { calculateSurvival } from './survival'
+import { filterCardHistory } from './cardHistory'
 
 type IO = Server<ClientToServerEvents, ServerToClientEvents>
 
@@ -118,6 +123,7 @@ export class Lobby {
   /** Последний реально применённый эффект (карта replayLast сюда не записывается). */
   private lastPlayedEffect: LastPlayedEffect | null = null
   private cardInstanceCounter = 1000
+  private cardHistory: CardHistoryEntry[] = []
   /** playerId -> последняя вскрытая характеристика. */
   private lastRevealed = new Map<string, { category: string; occ: number }>()
   /** Переголосование: предыдущие голоса (нельзя выбрать ту же цель). */
@@ -305,7 +311,15 @@ export class Lobby {
 
   updateSettings(playerId: string, incoming: Partial<LobbySettings>): void {
     if (!this.isHost(playerId)) return
-    if (this.started) return
+    if (this.started) {
+      if (typeof incoming.revealPreviousCharacteristics !== 'boolean') return
+      const next = !!incoming.revealPreviousCharacteristics
+      if (next === this.settings.revealPreviousCharacteristics) return
+      this.settings = { ...this.settings, revealPreviousCharacteristics: next }
+      this.io.to(this.code).emit('settingsUpdated', { settings: this.settings })
+      this.broadcastCardHistory()
+      return
+    }
     this.settings = this.sanitizeSettings({ ...this.settings, ...incoming })
     this.io.to(this.code).emit('settingsUpdated', { settings: this.settings })
   }
@@ -350,6 +364,7 @@ export class Lobby {
       noPhobias: !!s.noPhobias,
       threatsEnabled: !!s.threatsEnabled,
       actionCardsEnabled: !!s.actionCardsEnabled,
+      revealPreviousCharacteristics: !!s.revealPreviousCharacteristics,
       cardsPower: s.cardsPower === 'weak' || s.cardsPower === 'strong' ? s.cardsPower : 'balanced',
       roundSteps: cleanSteps.length > 0 ? cleanSteps : defaultRoundSteps(this.players.length, this.survivorsTarget(this.players.length)),
     }
@@ -398,6 +413,7 @@ export class Lobby {
     // Раздаём карты действия, если включены.
     this.cards.clear()
     this.lastPlayedEffect = null
+    this.cardHistory = []
     this.cancelledVoters.clear()
     this.voteWeight.clear()
     this.protectedFromVote.clear()
@@ -431,6 +447,7 @@ export class Lobby {
       bunker: this.bunker,
       actionCards: [],
       charLayout: this.charLayout,
+      cardHistory: [],
     })
   }
 
@@ -472,6 +489,7 @@ export class Lobby {
     this.pendingThreats = []
     this.cards.clear()
     this.lastPlayedEffect = null
+    this.cardHistory = []
     this.lastRevealed.clear()
     this.revoteFrom.clear()
     this.charLayout = []
@@ -573,6 +591,146 @@ export class Lobby {
     return `${category} #${occ + 1}`
   }
 
+  private normalizeSlotType(category: string): string {
+    if (category === 'biology' || category === BIOLOGY_CATEGORY) return BIOLOGY_CATEGORY
+    return category
+  }
+
+  private slotVisible(pl: Player, category: string, occ: number): boolean {
+    const type = this.normalizeSlotType(category)
+    if (type === BIOLOGY_CATEGORY) return pl.biology?.isVisible ?? false
+    return findChar(pl.characteristics, type, occ)?.isVisible ?? false
+  }
+
+  private slotDisplay(pl: Player, category: string, occ: number): string {
+    const type = this.normalizeSlotType(category)
+    if (type === BIOLOGY_CATEGORY) return formatBiology(pl.biology) ?? ''
+    return findChar(pl.characteristics, type, occ)?.value ?? ''
+  }
+
+  private pushChange(
+    changes: CardHistoryCharChange[],
+    pl: Player,
+    category: string,
+    occ: number,
+    kind: CardHistoryChangeKind,
+    oldValue: string,
+    newValue: string,
+    wasVisible: boolean,
+  ): void {
+    const slotType = this.normalizeSlotType(category)
+    changes.push({
+      playerId: pl.id,
+      playerName: pl.name,
+      slotType,
+      slotOcc: occ,
+      slotLabel: this.slotLabel(slotType, occ, pl),
+      wasVisible,
+      changeKind: kind,
+      oldValue,
+      newValue,
+    })
+  }
+
+  private pushPublicChange(
+    changes: CardHistoryCharChange[],
+    slotLabel: string,
+    oldValue: string,
+    newValue: string,
+    pl?: Player,
+  ): void {
+    changes.push({
+      playerId: pl?.id ?? '',
+      playerName: pl?.name ?? '',
+      slotType: slotLabel,
+      slotOcc: 0,
+      slotLabel,
+      wasVisible: true,
+      changeKind: 'replace',
+      oldValue,
+      newValue,
+    })
+  }
+
+  private applyTracked(
+    changes: CardHistoryCharChange[],
+    pl: Player,
+    category: string,
+    occ: number,
+  ): boolean {
+    const type = this.normalizeSlotType(category)
+    const oldValue = this.slotDisplay(pl, type, occ)
+    const wasVisible = this.slotVisible(pl, type, occ)
+    if (!this.applySlot(pl, type, occ)) return false
+    this.pushChange(changes, pl, type, occ, 'replace', oldValue, this.slotDisplay(pl, type, occ), wasVisible)
+    return true
+  }
+
+  private replaceCategoryAllTracked(changes: CardHistoryCharChange[], category: string, occ = 0): boolean {
+    const recipients = this.alive()
+      .map((player) => ({
+        player,
+        oldValue: this.slotDisplay(player, category, occ),
+        wasVisible: this.slotVisible(player, category, occ),
+      }))
+      .filter((entry) => findChar(entry.player.characteristics, category, occ) != null)
+    if (!this.replaceCategoryAll(category, occ)) return false
+    for (const entry of recipients) {
+      this.pushChange(
+        changes,
+        entry.player,
+        category,
+        occ,
+        'replace',
+        entry.oldValue,
+        this.slotDisplay(entry.player, category, occ),
+        entry.wasVisible,
+      )
+    }
+    return true
+  }
+
+  private rerollBiologyAllTracked(changes: CardHistoryCharChange[]): void {
+    const snaps = this.alive().map((player) => ({
+      player,
+      oldValue: this.slotDisplay(player, BIOLOGY_CATEGORY, 0),
+      wasVisible: this.slotVisible(player, BIOLOGY_CATEGORY, 0),
+    }))
+    this.rerollBiologyAll()
+    for (const snap of snaps) {
+      this.pushChange(
+        changes,
+        snap.player,
+        BIOLOGY_CATEGORY,
+        0,
+        'replace',
+        snap.oldValue,
+        this.slotDisplay(snap.player, BIOLOGY_CATEGORY, 0),
+        snap.wasVisible,
+      )
+    }
+  }
+
+  cardHistoryFor(viewerId?: string): CardHistoryEntry[] {
+    const viewer = viewerId ? this.players.find((player) => player.id === viewerId) : undefined
+    return filterCardHistory(
+      this.cardHistory,
+      viewer,
+      this.players,
+      this.stage,
+      this.settings.revealPreviousCharacteristics,
+    )
+  }
+
+  private broadcastCardHistory(): void {
+    for (const player of this.players) {
+      const sid = this.sockets.get(player.id)
+      if (sid) {
+        this.io.to(sid).emit('cardHistoryUpdated', { cardHistory: this.cardHistoryFor(player.id) })
+      }
+    }
+  }
+
   private sendCardsTo(playerId: string): void {
     const sid = this.sockets.get(playerId)
     if (sid) this.io.to(sid).emit('yourCards', { cards: this.cards.get(playerId) ?? [] })
@@ -635,12 +793,24 @@ export class Lobby {
     this.sendCardsTo(playerId)
 
     const byName = this.players.find((p) => p.id === playerId)?.name ?? '?'
+    const summary = effect.text ?? card.title
+    this.cardHistory.unshift({
+      seq: this.cardHistory.length + 1,
+      round: this.turn.round,
+      stage: this.stage,
+      byPlayerId: playerId,
+      byName,
+      cardTitle: card.title,
+      summary,
+      charChanges: effect.charChanges,
+    })
     this.io.to(this.code).emit('cardPlayed', {
       byPlayerId: playerId,
       byName,
       title: card.title,
-      effectText: effect.text ?? card.title,
+      effectText: summary,
     })
+    this.broadcastCardHistory()
     // Обновляем публичное состояние и бункер.
     this.broadcastCharacters()
     this.io.to(this.code).emit('bunkerUpdated', { bunker: this.bunker })
@@ -710,22 +880,25 @@ export class Lobby {
   }
 
   /**
-   * Применяет эффект карты. Возвращает {ok, text?, error?}.
+   * Применяет эффект карты. Возвращает {ok, text?, error?, charChanges}.
    */
   private applyCardEffect(
     playerId: string,
     card: ActionCard,
     t: CardTargets,
-  ): { ok: boolean; text?: string; error?: string } {
+  ): { ok: boolean; text?: string; error?: string; charChanges: CardHistoryCharChange[] } {
+    const charChanges: CardHistoryCharChange[] = []
+    const fail = (error: string) => ({ ok: false, error, charChanges: [] as CardHistoryCharChange[] })
+    const ok = (text: string) => ({ ok: true, text, charChanges })
     const self = this.players.find((p) => p.id === playerId)
-    if (!self) return { ok: false, error: 'Игрок не найден' }
+    if (!self) return fail('Игрок не найден')
 
     switch (card.action) {
       case 'change': {
         if (card.scope === 'all') {
           if (card.target === 'biology') {
-            this.rerollBiologyAll()
-            return { ok: true, text: 'Пересдана биология всем игрокам' }
+            this.rerollBiologyAllTracked(charChanges)
+            return ok('Пересдана биология всем игрокам')
           }
           let category = this.catToCategory(card.target)
           let occ = 0
@@ -733,21 +906,22 @@ export class Lobby {
             const pick = t.categories?.[0]
             category = typeof pick === 'string' ? pick : (pick?.category ?? '')
             occ = typeof pick === 'string' ? 0 : (pick?.occ ?? 0)
-            if (!category) return { ok: false, error: 'Не выбрана категория' }
+            if (!category) return fail('Не выбрана категория')
           }
           if (category === BIOLOGY_CATEGORY) {
-            this.rerollBiologyAll()
-            return { ok: true, text: 'Пересдана биология всем игрокам' }
+            this.rerollBiologyAllTracked(charChanges)
+            return ok('Пересдана биология всем игрокам')
           }
-          const okAny = this.replaceCategoryAll(category, occ)
-          if (!okAny) return { ok: false, error: `Не удалось пересдать «${category}»` }
+          if (!this.replaceCategoryAllTracked(charChanges, category, occ)) {
+            return fail(`Не удалось пересдать «${category}»`)
+          }
           const label = this.slotLabel(category, occ, self)
-          return { ok: true, text: `Пересдана категория «${label}» всем игрокам` }
+          return ok(`Пересдана категория «${label}» всем игрокам`)
         }
 
         if (card.scope === 'self') {
           const ch = t.characteristics?.[0]
-          if (!ch) return { ok: false, error: 'Выберите характеристику для замены' }
+          if (!ch) return fail('Выберите характеристику для замены')
           const allowed =
             card.target === 'factItem'
               ? ['Факт', 'Багаж']
@@ -757,97 +931,99 @@ export class Lobby {
                   ? ['Факт']
                   : null
           if (allowed && !allowed.includes(ch.category)) {
-            return { ok: false, error: 'Можно заменить только указанные характеристики' }
+            return fail('Можно заменить только указанные характеристики')
           }
-          if (!this.applySlot(self, ch.category, ch.occ ?? 0)) {
-            return { ok: false, error: 'Не удалось заменить характеристику' }
+          if (!this.applyTracked(charChanges, self, ch.category, ch.occ ?? 0)) {
+            return fail('Не удалось заменить характеристику')
           }
-          return { ok: true, text: `Заменён ${this.slotLabel(ch.category, ch.occ ?? 0, self)}` }
+          return ok(`Заменён ${this.slotLabel(ch.category, ch.occ ?? 0, self)}`)
         }
 
         if (card.target === 'lastOpened') {
           const otherId = t.players?.[0]
-          if (!otherId || otherId === playerId) return { ok: false, error: 'Выберите другого игрока' }
+          if (!otherId || otherId === playerId) return fail('Выберите другого игрока')
           const pl = this.players.find((p) => p.id === otherId)
-          if (!pl) return { ok: false, error: 'Игрок не найден' }
+          if (!pl) return fail('Игрок не найден')
           const last = this.lastRevealed.get(otherId)
-          if (!last) return { ok: false, error: 'У игрока ещё нет открытых характеристик' }
-          if (!this.applySlot(pl, last.category, last.occ)) {
-            return { ok: false, error: 'Не удалось заменить последнюю открытую характеристику' }
+          if (!last) return fail('У игрока ещё нет открытых характеристик')
+          if (!this.applyTracked(charChanges, pl, last.category, last.occ)) {
+            return fail('Не удалось заменить последнюю открытую характеристику')
           }
-          return {
-            ok: true,
-            text: `Заменена последняя открытая характеристика ${this.nameOf(otherId)}: ${this.slotLabel(last.category, last.occ, pl)}`,
-          }
+          return ok(
+            `Заменена последняя открытая характеристика ${this.nameOf(otherId)}: ${this.slotLabel(last.category, last.occ, pl)}`,
+          )
         }
 
         const targetId = t.players?.[0]
-        if (!targetId) return { ok: false, error: 'Выберите игрока' }
+        if (!targetId) return fail('Выберите игрока')
         const pl = this.players.find((p) => p.id === targetId)
-        if (!pl) return { ok: false, error: 'Игрок не найден' }
+        if (!pl) return fail('Игрок не найден')
 
         if (card.target !== 'any' && card.target !== 'factItem') {
           const category = this.catToCategory(card.target)
           const occ = t.characteristics?.[0]?.occ ?? 0
-          if (!this.applySlot(pl, category, occ)) {
-            return { ok: false, error: `Не удалось заменить «${category}»` }
+          if (!this.applyTracked(charChanges, pl, category, occ)) {
+            return fail(`Не удалось заменить «${category}»`)
           }
-          return {
-            ok: true,
-            text: `Заменено — ${this.nameOf(targetId)}: ${this.slotLabel(category, occ, pl)}`,
-          }
+          return ok(`Заменено — ${this.nameOf(targetId)}: ${this.slotLabel(category, occ, pl)}`)
         }
 
         const chars = t.characteristics ?? []
-        if (chars.length === 0) return { ok: false, error: 'Не выбраны характеристики' }
+        if (chars.length === 0) return fail('Не выбраны характеристики')
         const names: string[] = []
         for (const ch of chars) {
           const owner = this.players.find((p) => p.id === ch.playerId) ?? pl
-          if (this.applySlot(owner, ch.category, ch.occ ?? 0)) {
+          if (this.applyTracked(charChanges, owner, ch.category, ch.occ ?? 0)) {
             names.push(`${this.nameOf(owner.id)}: ${this.slotLabel(ch.category, ch.occ ?? 0, owner)}`)
           }
         }
-        if (names.length === 0) return { ok: false, error: 'Не удалось заменить характеристики' }
-        return { ok: true, text: `Заменено — ${names.join(', ')}` }
+        if (names.length === 0) return fail('Не удалось заменить характеристики')
+        return ok(`Заменено — ${names.join(', ')}`)
       }
       case 'swap': {
         const otherId = t.players?.[0]
-        if (!otherId || otherId === playerId) return { ok: false, error: 'Выберите другого игрока' }
+        if (!otherId || otherId === playerId) return fail('Выберите другого игрока')
         const other = this.players.find((p) => p.id === otherId)
-        if (!other) return { ok: false, error: 'Игрок не найден' }
+        if (!other) return fail('Игрок не найден')
         const give = t.characteristics?.[0]
         const receive = t.characteristics?.[1]
         if (!give || !receive) {
-          return { ok: false, error: 'Выберите, что отдаёте и что получаете' }
+          return fail('Выберите, что отдаёте и что получаете')
         }
         if (give.playerId !== playerId || receive.playerId !== otherId) {
-          return { ok: false, error: 'Неверно выбраны владельцы характеристик' }
+          return fail('Неверно выбраны владельцы характеристик')
         }
         if (give.category !== receive.category) {
-          return { ok: false, error: 'Обмен возможен только внутри одной категории' }
+          return fail('Обмен возможен только внутри одной категории')
         }
         const category = give.category
         if (card.target === 'item' && category !== 'Багаж') {
-          return { ok: false, error: 'Этой картой можно обменивать только багаж' }
+          return fail('Этой картой можно обменивать только багаж')
         }
         if (category === BIOLOGY_CATEGORY) {
-          if (!self.biology || !other.biology) return { ok: false, error: 'Нет биологии для обмена' }
+          if (!self.biology || !other.biology) return fail('Нет биологии для обмена')
           if (!self.biology.isVisible || !other.biology.isVisible) {
-            return { ok: false, error: 'Обменивать можно только открытые характеристики' }
+            return fail('Обменивать можно только открытые характеристики')
           }
-          const tmp = { ...self.biology }
+          const oldSelf = this.slotDisplay(self, BIOLOGY_CATEGORY, 0)
+          const oldOther = this.slotDisplay(other, BIOLOGY_CATEGORY, 0)
           const visA = self.biology.isVisible
           const visB = other.biology.isVisible
+          const tmp = { ...self.biology }
           self.biology = { ...other.biology, isVisible: visA }
           other.biology = { ...tmp, isVisible: visB }
-          return { ok: true, text: `Обмен биологии с ${this.nameOf(otherId)}` }
+          this.pushChange(charChanges, self, BIOLOGY_CATEGORY, 0, 'swap', oldSelf, this.slotDisplay(self, BIOLOGY_CATEGORY, 0), visA)
+          this.pushChange(charChanges, other, BIOLOGY_CATEGORY, 0, 'swap', oldOther, this.slotDisplay(other, BIOLOGY_CATEGORY, 0), visB)
+          return ok(`Обмен биологии с ${this.nameOf(otherId)}`)
         }
         const a = findChar(self.characteristics, category, give.occ ?? 0)
         const b = findChar(other.characteristics, category, receive.occ ?? 0)
-        if (!a || !b) return { ok: false, error: 'Не найдена выбранная характеристика' }
+        if (!a || !b) return fail('Не найдена выбранная характеристика')
         if (!a.isVisible || !b.isVisible) {
-          return { ok: false, error: 'Обменивать можно только открытые характеристики' }
+          return fail('Обменивать можно только открытые характеристики')
         }
+        const oldA = a.value
+        const oldB = b.value
         const tmp = { value: a.value, coef: a.coef, hint: a.hint, tags: [...(a.tags ?? [])] }
         a.value = b.value
         a.coef = b.coef
@@ -857,25 +1033,38 @@ export class Lobby {
         b.coef = tmp.coef
         b.hint = tmp.hint
         b.tags = tmp.tags
-        return {
-          ok: true,
-          text: `Обмен с ${this.nameOf(otherId)}: отдан «${this.slotLabel(category, give.occ ?? 0, self)}», получен «${this.slotLabel(category, receive.occ ?? 0, other)}»`,
-        }
+        this.pushChange(charChanges, self, category, give.occ ?? 0, 'swap', oldA, a.value, true)
+        this.pushChange(charChanges, other, category, receive.occ ?? 0, 'swap', oldB, b.value, true)
+        return ok(
+          `Обмен с ${this.nameOf(otherId)}: отдан «${this.slotLabel(category, give.occ ?? 0, self)}», получен «${this.slotLabel(category, receive.occ ?? 0, other)}»`,
+        )
       }
       case 'healFertile': {
         const targetId = t.players?.[0] ?? playerId
-        const pl = this.players.find((p) => p.id === targetId)
-        if (pl?.biology) {
-          pl.biology.infertile = false
-          pl.biology.coef = Math.min(1, pl.biology.coef + 0.32)
+        const healPl = this.players.find((p) => p.id === targetId)
+        if (healPl?.biology) {
+          const oldValue = this.slotDisplay(healPl, BIOLOGY_CATEGORY, 0)
+          const wasVisible = healPl.biology.isVisible
+          healPl.biology.infertile = false
+          healPl.biology.coef = Math.min(1, healPl.biology.coef + 0.32)
+          this.pushChange(
+            charChanges,
+            healPl,
+            BIOLOGY_CATEGORY,
+            0,
+            'healFertile',
+            oldValue,
+            this.slotDisplay(healPl, BIOLOGY_CATEGORY, 0),
+            wasVisible,
+          )
         }
-        return { ok: true, text: `Вылечено бесплодие: ${this.nameOf(targetId)}` }
+        return ok(`Вылечено бесплодие: ${this.nameOf(targetId)}`)
       }
       case 'replayLast': {
         const previous = this.lastPlayedEffect
-        if (!previous) return { ok: false, error: 'Нет карты для повтора' }
+        if (!previous) return fail('Нет карты для повтора')
         if (previous.byPlayerId === playerId) {
-          return { ok: false, error: 'Можно повторить только карту другого игрока' }
+          return fail('Можно повторить только карту другого игрока')
         }
         const copy: ActionCard = {
           ...previous.card,
@@ -889,61 +1078,84 @@ export class Lobby {
         const hand = this.cards.get(playerId) ?? []
         hand.push(copy)
         this.cards.set(playerId, hand)
-        return { ok: true, text: `Получена копия карты «${copy.title}» — её можно сыграть от своего лица` }
+        return ok(`Получена копия карты «${copy.title}» — её можно сыграть от своего лица`)
       }
       case 'changeCatastrophe': {
+        const previous = this.bunker.catastrophe
         this.bunker.catastrophe = pickCatastrophe()
-        return { ok: true, text: 'Катастрофа изменена' }
+        const fromTitle = challengeTitle(previous)
+        const toTitle = challengeTitle(this.bunker.catastrophe)
+        this.pushPublicChange(charChanges, 'Катастрофа', fromTitle, toTitle)
+        return ok(`Катастрофа: ${fromTitle} → ${toTitle}`)
       }
       case 'revealCondition': {
         const cond = pickUnusedCondition(this.bunker.conditions.map((condition) => condition.text))
-        if (!cond) return { ok: false, error: 'Все дополнительные условия уже открыты' }
+        if (!cond) return fail('Все дополнительные условия уже открыты')
         const entry: BunkerCondition = {
           text: cond,
           byPlayerId: playerId,
           byName: this.nameOf(playerId),
         }
         this.bunker.conditions.push(entry)
-        return { ok: true, text: 'Открыто доп. условие бункера' }
+        const title = challengeTitle(cond)
+        this.pushPublicChange(charChanges, 'Доп. условие', 'не было', title)
+        return ok(`Открыто доп. условие: ${title}`)
       }
       case 'removeThreat': {
         const idx = t.threats?.[0]
         if (idx === undefined || idx < 0 || idx >= this.bunker.threats.length)
-          return { ok: false, error: 'Выберите угрозу' }
+          return fail('Выберите угрозу')
         const removed = this.bunker.threats.splice(idx, 1)[0]
-        return { ok: true, text: `Убрана угроза: ${removed.slice(0, 40)}…` }
+        const title = challengeTitle(removed)
+        this.pushPublicChange(charChanges, 'Угроза', title, 'снята')
+        return ok(`Убрана угроза: ${title}`)
       }
       case 'cancelVotes': {
         const ids = (t.players ?? []).slice(0, 2)
-        if (ids.length === 0) return { ok: false, error: 'Выберите игроков' }
+        if (ids.length === 0) return fail('Выберите игроков')
         ids.forEach((id) => this.cancelledVoters.add(id))
-        return { ok: true, text: `Голоса не учитываются: ${ids.map((i) => this.nameOf(i)).join(', ')}` }
+        return ok(`Голоса не учитываются: ${ids.map((i) => this.nameOf(i)).join(', ')}`)
       }
       case 'doubleVote': {
-        return this.applyDoubleVote(playerId)
+        const result = this.applyDoubleVote(playerId)
+        return { ...result, charChanges }
       }
       case 'selfProtection': {
         const otherId = t.players?.[0]
-        if (!otherId || otherId === playerId) return { ok: false, error: 'Выберите другого игрока' }
+        if (!otherId || otherId === playerId) return fail('Выберите другого игрока')
         this.voteBans.push({ voterId: otherId, protectedId: playerId })
-        return { ok: true, text: `${this.nameOf(otherId)} не может голосовать против ${this.nameOf(playerId)}` }
+        return ok(`${this.nameOf(otherId)} не может голосовать против ${this.nameOf(playerId)}`)
       }
       case 'selfDefence': {
         this.protectedFromVote.add(playerId)
-        return { ok: true, text: `Никто не может голосовать против ${this.nameOf(playerId)} в этом раунде` }
+        return ok(`Никто не может голосовать против ${this.nameOf(playerId)} в этом раунде`)
       }
       case 'revote': {
-        if (!this.isVoting()) return { ok: false, error: 'Только во время голосования' }
+        if (!this.isVoting()) return fail('Только во время голосования')
+        const originalTargetId = this.votes.get(playerId)
+        const uniqueTargets = [...new Set(this.votes.values())]
+        for (const [voterId, targetId] of this.votes) {
+          const voter = this.players.find((p) => p.id === voterId)
+          this.pushPublicChange(charChanges, 'Голос', this.nameOf(targetId), 'другой кандидат', voter)
+        }
         this.revoteFrom = new Map(this.votes)
         this.votes.clear()
         this.broadcastVotes()
         if (this.settings.voteMode === 'sequential') this.beginSequentialVote()
-        return { ok: true, text: 'Объявлено переголосование — выберите другого кандидата' }
+        const originalName = originalTargetId
+          ? this.nameOf(originalTargetId)
+          : uniqueTargets.map((id) => this.nameOf(id)).join(', ')
+        return ok(
+          originalName
+            ? `Переголосование. Изначальный кандидат: ${originalName}`
+            : 'Объявлено переголосование — выберите другого кандидата',
+        )
       }
       default:
-        return { ok: true, text: card.title }
+        return ok(card.title)
     }
   }
+
 
   // ─── Исполнение программы раундов ────────────────────────────────────────
 
@@ -1088,6 +1300,7 @@ export class Lobby {
     }
     this.turn.revealedThisTurn += 1
     this.pushCharacteristicsTo(playerId)
+    this.broadcastCardHistory()
     return true
   }
 
@@ -1149,6 +1362,7 @@ export class Lobby {
     this.turn.revealedThisTurn += 1
     this.broadcastCharacters()
     this.pushCharacteristicsTo(playerId)
+    this.broadcastCardHistory()
     if (autoEndTurn) {
       this.advanceTurn()
       return
@@ -1457,6 +1671,7 @@ export class Lobby {
     this.io.to(this.code).emit('voteResult', { eliminatedId, tie: false, tiedIds: [], tally })
     this.broadcastPlayers()
     this.broadcastCharacters()
+    this.broadcastCardHistory()
 
     if (this.checkWinCondition()) return
     this.nextStep()
@@ -1498,6 +1713,7 @@ export class Lobby {
       survival: this.survivalReport,
     })
     this.broadcastCharacters()
+    this.broadcastCardHistory()
     this.io.to(this.code).emit('stageChanged', {
       stage: 'end',
       timer: 0,
@@ -1618,6 +1834,7 @@ export class Lobby {
       bunker: this.bunker,
       actionCards: [],
       charLayout: this.charLayout,
+      cardHistory: this.cardHistoryFor(playerId),
     })
     this.io.to(sid).emit('bunkerUpdated', { bunker: this.bunker })
     this.io.to(sid).emit('stageChanged', {

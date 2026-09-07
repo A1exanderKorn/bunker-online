@@ -35,8 +35,13 @@ test('катастрофы, угрозы и условия парсятся не
   assert.equal(new Set(data.challenges.map((item) => item.id)).size, data.challenges.length)
   for (const challenge of data.challenges) {
     assert.ok(challenge.text)
+    assert.ok(challenge.title)
     assert.ok(['catastrophe', 'threat', 'condition'].includes(challenge.kind))
     assert.ok(challenge.requirements.every((group) => group.length > 0))
+  }
+  for (const catastrophe of data.challenges.filter((item) => item.kind === 'catastrophe')) {
+    assert.ok(catastrophe.title.length <= 40)
+    assert.equal(catastrophe.title.includes(':'), false)
   }
 })
 
