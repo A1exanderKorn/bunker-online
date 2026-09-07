@@ -4,6 +4,7 @@ import type {
   Biology,
   BunkerState,
   CardPlayedPayload,
+  CardHistoryEntry,
   CardTargets,
   CatalogCard,
   CharSlot,
@@ -63,6 +64,7 @@ export const useGameStore = defineStore('game', {
     actionCards: [] as ActionCard[],
     myCards: [] as ActionCard[],
     cardPopup: null as CardPlayedPayload | null,
+    cardHistory: [] as CardHistoryEntry[],
     threatPopup: null as string | null,
     catalog: [] as CatalogCard[],
 
@@ -150,6 +152,7 @@ export const useGameStore = defineStore('game', {
         this.bunker = payload.bunker
         this.charLayout = payload.charLayout ?? []
         this.actionCards = payload.actionCards
+        this.cardHistory = payload.cardHistory ?? []
         this.lastResult = null
         this.survivorIds = []
         this.survival = null
@@ -188,6 +191,10 @@ export const useGameStore = defineStore('game', {
         }, 8_000)
       })
 
+      socket.on('cardHistoryUpdated', (payload) => {
+        this.cardHistory = payload.cardHistory
+      })
+
       socket.on('newGameStarted', () => {
         clearCardPopupTimer()
         // Сброс к лобби, но сохраняем подключение/идентичность.
@@ -210,6 +217,7 @@ export const useGameStore = defineStore('game', {
         this.bunker = { catastrophe: '', years: 0, threats: [], conditions: [] }
         this.charLayout = []
         this.actionCards = []
+        this.cardHistory = []
         this.revoteFrom = {}
       })
 

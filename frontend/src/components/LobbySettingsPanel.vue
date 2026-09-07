@@ -212,6 +212,15 @@ const survivorsHint = computed(() =>
         />
         <span>Карты действия</span>
       </label>
+        <label class="check" :class="{ ro: !isHost }">
+          <input
+            type="checkbox"
+            :checked="settings.revealPreviousCharacteristics"
+            :disabled="!isHost"
+            @change="patch({ revealPreviousCharacteristics: ($event.target as HTMLInputElement).checked })"
+          />
+          <span>Раскрытие предыдущих характеристик</span>
+        </label>
     </div>
 
     <!-- Влияние карт (только если карты включены) -->

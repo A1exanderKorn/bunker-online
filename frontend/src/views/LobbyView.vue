@@ -252,6 +252,14 @@ const survivalColor = computed(() => {
         customClass="danger-button"
         :text="`Завершить ход: ${currentPlayerName || 'игрок'}`"
       />
+      <label class="auto-end-control host-history-flag">
+        <input
+          type="checkbox"
+          :checked="settings.revealPreviousCharacteristics"
+          @change="game.updateSettings({ revealPreviousCharacteristics: ($event.target as HTMLInputElement).checked })"
+        />
+        <span>Раскрытие предыдущих характеристик</span>
+      </label>
     </div>
   </div>
 
@@ -470,6 +478,10 @@ const survivalColor = computed(() => {
   gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
+}
+.host-history-flag {
+  margin: 0;
 }
 .my-turn-controls {
   display: flex;

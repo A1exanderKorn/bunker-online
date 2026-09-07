@@ -97,6 +97,12 @@ export interface Biology {
   hint?: string
 }
 
+/** Текст биологии на столе и в истории карт. */
+export function formatBiology(bio: Biology | null | undefined): string | null {
+  if (!bio) return null
+  return `${bio.sex}, ${bio.age} лет, стаж ${bio.experience} лет` + (bio.infertile ? ', бесплоден' : '')
+}
+
 /** Полные данные игрока (живут только на сервере). */
 export interface Player {
   id: string
@@ -158,6 +164,11 @@ export interface LobbySettings {
 
   /** Карты действия: включены ли. Каждому игроку выдаётся 1 карта по КФ. */
   actionCardsEnabled: boolean
+  /**
+   * После вскрытия слота показывать в истории и предыдущее значение
+   * (зелёным). Выкл. — живым чужим старое остаётся скрытым.
+   */
+  revealPreviousCharacteristics: boolean
   /** Влияние карт: сдвиг вероятностей категорий. */
   cardsPower: CardsPower
 
@@ -209,6 +220,7 @@ export const DEFAULT_SETTINGS: LobbySettings = {
   noPhobias: false,
   threatsEnabled: true,
   actionCardsEnabled: false,
+  revealPreviousCharacteristics: false,
   cardsPower: 'balanced',
   roundSteps: [],
 }
@@ -377,6 +389,36 @@ export interface CardPlayedPayload {
   effectText: string
 }
 
+export type CardHistoryChangeKind = 'replace' | 'swap' | 'healFertile'
+
+/** Смена одного слота в истории карт. null у значений — скрыто от этого зрителя. */
+export interface CardHistoryCharChange {
+  playerId: string
+  playerName: string
+  slotType: string
+  slotOcc: number
+  slotLabel: string
+  wasVisible: boolean
+  changeKind: CardHistoryChangeKind
+  oldValue: string | null
+  newValue: string | null
+  /** Зелёный чип, если значение не null. Считает фильтр, в хранилище сервера нет. */
+  oldPublic?: boolean
+  newPublic?: boolean
+}
+
+/** Одна сыгранная карта в ленте истории (уже отфильтрованная под зрителя). */
+export interface CardHistoryEntry {
+  seq: number
+  round: number
+  stage: GameStage
+  byPlayerId: string
+  byName: string
+  cardTitle: string
+  summary: string
+  charChanges: CardHistoryCharChange[]
+}
+
 // ─── Стадии игры ────────────────────────────────────────────────────────────
 
 export type GameStage =
@@ -425,6 +467,8 @@ export interface GameStartedPayload {
   actionCards: ActionCard[]
   /** Порядок строк на карточке (из JSON колоды + настройки багажа/фобий). */
   charLayout: CharSlot[]
+  /** История карт, уже отфильтрованная под получателя. */
+  cardHistory: CardHistoryEntry[]
 }
 
 export interface BunkerUpdatedPayload {
@@ -544,6 +588,8 @@ export interface ServerToClientEvents {
   yourCards: (payload: { cards: ActionCard[] }) => void
   /** Карта сыграна — попап у всех. */
   cardPlayed: (payload: CardPlayedPayload) => void
+  /** Лента истории карт (приватно, с учётом видимости). */
+  cardHistoryUpdated: (payload: { cardHistory: CardHistoryEntry[] }) => void
   /** Каталог карт (админ-панель). */
   cardCatalog: (payload: { cards: CatalogCard[] }) => void
   yourCharacteristics: (payload: YourCharacteristicsPayload) => void
