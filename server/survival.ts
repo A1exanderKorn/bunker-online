@@ -253,7 +253,7 @@ export function calculateSurvival(players: Player[], bunker: BunkerState): Survi
   const challengeTexts = [bunker.catastrophe, ...bunker.threats].filter(Boolean)
   const challenges = challengeTexts.map((text) => {
     const challenge = challengeByText(text)
-    if (!challenge) return { kind: text === bunker.catastrophe ? 'catastrophe' as const : 'threat' as const, text, success: false, delta: -10, detail: 'Для события не настроены требования в Excel.' }
+    if (!challenge) return { kind: text === bunker.catastrophe ? 'catastrophe' as const : 'threat' as const, text, success: false, delta: -10, detail: 'Для события не настроены требования в данных бункера.' }
     return evaluateChallenge(challenge, team)
   })
 

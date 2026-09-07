@@ -29,7 +29,7 @@ test('категории карт обходятся в порядке A -> B ->
   assert.equal(rollCategory(defs, 0.5, 'balanced', () => 0.76), 'C')
 })
 
-test('вероятности категорий в каждой корзине Excel дают 100%', () => {
+test('вероятности категорий в каждой корзине дают 100%', () => {
   const firstByCategory = new Map()
   for (const card of loadCards()) {
     if (!firstByCategory.has(card.category)) firstByCategory.set(card.category, card)

@@ -6,18 +6,18 @@ const { loadBunkerData } = require('../dist/server/bunker.js')
 
 test('характеристики не содержат служебные четвёрки', () => {
   const rows = loadCharacteristics()
-  assert.equal(rows.some((row) => String(row.Название).trim() === '4'), false)
-  assert.equal(rows.some((row) => String(row.Подсказка).trim() === '4'), false)
+  assert.equal(rows.some((row) => String(row.name).trim() === '4'), false)
+  assert.equal(rows.some((row) => String(row.hint).trim() === '4'), false)
 })
 
 test('внутри каждой категории характеристики отсортированы по КФ убыванию', () => {
   const previous = new Map()
   for (const row of loadCharacteristics()) {
-    const coef = Number(row.КФ)
-    if (previous.has(row.Категория)) {
-      assert.ok(coef <= previous.get(row.Категория), `${row.Категория}: ${coef} после ${previous.get(row.Категория)}`)
+    const coef = Number(row.coef)
+    if (previous.has(row.category)) {
+      assert.ok(coef <= previous.get(row.category), `${row.category}: ${coef} после ${previous.get(row.category)}`)
     }
-    previous.set(row.Категория, coef)
+    previous.set(row.category, coef)
   }
 })
 
@@ -28,12 +28,12 @@ test('погранично опасные факты используют light_
     'Сидел на зоне',
     'Имеет непогашенную судимость',
   ])
-  const rows = loadCharacteristics().filter((row) => expected.has(row.Название))
+  const rows = loadCharacteristics().filter((row) => expected.has(row.name))
   assert.equal(rows.length, expected.size)
   for (const row of rows) {
-    const tags = parseSurvivalTags(row['Теги выживания'])
-    assert.ok(tags.includes('light_danger'), row.Название)
-    assert.equal(tags.includes('dangerous'), false, row.Название)
+    const tags = parseSurvivalTags(row.tags)
+    assert.ok(tags.includes('light_danger'), row.name)
+    assert.equal(tags.includes('dangerous'), false, row.name)
   }
 })
 
@@ -41,9 +41,9 @@ test('у характеристик с КФ не выше 0.30 нет полез
   const required = new Set(loadBunkerData().challenges.flatMap((challenge) => challenge.requirements.flat()))
   required.delete('criminal')
   const usefulLow = loadCharacteristics().filter((row) =>
-    Number(row.КФ) <= 0.3 && parseSurvivalTags(row['Теги выживания']).some((tag) => required.has(tag)),
+    Number(row.coef) <= 0.3 && parseSurvivalTags(row.tags).some((tag) => required.has(tag)),
   )
-  assert.deepEqual(usefulLow.map((row) => row.Название), [])
+  assert.deepEqual(usefulLow.map((row) => row.name), [])
 })
 
 test('угроза криминальных группировок компенсирует light_danger', () => {
@@ -68,17 +68,17 @@ test('все катастрофы и угрозы явно объясняют с
 
 test('теги protection и criminal имеют достаточно источников', () => {
   const rows = loadCharacteristics()
-  const withTag = (tag) => rows.filter((row) => parseSurvivalTags(row['Теги выживания']).includes(tag))
+  const withTag = (tag) => rows.filter((row) => parseSurvivalTags(row.tags).includes(tag))
   const protection = withTag('protection')
   const criminal = withTag('criminal')
 
   assert.ok(protection.length >= 7)
-  assert.ok(new Set(protection.map((row) => row.Категория)).size >= 2)
+  assert.ok(new Set(protection.map((row) => row.category)).size >= 2)
   assert.ok(criminal.length >= 10)
-  assert.deepEqual(new Set(criminal.map((row) => row.Категория)), new Set(['Профессия', 'Хобби', 'Факт']))
+  assert.deepEqual(new Set(criminal.map((row) => row.category)), new Set(['Профессия', 'Хобби', 'Факт']))
   for (const row of criminal) {
-    const tags = parseSurvivalTags(row['Теги выживания'])
-    assert.ok(tags.includes('light_danger') || tags.includes('dangerous'), row.Название)
+    const tags = parseSurvivalTags(row.tags)
+    assert.ok(tags.includes('light_danger') || tags.includes('dangerous'), row.name)
   }
 })
 
@@ -87,7 +87,7 @@ test('все теги испытаний имеют не менее трёх и�
   const required = new Set(loadBunkerData().challenges.flatMap((challenge) => challenge.requirements.flat()))
   required.delete('reproductive_edge')
   const sparse = [...required].filter((tag) =>
-    rows.filter((row) => parseSurvivalTags(row['Теги выживания']).includes(tag)).length < 3,
+    rows.filter((row) => parseSurvivalTags(row.tags).includes(tag)).length < 3,
   )
   assert.deepEqual(sparse, [])
 })

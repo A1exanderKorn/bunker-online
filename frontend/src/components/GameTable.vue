@@ -80,15 +80,7 @@ function isFinalDanger(p: PublicPlayer, slot: CharSlot): boolean {
 
 /** Совпадает с серверным расчётом КФ, по которому раздаются карты действия. */
 function overallCoef(p: PublicPlayer): number | null {
-  const weights: Record<string, number> = {
-    Здоровье: 1,
-    Профессия: 0.8,
-    Биология: 1,
-    Фобия: 0.75,
-    Факт: 0.75,
-    Багаж: 0.5,
-  }
-  const weightFor = (type: string) => weights[type] ?? 1
+  const weightFor = (type: string) => rows.value.find((slot) => slot.type === type)?.weight ?? 1
   const characteristics = isMe(p) ? game.myCharacteristics : p.characteristics
   const biology = isMe(p) ? game.myBiology : p.biology
   const weighted = characteristics.reduce(

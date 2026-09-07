@@ -5,19 +5,19 @@ import type { CharacteristicCategory } from '../shared/types'
 /** Порт HTTP/socket-сервера. */
 export const PORT = Number(process.env.PORT) || 3000
 
-function resolveDataPath(): string {
-  if (process.env.DATA_PATH) return process.env.DATA_PATH
+function resolveDataDir(): string {
+  if (process.env.DATA_DIR) return process.env.DATA_DIR
   const candidates = [
-    path.join(__dirname, 'data.xlsx'),
-    path.join(__dirname, '..', 'data.xlsx'),
-    path.join(process.cwd(), 'server', 'data.xlsx'),
-    path.join(process.cwd(), 'data.xlsx'),
+    path.join(__dirname, 'data'),
+    path.join(__dirname, '..', 'data'),
+    path.join(process.cwd(), 'server', 'data'),
+    path.join(process.cwd(), 'data'),
   ]
-  return candidates.find((p) => fs.existsSync(p)) ?? candidates[0]
+  return candidates.find((p) => fs.existsSync(path.join(p, 'characteristics', 'index.json'))) ?? candidates[0]
 }
 
-/** Путь к файлу с характеристиками, картами и угрозами. */
-export const DATA_PATH = resolveDataPath()
+/** Каталог с JSON колоды (характеристики, бункер, карты действия). */
+export const DATA_DIR = resolveDataDir()
 
 /** Минимум игроков для старта игры. */
 export const MIN_PLAYERS = 2
@@ -34,7 +34,7 @@ export const LOBBY_RECONNECT_GRACE_MS = 30_000
 /** I.4: доп. время (сек) после авто-вскрытия по истечении таймера хода. */
 export const TURN_GRACE_SECONDS = 15
 
-/** Фолбэк порядка раздачи, если Excel не прочитался. */
+/** Фолбэк порядка раздачи, если JSON не прочитался. */
 export const CATEGORY_ORDER: CharacteristicCategory[] = [
   'Профессия',
   'Здоровье',

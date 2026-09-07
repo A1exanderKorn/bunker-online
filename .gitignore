@@ -28,3 +28,6 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# Локальные спеки и правила Cursor (не коммитить)
+.cursor/

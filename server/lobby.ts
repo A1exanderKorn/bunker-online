@@ -501,10 +501,10 @@ export class Lobby {
     if (!rows || rows.length === 0) return null
     const r = rows[Math.floor(Math.random() * rows.length)]
     return {
-      value: String(r['Название']),
-      coef: Number(r['КФ']) || 0,
-      hint: String(r['Подсказка'] ?? ''),
-      tags: String(r['Теги выживания'] ?? '').split(',').map((tag) => tag.trim()).filter(Boolean),
+      value: String(r.name),
+      coef: Number(r.coef) || 0,
+      hint: String(r.hint ?? ''),
+      tags: [...(r.tags ?? [])],
     }
   }
 

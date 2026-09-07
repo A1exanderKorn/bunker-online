@@ -1,10 +1,7 @@
-import * as XLSX from 'xlsx'
-import { DATA_PATH } from './config'
+import { readJson } from './loadJson'
 
 /**
- * Парсинг третьего листа Excel: «Угрозы, Катастрофы, Условия».
- * Столбцы определяются по заголовкам, поэтому порядок строк и добавление новых
- * катастроф/угроз/условий не влияют на парсинг.
+ * Каталог бункера: катастрофы, угрозы и доп. условия из JSON.
  */
 
 export interface BunkerData {
@@ -25,78 +22,46 @@ export interface BunkerChallenge {
   failureDelta: number
 }
 
-function parseRequirements(value: unknown): string[][] {
-  return String(value ?? '').split(';').map((group) =>
-    group.split('|').map((tag) => tag.trim()).filter(Boolean),
-  ).filter((group) => group.length > 0)
+interface BunkerFile {
+  items: {
+    id: string
+    text: string
+    requirements: string[][]
+    grants: string[]
+    successDelta: number
+    failureDelta: number
+  }[]
 }
-
-function parseTags(value: unknown): string[] {
-  return String(value ?? '').split(',').map((tag) => tag.trim()).filter(Boolean)
-}
-
-function numberValue(value: unknown): number {
-  const parsed = Number(String(value ?? 0).replace(',', '.'))
-  return Number.isFinite(parsed) ? parsed : 0
-}
-
-function valueByHeaders(row: Record<string, unknown>, ...headers: string[]): unknown {
-  for (const header of headers) {
-    if (Object.prototype.hasOwnProperty.call(row, header)) return row[header]
-  }
-  return undefined
-}
-
-function challengeKind(value: unknown): BunkerChallenge['kind'] | null {
-  const type = String(value ?? '').trim().toLocaleLowerCase('ru-RU').replace(/\./g, '')
-  if (type.startsWith('катастроф')) return 'catastrophe'
-  if (type.startsWith('угроз')) return 'threat'
-  if (type.startsWith('доп') || type.startsWith('услов')) return 'condition'
-  return null
-}
-
-const SHEET_NAME = 'Угрозы, Катастрофы, Условия'
 
 let cache: BunkerData | null = null
 
+function loadKind(kind: BunkerChallenge['kind'], file: string): BunkerChallenge[] {
+  const items = readJson<BunkerFile>(`bunker/${file}`).items ?? []
+  return items
+    .filter((item) => String(item.text ?? '').trim())
+    .map((item) => ({
+      id: String(item.id ?? ''),
+      kind,
+      text: String(item.text).trim(),
+      requirements: Array.isArray(item.requirements) ? item.requirements : [],
+      grants: Array.isArray(item.grants) ? item.grants : [],
+      successDelta: Number(item.successDelta) || 0,
+      failureDelta: Number(item.failureDelta) || 0,
+    }))
+}
+
 export function loadBunkerData(): BunkerData {
   if (cache) return cache
-
-  const workbook = XLSX.readFile(DATA_PATH)
-  const sheet =
-    workbook.Sheets[SHEET_NAME] ??
-    workbook.Sheets[workbook.SheetNames.find((n) => n.includes('Угроз')) ?? '']
-  if (!sheet) {
-    cache = { threats: [], catastrophes: [], conditions: [], challenges: [] }
-    return cache
+  const catastrophes = loadKind('catastrophe', 'catastrophes.json')
+  const threats = loadKind('threat', 'threats.json')
+  const conditions = loadKind('condition', 'conditions.json')
+  const challenges = [...catastrophes, ...threats, ...conditions]
+  cache = {
+    catastrophes: catastrophes.map((item) => item.text),
+    threats: threats.map((item) => item.text),
+    conditions: conditions.map((item) => item.text),
+    challenges,
   }
-
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
-  const threats: string[] = []
-  const catastrophes: string[] = []
-  const conditions: string[] = []
-  const challenges: BunkerChallenge[] = []
-
-  for (const [index, row] of rows.entries()) {
-    const kind = challengeKind(valueByHeaders(row, 'Тип', 'type'))
-    const text = String(valueByHeaders(row, 'Текст', 'text') ?? '').trim()
-    if (!kind) continue
-    if (!text) continue
-    if (kind === 'threat') threats.push(text)
-    else if (kind === 'catastrophe') catastrophes.push(text)
-    else conditions.push(text)
-    challenges.push({
-      id: String(valueByHeaders(row, 'id', 'ID') || `${kind}_${index + 2}`),
-      kind,
-      text,
-      requirements: parseRequirements(valueByHeaders(row, 'Требования (группы ;, варианты |)', 'Требования')),
-      grants: parseTags(valueByHeaders(row, 'Даёт теги', 'Теги')),
-      successDelta: numberValue(valueByHeaders(row, 'Успех, %', 'Успех')),
-      failureDelta: numberValue(valueByHeaders(row, 'Провал, %', 'Провал')),
-    })
-  }
-
-  cache = { threats, catastrophes, conditions, challenges }
   return cache
 }
 

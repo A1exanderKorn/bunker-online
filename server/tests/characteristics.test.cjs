@@ -11,6 +11,10 @@ test('профессия имеет вес 0.8 в общем коэффицие�
   assert.equal(characteristicWeight('Профессия'), 0.8)
 })
 
+test('вес неизвестной категории равен 1', () => {
+  assert.equal(characteristicWeight('НетТакойКатегории'), 1)
+})
+
 test('притяжение к целевому КФ стало плотнее предыдущей кривой', () => {
   const previousWeightAtHalfPoint = 0.15 + 0.85 / (1 + 4 * 0.5)
 
