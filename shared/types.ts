@@ -8,8 +8,8 @@
 export type Sex = 'М' | 'Ж' | 'Андроид' | 'Гермафродит'
 
 /**
- * Базовые категории (фолбэк, если Excel недоступен).
- * Реальный набор и порядок берутся из data.xlsx — новые категории
+ * Базовые категории (фолбэк, если JSON недоступен).
+ * Реальный набор и порядок берутся из server/data/characteristics — новые категории
  * подхватываются автоматически.
  */
 export const CHARACTERISTIC_CATEGORIES = [
@@ -21,7 +21,7 @@ export const CHARACTERISTIC_CATEGORIES = [
   'Факт',
 ] as const
 
-/** Категория характеристики — строка из Excel, не закрытый enum. */
+/** Категория характеристики — строка из JSON колоды, не закрытый enum. */
 export type CharacteristicCategory = string
 
 /** Псевдо-категория для строки биологии в таблице. */
@@ -33,6 +33,8 @@ export interface CharSlot {
   /** 0-based индекс среди характеристик того же типа (Багаж #1 → 0, Багаж #2 → 1). */
   occ: number
   label: string
+  /** Вес категории в общем КФ (из characteristics/index.json). */
+  weight?: number
 }
 
 /** Подпись слота: «Багаж #2», если однотипных больше одной. */
@@ -43,7 +45,7 @@ export function charSlotLabel(type: string, occ: number, totalOfType: number): s
 
 /**
  * Раскладка строк карточки по настройкам (фолбэк на клиенте).
- * Сервер присылает свой layout из Excel — он приоритетнее.
+ * Сервер присылает свой layout из JSON — он приоритетнее.
  */
 export function fallbackCharLayout(s: {
   extraBaggage?: boolean
@@ -421,7 +423,7 @@ export interface GameStartedPayload {
   bunker: BunkerState
   /** Собственные карты действия игрока (заглушка). */
   actionCards: ActionCard[]
-  /** Порядок строк на карточке (из Excel + настройки багажа/фобий). */
+  /** Порядок строк на карточке (из JSON колоды + настройки багажа/фобий). */
   charLayout: CharSlot[]
 }
 

@@ -1,7 +1,7 @@
 import type { Biology, Characteristic, CharacteristicCategory, CharSlot, Player, Sex } from '../shared/types'
 import { BIOLOGY_CATEGORY, slotsFromTypes } from '../shared/types'
 import { CATEGORY_ORDER } from './config'
-import { dealCategories, displayCategoryOrder, parseSurvivalTags, rowsByCategory, type ExcelRow } from './data'
+import { dealCategories, displayCategoryOrder, rowsByCategory, characteristicWeight, type CharacteristicDef } from './data'
 
 /** Фишер–Йейтс, тасует массив на месте и возвращает его же. */
 export function shuffleArray<T>(array: T[]): T[] {
@@ -14,18 +14,7 @@ export function shuffleArray<T>(array: T[]): T[] {
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value))
 
-/** Насколько категория участвует в балансе общего коэффициента игрока. */
-export function characteristicWeight(category: string): number {
-  const weights: Record<string, number> = {
-    Здоровье: 1,
-    Профессия: 0.8,
-    Биология: 1,
-    Фобия: 0.75,
-    Факт: 0.75,
-    Багаж: 0.5,
-  }
-  return weights[category] ?? 1
-}
+export { characteristicWeight }
 
 /** Стаж линейно растёт от −0.02 за 1 год до +0.06 за максимально возможный стаж. */
 export function experienceModifier(age: number, experience: number): number {
@@ -130,15 +119,15 @@ export function generateBiology(existing: Biology[]): Biology {
   return { sex, age, experience, coef, infertile, isVisible: false, hint }
 }
 
-function parseRow(row: ExcelRow): Characteristic {
+function parseRow(row: CharacteristicDef): Characteristic {
   return {
-    type: row['Категория'] as Characteristic['type'],
-    value: String(row['Название'] ?? '').trim(),
-    coef: Number(row['КФ']) || 0,
-    hint: String(row['Подсказка'] ?? ''),
+    type: row.category,
+    value: String(row.name ?? '').trim(),
+    coef: Number(row.coef) || 0,
+    hint: String(row.hint ?? ''),
     isVisible: false,
     occ: 0,
-    tags: parseSurvivalTags(row['Теги выживания']),
+    tags: [...(row.tags ?? [])],
   }
 }
 
@@ -263,7 +252,7 @@ function buildCategoryProgram(opts: DealOptions): CharacteristicCategory[] {
   return program
 }
 
-/** Раскладка строк карточки: Excel-порядок + второй багаж / без фобий. */
+/** Раскладка строк карточки: порядок из JSON + второй багаж / без фобий. */
 export function buildCharLayout(opts: DealOptions): CharSlot[] {
   let types = displayCategoryOrder()
   if (types.length === 0) {
@@ -275,7 +264,10 @@ export function buildCharLayout(opts: DealOptions): CharSlot[] {
     if (idx >= 0) types.splice(idx + 1, 0, 'Багаж')
     else types.push('Багаж')
   }
-  return slotsFromTypes(types)
+  return slotsFromTypes(types).map((slot) => ({
+    ...slot,
+    weight: characteristicWeight(slot.type),
+  }))
 }
 
 /** Раздаёт характеристики всем игрокам (мутирует объекты игроков). */

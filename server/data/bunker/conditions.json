@@ -1,0 +1,84 @@
+{
+  "items": [
+    {
+      "id": "condition_24",
+      "text": "Шкаф с обилием всевозможных настольных игр.",
+      "requirements": [],
+      "grants": ["culture"],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_25",
+      "text": "Хим. Лаборатория и реактивы для создания гидропонной фермы.",
+      "requirements": [],
+      "grants": ["chemistry", "science", "agriculture"],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_26",
+      "text": "Бункер строили заключенные. Жуткий запах привел вас в подвал, где вы нашли их останки, инструменты и оружие охранников - дубинки, ножи",
+      "requirements": [],
+      "grants": ["tools", "weapon"],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_27",
+      "text": "В бункере обнаруживается набор инструментов для рисования, доска с маркерами.",
+      "requirements": [],
+      "grants": ["culture"],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_28",
+      "text": "Рядом с бункером обнаружена оборудованная автомастерская и набор инструментов.",
+      "requirements": [],
+      "grants": ["repair", "tools"],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_29",
+      "text": "В бункере вы находите набор семян для выращивания большого количества сельскохозяйственных культур.",
+      "requirements": [],
+      "grants": ["agriculture", "food"],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_30",
+      "text": "В бункере находится оборудованный медицинский отсек",
+      "requirements": [],
+      "grants": ["medical"],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_31",
+      "text": "В бункере находится инкубатор с яйцами. Нужен человек, имеющий опыт по выращиванию животных.",
+      "requirements": [],
+      "grants": ["animals", "food"],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_32",
+      "text": "Увы, вам не повезло",
+      "requirements": [],
+      "grants": [],
+      "successDelta": 0,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_33",
+      "text": "Увы, вам не повезло",
+      "requirements": [],
+      "grants": [],
+      "successDelta": 0,
+      "failureDelta": 0
+    }
+  ]
+}

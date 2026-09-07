@@ -1,31 +1,43 @@
 const fs = require('node:fs')
 const path = require('node:path')
-const XLSX = require('xlsx')
 
 const serverDir = path.resolve(__dirname, '..')
-const dataPath = process.env.DATA_PATH || path.join(serverDir, 'data.xlsx')
-const workbook = XLSX.readFile(dataPath)
+const dataDir = process.env.DATA_DIR || path.join(serverDir, 'data')
 
-function rows(sheetName) {
-  const sheet = workbook.Sheets[sheetName]
-  if (!sheet) throw new Error(`Не найден лист «${sheetName}»`)
-  return XLSX.utils.sheet_to_json(sheet, { defval: '' })
+function readJson(relativePath) {
+  return JSON.parse(fs.readFileSync(path.join(dataDir, relativePath), 'utf8'))
 }
 
-function tags(value, separator = ',') {
-  return String(value ?? '').split(separator).map((tag) => tag.trim()).filter(Boolean)
+function loadCharacteristics() {
+  const index = readJson(path.join('characteristics', 'index.json'))
+  const items = []
+  for (const slot of index.slots) {
+    if (!slot.file) continue
+    const file = readJson(path.join('characteristics', slot.file))
+    const category = file.category || slot.category
+    for (const item of file.items ?? []) {
+      if (!String(item.name ?? '').trim()) continue
+      items.push({
+        category,
+        name: String(item.name).trim(),
+        coef: Number(item.coef) || 0,
+        tags: Array.isArray(item.tags) ? item.tags : [],
+      })
+    }
+  }
+  return items
 }
 
-function requirementGroups(value) {
-  return String(value ?? '').split(';').map((group) => tags(group, '|')).filter((group) => group.length)
-}
-
-function kind(value) {
-  const type = String(value ?? '').trim().toLocaleLowerCase('ru-RU').replace(/\./g, '')
-  if (type.startsWith('катастроф')) return 'catastrophe'
-  if (type.startsWith('угроз')) return 'threat'
-  if (type.startsWith('доп') || type.startsWith('услов')) return 'condition'
-  return null
+function loadBunkerKind(kind, fileName) {
+  return (readJson(path.join('bunker', fileName)).items ?? [])
+    .filter((item) => String(item.text ?? '').trim())
+    .map((item) => ({
+      id: String(item.id ?? ''),
+      kind,
+      text: String(item.text).trim(),
+      groups: Array.isArray(item.requirements) ? item.requirements : [],
+      grants: Array.isArray(item.grants) ? item.grants : [],
+    }))
 }
 
 function escapeHtml(value) {
@@ -37,14 +49,7 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;')
 }
 
-const characteristics = rows('Характеристики')
-  .filter((row) => row['Название'])
-  .map((row) => ({
-    category: String(row['Категория']),
-    name: String(row['Название']),
-    coef: Number(String(row['КФ']).replace(',', '.')) || 0,
-    tags: tags(row['Теги выживания']),
-  }))
+const characteristics = loadCharacteristics()
 characteristics.push({
   category: 'Биология',
   name: 'Бесплодие; также Ж старше 50 лет или М старше 60 лет',
@@ -52,18 +57,12 @@ characteristics.push({
   tags: ['reproductive_edge'],
 })
 
-const bunkerRows = rows('Угрозы, Катастрофы, Условия')
-const conditions = bunkerRows
-  .filter((row) => kind(row['Тип']) === 'condition')
-  .map((row) => ({ text: String(row['Текст']), tags: tags(row['Даёт теги']) }))
-const challenges = bunkerRows
-  .map((row) => ({
-    id: String(row.id),
-    kind: kind(row['Тип']),
-    text: String(row['Текст']),
-    groups: requirementGroups(row['Требования (группы ;, варианты |)']),
-  }))
-  .filter((row) => row.kind === 'catastrophe' || row.kind === 'threat')
+const conditionRows = loadBunkerKind('condition', 'conditions.json')
+const conditions = conditionRows.map((row) => ({ text: row.text, tags: row.grants }))
+const challenges = [
+  ...loadBunkerKind('catastrophe', 'catastrophes.json'),
+  ...loadBunkerKind('threat', 'threats.json'),
+]
 
 function sourceList(group) {
   const characteristicSources = characteristics
@@ -169,7 +168,7 @@ const html = `<!doctype html>
 <body>
   <main>
     <h1>Покрытие катастроф и угроз</h1>
-    <p class="intro">Каждая группа обязательна; внутри группы достаточно одного тега. Источники отсортированы по КФ. Сформировано ${generatedAt} UTC из server/data.xlsx.</p>
+    <p class="intro">Каждая группа обязательна; внутри группы достаточно одного тега. Источники отсортированы по КФ. Сформировано ${generatedAt} UTC из server/data.</p>
     <div class="toolbar" aria-label="Фильтры">
       <input id="search" type="search" placeholder="Текст, id или тег…" aria-label="Поиск">
       <button type="button" class="active" data-filter="all">Все</button>

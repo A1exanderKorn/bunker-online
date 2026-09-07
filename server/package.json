@@ -5,7 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "dev": "ts-node index.ts",
-    "build": "tsc && node -e \"const fs=require('fs'); const p=require('path'); const dest=p.join('dist','server'); fs.mkdirSync(dest,{recursive:true}); fs.copyFileSync('data.xlsx', p.join(dest,'data.xlsx'));\"",
+    "build": "tsc && node -e \"require('fs').cpSync('data', require('path').join('dist','server','data'), {recursive:true})\"",
     "start": "node dist/server/index.js",
     "test": "npm run build && node --test tests/*.test.cjs"
   },
@@ -15,8 +15,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "socket.io": "^4.8.1",
-    "xlsx": "^0.18.5"
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

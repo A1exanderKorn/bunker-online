@@ -1,5 +1,3 @@
-import * as XLSX from 'xlsx'
-import { DATA_PATH } from './config'
 import type {
   ActionCard,
   CardPickSpec,
@@ -8,9 +6,10 @@ import type {
   Player,
 } from '../shared/types'
 import { characteristicWeight } from './characteristics'
+import { readJson } from './loadJson'
 
 /**
- * Загрузка каталога карт действия из 2-го листа data.xlsx и раздача карт
+ * Загрузка каталога карт действия из JSON и раздача карт
  * игрокам по коэффициенту их набора характеристик.
  */
 
@@ -30,48 +29,29 @@ export interface CardDef {
   probs: number[]
 }
 
-interface CardRow {
-  id: string
-  category: string
-  title: string
-  code: string
-  action: string
-  target: string
-  scope: string
-  picks: number
-  stage: string
-  unique: number
-  prob025: number
-  prob035: number
-  prob04: number
-  prob045: number
-  prob05: number
-  prob06: number
-  prob06p: number
-  note?: string
+interface CardFile {
+  cards: {
+    id: string
+    category: string
+    title: string
+    code: string
+    action: string
+    target: string
+    scope: string
+    picks: number
+    stage: string
+    unique: boolean
+    note?: string
+    probs: number[]
+  }[]
 }
-
-const SHEET = 'Карты действия'
 
 let cache: CardDef[] | null = null
 
-/** Excel обычно возвращает number, но поддерживаем и текстовые "0,4". */
-function decimal(value: unknown): number {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
-  const parsed = Number(String(value ?? '').trim().replace(',', '.'))
-  return Number.isFinite(parsed) ? parsed : 0
-}
-
 export function loadCards(): CardDef[] {
   if (cache) return cache
-  const wb = XLSX.readFile(DATA_PATH)
-  const sheet = wb.Sheets[SHEET]
-  if (!sheet) {
-    cache = []
-    return cache
-  }
-  const rows = XLSX.utils.sheet_to_json<CardRow>(sheet)
-  cache = rows
+  const cards = readJson<CardFile>('action-cards.json').cards ?? []
+  cache = cards
     .filter((r) => r.id && r.code)
     .map((r) => ({
       cardId: r.id,
@@ -81,11 +61,11 @@ export function loadCards(): CardDef[] {
       action: r.action,
       target: r.target,
       scope: r.scope,
-      picks: decimal(r.picks),
+      picks: Number(r.picks) || 0,
       stage: (r.stage as CardStage) ?? 'any',
-      unique: Number(r.unique) === 1,
+      unique: !!r.unique,
       note: r.note ?? '',
-      probs: [r.prob025, r.prob035, r.prob04, r.prob045, r.prob05, r.prob06, r.prob06p].map(decimal),
+      probs: (r.probs ?? []).map((value) => Number(value) || 0),
     }))
   return cache
 }

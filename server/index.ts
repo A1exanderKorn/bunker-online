@@ -32,7 +32,7 @@ try {
   loadCards()
   loadBunkerData()
 } catch (err) {
-  console.error('Не удалось загрузить data.xlsx:', err)
+  console.error('Не удалось загрузить игровые JSON:', err)
 }
 
 registerSocketHandlers(io)
