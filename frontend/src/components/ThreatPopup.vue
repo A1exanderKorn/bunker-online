@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
+import ChallengeRequirements from '@/components/ChallengeRequirements.vue'
 
 /** Центральный попап новой угрозы. Закрывается кликом по затемнённому фону. */
 const game = useGameStore()
@@ -13,7 +14,8 @@ const { threatPopup } = storeToRefs(game)
       <article class="threat-dialog card" role="dialog" aria-modal="true" aria-label="Новая угроза">
         <div class="threat-icon">⚠️</div>
         <p class="threat-kicker">Новая угроза</p>
-        <h2>{{ threatPopup }}</h2>
+        <h2>{{ threatPopup.flavor }}</h2>
+        <ChallengeRequirements :requirements="threatPopup.requirements" />
         <p class="threat-hint">Нажмите за пределами окна, чтобы закрыть</p>
       </article>
     </div>

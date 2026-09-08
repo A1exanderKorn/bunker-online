@@ -33,6 +33,10 @@ const specs = computed(() => props.card.pickSpecs)
 const current = computed(() => specs.value[stepIdx.value])
 const isLast = computed(() => stepIdx.value >= specs.value.length - 1)
 
+function threatPreview(flavor: string): string {
+  return flavor.length > 60 ? `${flavor.slice(0, 60)}…` : flavor
+}
+
 const layout = computed<CharSlot[]>(() =>
   charLayout.value.length > 0
     ? charLayout.value
@@ -187,7 +191,7 @@ function playerName(id: string | undefined) {
             class="opt threat-opt"
             @click="pickThreat(i)"
           >
-            {{ t.slice(0, 60) }}…
+            {{ threatPreview(t.flavor) }}
           </button>
           <p v-if="bunker.threats.length === 0" class="empty">Нет угроз для удаления.</p>
         </div>

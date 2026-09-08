@@ -281,23 +281,35 @@ export function remainingPlayers(steps: RoundStep[], playerCount: number): numbe
 
 // ─── Бункер: катастрофы, угрозы, условия (III.5) ───────────────────
 
-/** Доп. условие бункера, открытое картой действия. */
+/** Катастрофа или угроза на клиенте: сюжет без хвоста механики и подписанные требования. */
+export interface PublicBunkerChallenge {
+  flavor: string
+  requirements: string[][]
+}
+
+/** Доп. условие на клиенте. */
 export interface BunkerCondition {
-  text: string
+  flavor: string
+  grants: string[]
   byPlayerId: string
   byName: string
 }
 
-/** Стартовое состояние бункера, видное всем. */
+/** Состояние бункера в сокете (клиент). На сервере лобби хранит полные text отдельно. */
 export interface BunkerState {
-  /** Катастрофа (показывается сразу). */
-  catastrophe: string
-  /** Сколько лет нужно провести в бункере (1–15, рандом на старте). */
+  catastrophe: PublicBunkerChallenge
   years: number
-  /** Раскрытые по ходу игры угрозы (в порядке появления). */
-  threats: string[]
-  /** Доп. условия, открытые картами (отдельно от угроз). */
+  threats: PublicBunkerChallenge[]
   conditions: BunkerCondition[]
+}
+
+export const EMPTY_PUBLIC_CHALLENGE: PublicBunkerChallenge = { flavor: '', requirements: [] }
+
+export const EMPTY_BUNKER: BunkerState = {
+  catastrophe: { ...EMPTY_PUBLIC_CHALLENGE },
+  years: 0,
+  threats: [],
+  conditions: [],
 }
 
 // ─── Карты действия ───────────────────────────────────

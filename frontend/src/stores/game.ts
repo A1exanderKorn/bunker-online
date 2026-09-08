@@ -15,8 +15,9 @@ import type {
   SurvivalReport,
   TurnState,
   VoteResultPayload,
+  PublicBunkerChallenge,
 } from '@shared/types'
-import { DEFAULT_SETTINGS } from '@shared/types'
+import { DEFAULT_SETTINGS, EMPTY_BUNKER } from '@shared/types'
 import { connectSocket, getSocket, type JoinMode } from '@/services/socket'
 
 interface RosterPlayer {
@@ -59,13 +60,13 @@ export const useGameStore = defineStore('game', {
       currentVoterId: null,
     } as TurnState,
 
-    bunker: { catastrophe: '', years: 0, threats: [], conditions: [] } as BunkerState,
+    bunker: { ...EMPTY_BUNKER } as BunkerState,
     charLayout: [] as CharSlot[],
     actionCards: [] as ActionCard[],
     myCards: [] as ActionCard[],
     cardPopup: null as CardPlayedPayload | null,
     cardHistory: [] as CardHistoryEntry[],
-    threatPopup: null as string | null,
+    threatPopup: null as PublicBunkerChallenge | null,
     catalog: [] as CatalogCard[],
 
     roster: [] as RosterPlayer[],
@@ -161,12 +162,12 @@ export const useGameStore = defineStore('game', {
       socket.on('bunkerUpdated', (payload) => {
         const previous = new Map<string, number>()
         for (const threat of this.bunker.threats) {
-          previous.set(threat, (previous.get(threat) ?? 0) + 1)
+          previous.set(threat.flavor, (previous.get(threat.flavor) ?? 0) + 1)
         }
         const added = payload.bunker.threats.filter((threat) => {
-          const count = previous.get(threat) ?? 0
+          const count = previous.get(threat.flavor) ?? 0
           if (count === 0) return true
-          previous.set(threat, count - 1)
+          previous.set(threat.flavor, count - 1)
           return false
         })
         if (added.length > 0) this.threatPopup = added[added.length - 1] ?? null
@@ -214,7 +215,7 @@ export const useGameStore = defineStore('game', {
         this.lastResult = null
         this.survivorIds = []
         this.survival = null
-        this.bunker = { catastrophe: '', years: 0, threats: [], conditions: [] }
+        this.bunker = { ...EMPTY_BUNKER, catastrophe: { flavor: '', requirements: [] } }
         this.charLayout = []
         this.actionCards = []
         this.cardHistory = []
