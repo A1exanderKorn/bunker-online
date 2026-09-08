@@ -1,6 +1,7 @@
-import type { BunkerState, PublicBunkerChallenge } from '../shared/types'
+import type { BunkerState, GameMode, PublicBunkerChallenge } from '../shared/types'
 import { readJson } from './loadJson'
 import { labelTag, labelTagGroups } from './tagLabels'
+import { isNewGameMode } from './data'
 
 /**
  * Каталог бункера: катастрофы, угрозы и доп. условия из JSON.
@@ -45,8 +46,12 @@ function deriveTitle(text: string): string {
   return text.slice(0, 48).trim()
 }
 
-function loadKind(kind: BunkerChallenge['kind'], file: string): BunkerChallenge[] {
-  const items = readJson<BunkerFile>(`bunker/${file}`).items ?? []
+function bunkerDir(mode: GameMode = 'classic'): string {
+  return isNewGameMode(mode) ? 'bunker-new' : 'bunker'
+}
+
+function loadKind(kind: BunkerChallenge['kind'], file: string, mode: GameMode = 'classic'): BunkerChallenge[] {
+  const items = readJson<BunkerFile>(`${bunkerDir(mode)}/${file}`).items ?? []
   return items
     .filter((item) => String(item.text ?? '').trim())
     .map((item) => {
@@ -65,25 +70,28 @@ function loadKind(kind: BunkerChallenge['kind'], file: string): BunkerChallenge[
     })
 }
 
-let cache: BunkerData | null = null
+const cache = new Map<string, BunkerData>()
 
-export function loadBunkerData(): BunkerData {
-  if (cache) return cache
-  const catastrophes = loadKind('catastrophe', 'catastrophes.json')
-  const threats = loadKind('threat', 'threats.json')
-  const conditions = loadKind('condition', 'conditions.json')
+export function loadBunkerData(mode: GameMode = 'classic'): BunkerData {
+  const key = isNewGameMode(mode) ? 'new' : 'classic'
+  const hit = cache.get(key)
+  if (hit) return hit
+  const catastrophes = loadKind('catastrophe', 'catastrophes.json', key)
+  const threats = loadKind('threat', 'threats.json', key)
+  const conditions = loadKind('condition', 'conditions.json', key)
   const challenges = [...catastrophes, ...threats, ...conditions]
-  cache = {
+  const data: BunkerData = {
     catastrophes: catastrophes.map((item) => item.text),
     threats: threats.map((item) => item.text),
     conditions: conditions.map((item) => item.text),
     challenges,
   }
-  return cache
+  cache.set(key, data)
+  return data
 }
 
-export function challengeByText(text: string): BunkerChallenge | undefined {
-  return loadBunkerData().challenges.find((challenge) => challenge.text === text)
+export function challengeByText(text: string, mode: GameMode = 'classic'): BunkerChallenge | undefined {
+  return loadBunkerData(mode).challenges.find((challenge) => challenge.text === text)
 }
 
 const FLAVOR_MARKERS = ['Для решения нужны одновременно:', 'Для решения подойдёт:']
@@ -112,25 +120,25 @@ export interface StoredBunkerState {
   conditions: StoredBunkerCondition[]
 }
 
-export function toPublicChallenge(text: string): PublicBunkerChallenge {
+export function toPublicChallenge(text: string, mode: GameMode = 'classic'): PublicBunkerChallenge {
   if (!text) return { flavor: '', requirements: [] }
-  const challenge = challengeByText(text)
+  const challenge = challengeByText(text, mode)
   return {
     flavor: challengeFlavor(text),
-    requirements: labelTagGroups(challenge?.requirements ?? []),
+    requirements: labelTagGroups(challenge?.requirements ?? [], mode),
   }
 }
 
-export function toPublicBunker(bunker: StoredBunkerState): BunkerState {
+export function toPublicBunker(bunker: StoredBunkerState, mode: GameMode = 'classic'): BunkerState {
   return {
-    catastrophe: toPublicChallenge(bunker.catastrophe),
+    catastrophe: toPublicChallenge(bunker.catastrophe, mode),
     years: bunker.years,
-    threats: bunker.threats.map(toPublicChallenge),
+    threats: bunker.threats.map((text) => toPublicChallenge(text, mode)),
     conditions: bunker.conditions.map((condition) => {
-      const challenge = challengeByText(condition.text)
+      const challenge = challengeByText(condition.text, mode)
       return {
         flavor: challengeFlavor(condition.text),
-        grants: (challenge?.grants ?? []).map(labelTag),
+        grants: (challenge?.grants ?? []).map((tag) => labelTag(tag, mode)),
         byPlayerId: condition.byPlayerId,
         byName: condition.byName,
       }
@@ -139,9 +147,9 @@ export function toPublicBunker(bunker: StoredBunkerState): BunkerState {
 }
 
 /** Краткое имя катастрофы / угрозы / условия для истории карт. */
-export function challengeTitle(text: string): string {
+export function challengeTitle(text: string, mode: GameMode = 'classic'): string {
   if (!text) return ''
-  return challengeByText(text)?.title || deriveTitle(text)
+  return challengeByText(text, mode)?.title || deriveTitle(text)
 }
 
 /** Возвращает перемешанную копию массива (не мутирует исходный). */
@@ -155,27 +163,22 @@ function shuffled<T>(arr: T[]): T[] {
 }
 
 /** Случайная катастрофа (стартовое условие). */
-export function pickCatastrophe(): string {
-  const data = loadBunkerData()
+export function pickCatastrophe(mode: GameMode = 'classic'): string {
+  const data = loadBunkerData(mode)
   if (data.catastrophes.length === 0) return 'Неизвестная катастрофа'
   return data.catastrophes[Math.floor(Math.random() * data.catastrophes.length)]
 }
 
-/**
- * Возвращает перемешанную очередь уникальных угроз. Если запрошено больше,
- * чем есть в колоде, очередь заканчивается без перехода на второй круг.
- */
-export function threatQueue(count: number): string[] {
-  const data = loadBunkerData()
+export function threatQueue(count: number, mode: GameMode = 'classic'): string[] {
+  const data = loadBunkerData(mode)
   if (data.threats.length === 0) return []
   const uniqueThreats = [...new Set(data.threats)]
   return shuffled(uniqueThreats).slice(0, Math.max(0, count))
 }
 
-/** Случайное дополнительное условие, которого ещё нет в бункере. */
-export function pickUnusedCondition(openedTexts: Iterable<string>): string | undefined {
+export function pickUnusedCondition(openedTexts: Iterable<string>, mode: GameMode = 'classic'): string | undefined {
   const opened = new Set(openedTexts)
-  const available = [...new Set(loadBunkerData().conditions)].filter((text) => !opened.has(text))
+  const available = [...new Set(loadBunkerData(mode).conditions)].filter((text) => !opened.has(text))
   if (available.length === 0) return undefined
   return available[Math.floor(Math.random() * available.length)]
 }

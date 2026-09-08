@@ -1,0 +1,935 @@
+{
+  "category": "Здоровье",
+  "items": [
+    {
+      "name": "Отличный иммунитет",
+      "coef": 1,
+      "hint": "Устойчив к заразе в бункере и к инфекционным катастрофам; не отменяет нужду в лечении тяжёлых больных",
+      "tags": [
+        "infectious",
+        "ppe"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Закалённость",
+      "coef": 0.95,
+      "hint": "Переносит холод гермозоны, отказ отопления и мороз снаружи (ядерная зима, выход)",
+      "tags": [
+        "cold"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Идеально здоров",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "healthy"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Идеально здоров",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "healthy"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Идеально здоров",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "healthy"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Идеально здоров",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "healthy"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Гетерохромия",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Перенесенная аппендэктомия",
+      "coef": 0.8,
+      "hint": "Аппендикс удален, осложнений нет",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Заикание",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Косоглазие",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Перенесённый ковид без последствий",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Мигрень",
+      "coef": 0.65,
+      "hint": "лёгкая",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Плоскостопие",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Дальтонизм",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Отсутствие обоняния",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Близорукость",
+      "coef": 0.55,
+      "hint": "−3",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Гастрит",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Донорская почка (функция в норме)",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Сколиоз",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Экзема",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Варикоз",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Вегетососудистая дистония",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Нарциссизм",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "mental"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Карликовость",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Псориаз",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [],
+      "staged": true,
+      "stages": [
+        "ранняя",
+        "средняя",
+        "терминальная (тяжёлый)"
+      ]
+    },
+    {
+      "name": "Слабая анемия",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Аллергия на пыль",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Бессонница",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Кариес",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Ремиссия онкологии",
+      "coef": 0.4,
+      "hint": "Не стадия «Онкологии»; отдельная карта",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Тугоухость",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Анорексия",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Миокардит в ремиссии",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Потеря двух пальцев на руке",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Целиакия",
+      "coef": 0.3,
+      "hint": "Не переносит продукты с глютеном",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Ожирение",
+      "coef": 0.25,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Протез ноги (ходит)",
+      "coef": 0.25,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Гипотиреоз",
+      "coef": 0.2,
+      "hint": "вместо снятого «Псориаз тяжёлый»",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Гипертония",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Кардиостимулятор стабильный",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Обсессивно-компульсивное расстройство",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "mental"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Панические атаки",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "mental"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Храп с апноэ",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Акне",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Аллергия на антибиотики",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Аритмия",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Депрессия",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [
+        "mental"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Лунатизм",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Остеопороз",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Язва желудка",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [],
+      "staged": true,
+      "stages": [
+        "ранняя",
+        "средняя",
+        "терминальная (кровотечение)"
+      ]
+    },
+    {
+      "name": "Алкоголизм",
+      "coef": 0.05,
+      "hint": "",
+      "tags": [
+        "addiction"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Игровая зависимость",
+      "coef": 0.05,
+      "hint": "",
+      "tags": [
+        "addiction"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Клептомания",
+      "coef": 0.05,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Биполярное расстройство",
+      "coef": 0,
+      "hint": "",
+      "tags": [
+        "mental"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Глухонемота",
+      "coef": 0,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Игромания",
+      "coef": 0,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Ипохондрия",
+      "coef": 0,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Потеря одного глаза",
+      "coef": 0,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Хронический бронхит",
+      "coef": 0,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Подагра",
+      "coef": -0.1,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Слабый иммунитет",
+      "coef": -0.1,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Астма",
+      "coef": -0.15,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Мочекаменная болезнь",
+      "coef": -0.15,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Наркотическая зависимость",
+      "coef": -0.15,
+      "hint": "",
+      "tags": [
+        "addiction"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Токсический зоб",
+      "coef": -0.15,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Ампутация кисти",
+      "coef": -0.2,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Глаукома",
+      "coef": -0.2,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Диссоциативное расстройство",
+      "coef": -0.2,
+      "hint": "",
+      "tags": [
+        "mental"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Полная глухота",
+      "coef": -0.2,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Ревматоидный артрит",
+      "coef": -0.2,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Синдром отмены",
+      "coef": -0.2,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Слепота",
+      "coef": -0.25,
+      "hint": "",
+      "tags": [],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Эпилепсия",
+      "coef": -0.25,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": true,
+      "stages": [
+        "ранняя",
+        "средняя",
+        "терминальная (неконтролируемая)"
+      ]
+    },
+    {
+      "name": "Язвенный колит",
+      "coef": -0.25,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Агрессивный психический срыв",
+      "coef": -0.3,
+      "hint": "",
+      "tags": [
+        "dangerous"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Умственная отсталость",
+      "coef": -0.3,
+      "hint": "Бывает",
+      "tags": [
+        "mental"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Отсутствие ноги",
+      "coef": -0.35,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Отсутствие руки",
+      "coef": -0.35,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Сифилис",
+      "coef": -0.35,
+      "hint": "",
+      "tags": [
+        "contagious"
+      ],
+      "staged": true,
+      "stages": [
+        "первичный",
+        "вторичный",
+        "третичный"
+      ]
+    },
+    {
+      "name": "ХОБЛ",
+      "coef": -0.35,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Шизофрения",
+      "coef": -0.35,
+      "hint": "В душе он Наполеон",
+      "tags": [
+        "mental"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Гемофилия",
+      "coef": -0.4,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Сахарный диабет",
+      "coef": -0.4,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": true,
+      "stages": []
+    },
+    {
+      "name": "Болезнь Альцгеймера",
+      "coef": -0.45,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": true,
+      "stages": [
+        "ранняя",
+        "средняя",
+        "терминальная (деменция)"
+      ]
+    },
+    {
+      "name": "Мультирезистентный стафилококк",
+      "coef": -0.45,
+      "hint": "",
+      "tags": [
+        "contagious"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Цирроз",
+      "coef": -0.45,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": true,
+      "stages": [
+        "компенсированный",
+        "субкомпенсированный",
+        "декомпенсированный"
+      ]
+    },
+    {
+      "name": "Онкология",
+      "coef": -0.5,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": true,
+      "stages": [
+        "ранняя",
+        "средняя",
+        "терминальная (4 стадия)"
+      ]
+    },
+    {
+      "name": "Полный паралич",
+      "coef": -0.5,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Почечная недостаточность",
+      "coef": -0.5,
+      "hint": "Нуждается в регулярном лечении",
+      "tags": [
+        "critical"
+      ],
+      "staged": true,
+      "stages": []
+    },
+    {
+      "name": "Сердечная недостаточность",
+      "coef": -0.5,
+      "hint": "Нуждается в регулярном лечении",
+      "tags": [
+        "critical"
+      ],
+      "staged": true,
+      "stages": []
+    },
+    {
+      "name": "Гепатит C",
+      "coef": -0.7,
+      "hint": "",
+      "tags": [
+        "contagious"
+      ],
+      "staged": true,
+      "stages": []
+    },
+    {
+      "name": "Вирусная инфекция",
+      "coef": -0.75,
+      "hint": "",
+      "tags": [
+        "contagious"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Пневмония",
+      "coef": -0.75,
+      "hint": "",
+      "tags": [
+        "contagious"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "ВИЧ",
+      "coef": -0.8,
+      "hint": "",
+      "tags": [
+        "contagious"
+      ],
+      "staged": true,
+      "stages": [
+        "ранняя",
+        "средняя",
+        "терминальная (СПИД)"
+      ]
+    },
+    {
+      "name": "Сепсис",
+      "coef": -0.85,
+      "hint": "",
+      "tags": [
+        "critical"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Туберкулёз",
+      "coef": -0.85,
+      "hint": "Кхе-кхе",
+      "tags": [
+        "contagious"
+      ],
+      "staged": true,
+      "stages": [
+        "ранняя",
+        "средняя",
+        "терминальная (открытая форма)"
+      ]
+    },
+    {
+      "name": "Геморрагическая лихорадка",
+      "coef": -0.9,
+      "hint": "",
+      "tags": [
+        "contagious",
+        "critical"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Корь",
+      "coef": -0.9,
+      "hint": "",
+      "tags": [
+        "contagious"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Натуральная оспа",
+      "coef": -0.95,
+      "hint": "",
+      "tags": [
+        "contagious",
+        "critical"
+      ],
+      "staged": false,
+      "stages": []
+    },
+    {
+      "name": "Лёгочная чума",
+      "coef": -1,
+      "hint": "",
+      "tags": [
+        "contagious",
+        "critical"
+      ],
+      "staged": false,
+      "stages": []
+    }
+  ]
+}

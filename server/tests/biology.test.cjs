@@ -5,6 +5,7 @@ const {
   biologyAgeProbability,
   experienceModifier,
   generateBiology,
+  generateOrdinaryBiology,
 } = require('../dist/server/characteristics.js')
 
 function withRandom(sequence, fn) {
@@ -100,4 +101,12 @@ test('женщина старше 50 получает возрастное бе�
   assert.equal(biology.sex, 'Ж')
   assert.equal(biology.age, 51)
   assert.equal(biology.infertile, true)
+})
+
+test('обычная биология только М/Ж и не младше 19 лет', () => {
+  for (let i = 0; i < 80; i += 1) {
+    const biology = generateOrdinaryBiology()
+    assert.ok(biology.sex === 'М' || biology.sex === 'Ж')
+    assert.ok(biology.age >= 19 && biology.age <= 90)
+  }
 })

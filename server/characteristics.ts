@@ -1,7 +1,14 @@
 import type { Biology, Characteristic, CharacteristicCategory, CharSlot, Player, Sex } from '../shared/types'
 import { BIOLOGY_CATEGORY, slotsFromTypes } from '../shared/types'
 import { CATEGORY_ORDER } from './config'
-import { dealCategories, displayCategoryOrder, rowsByCategory, characteristicWeight, type CharacteristicDef } from './data'
+import {
+  dealCategories,
+  displayCategoryOrder,
+  rowsByCategory,
+  characteristicWeight,
+  type CharacteristicDef,
+  type GameMode,
+} from './data'
 
 /** Фишер–Йейтс, тасует массив на месте и возвращает его же. */
 export function shuffleArray<T>(array: T[]): T[] {
@@ -119,7 +126,22 @@ export function generateBiology(existing: Biology[]): Biology {
   return { sex, age, experience, coef, infertile, isVisible: false, hint }
 }
 
-function parseRow(row: CharacteristicDef): Characteristic {
+/** Обычный М/Ж: возраст 19–90. Без андроида и гермафродита. */
+export function generateOrdinaryBiology(): Biology {
+  const sex: Sex = Math.random() < 0.5 ? 'М' : 'Ж'
+  const age = rollBiologyAge()
+  const experience = rollExperience(age)
+  const baseCoef = sex === 'Ж'
+    ? (age <= 50 ? 0.92 - 0.012 * Math.abs(30 - age) : 0.78 - 0.006 * (age - 50))
+    : (age <= 60 ? 0.9 - 0.008 * Math.abs(35 - age) : 0.8 - 0.005 * (age - 60))
+  const guaranteedInfertility =
+    (sex === 'Ж' && age > 50) || (sex === 'М' && age > 60)
+  const infertile = guaranteedInfertility || Math.random() < 0.1
+  const coef = clamp01(baseCoef + experienceModifier(age, experience) - (infertile ? 0.2 : 0))
+  return { sex, age, experience, coef, infertile, isVisible: false }
+}
+
+function parseRow(row: CharacteristicDef, mode: GameMode = 'classic'): Characteristic {
   return {
     type: row.category,
     value: String(row.name ?? '').trim(),
@@ -128,6 +150,9 @@ function parseRow(row: CharacteristicDef): Characteristic {
     isVisible: false,
     occ: 0,
     tags: [...(row.tags ?? [])],
+    stageLabel: undefined,
+    stageIndex: undefined,
+    incurable: undefined,
   }
 }
 
@@ -200,22 +225,23 @@ function dealToPlayer(
   biologies: Biology[],
   targetCoef: number | null,
   categoryProgram: CharacteristicCategory[],
+  mode: GameMode = 'classic',
 ): {
   biology: Biology
   characteristics: Characteristic[]
 } {
   const biology = generateBiology(biologies)
   const characteristics: Characteristic[] = []
-  let weightedSum = biology.coef * characteristicWeight(BIOLOGY_CATEGORY)
-  let totalWeight = characteristicWeight(BIOLOGY_CATEGORY)
+  let weightedSum = biology.coef * characteristicWeight(BIOLOGY_CATEGORY, mode)
+  let totalWeight = characteristicWeight(BIOLOGY_CATEGORY, mode)
 
   for (const category of shuffleArray([...categoryProgram])) {
-    const available = rowsByCategory(category)
-      .map(parseRow)
+    const available = rowsByCategory(category, mode)
+      .map((row) => parseRow(row, mode))
       .filter((c) => !usedValues.has(c.value))
     if (available.length === 0) continue
 
-    const weight = characteristicWeight(category)
+    const weight = characteristicWeight(category, mode)
     const chosen = targetCoef === null
       ? available[Math.floor(Math.random() * available.length)]
       : pickWithBias(available, weightedSum, totalWeight, targetCoef, weight)
@@ -237,11 +263,13 @@ export interface DealOptions {
   extraBaggage?: boolean
   /** III.4: не раздавать «Фобию». */
   noPhobias?: boolean
+  gameMode?: GameMode
 }
 
 /** Строит программу категорий с учётом багажа/фобий. */
 function buildCategoryProgram(opts: DealOptions): CharacteristicCategory[] {
-  let program = dealCategories()
+  const mode = opts.gameMode ?? 'classic'
+  let program = dealCategories(mode)
   if (program.length === 0) program = [...CATEGORY_ORDER]
   if (opts.noPhobias) program = program.filter((c) => c !== 'Фобия')
   if (opts.extraBaggage) {
@@ -252,9 +280,9 @@ function buildCategoryProgram(opts: DealOptions): CharacteristicCategory[] {
   return program
 }
 
-/** Раскладка строк карточки: порядок из JSON + второй багаж / без фобий. */
 export function buildCharLayout(opts: DealOptions): CharSlot[] {
-  let types = displayCategoryOrder()
+  const mode = opts.gameMode ?? 'classic'
+  let types = displayCategoryOrder(mode)
   if (types.length === 0) {
     types = ['Профессия', 'Здоровье', 'Биология', 'Хобби', 'Фобия', 'Багаж', 'Факт']
   }
@@ -266,35 +294,40 @@ export function buildCharLayout(opts: DealOptions): CharSlot[] {
   }
   return slotsFromTypes(types).map((slot) => ({
     ...slot,
-    weight: characteristicWeight(slot.type),
+    weight: characteristicWeight(slot.type, mode),
   }))
 }
 
-/** Раздаёт характеристики всем игрокам (мутирует объекты игроков). */
 export function dealCharacteristics(players: Player[], opts: DealOptions = {}): void {
+  const mode = opts.gameMode ?? 'classic'
+  if (mode === 'new') {
+    const { dealNewModeToPlayers } = require('./dealNew') as typeof import('./dealNew')
+    dealNewModeToPlayers(players, opts)
+    return
+  }
   const targetCoef = opts.targetCoef === null ? null : (opts.targetCoef ?? 0.5)
   const program = buildCategoryProgram(opts)
   const used = new Set<string>()
   const biologies: Biology[] = []
 
   for (const player of players) {
-    const { biology, characteristics } = dealToPlayer(used, biologies, targetCoef, program)
+    const { biology, characteristics } = dealToPlayer(used, biologies, targetCoef, program, mode)
     biologies.push(biology)
     player.biology = biology
     player.characteristics = characteristics
   }
 }
 
-/** Случайные уникальные значения категории для массовой перераздачи. */
 export function drawUniqueCharacteristics(
   category: string,
   count: number,
   excludedValues: Iterable<string> = [],
+  mode: GameMode = 'classic',
 ): Characteristic[] {
   const excluded = new Set(excludedValues)
   const unique = new Map<string, Characteristic>()
-  for (const row of rowsByCategory(category)) {
-    const characteristic = parseRow(row)
+  for (const row of rowsByCategory(category, mode)) {
+    const characteristic = parseRow(row, mode)
     if (characteristic.value && !excluded.has(characteristic.value) && !unique.has(characteristic.value)) {
       unique.set(characteristic.value, characteristic)
     }
