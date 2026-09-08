@@ -2,8 +2,6 @@ import type { Server } from 'socket.io'
 import type {
   ActionCard,
   Biology,
-  BunkerCondition,
-  BunkerState,
   CardHistoryCharChange,
   CardHistoryChangeKind,
   CardHistoryEntry,
@@ -41,7 +39,15 @@ import {
   generateBiology,
 } from './characteristics'
 import { rowsByCategory } from './data'
-import { pickCatastrophe, pickUnusedCondition, threatQueue, challengeTitle } from './bunker'
+import {
+  pickCatastrophe,
+  pickUnusedCondition,
+  threatQueue,
+  challengeTitle,
+  toPublicBunker,
+  type StoredBunkerCondition,
+  type StoredBunkerState,
+} from './bunker'
 import { dealActionCards, makeCardByCatalogId, loadCards } from './cards'
 import { calculateSurvival } from './survival'
 import { filterCardHistory } from './cardHistory'
@@ -112,7 +118,7 @@ export class Lobby {
   private voteCandidates: string[] | null = null
 
   // ── Бункер ──
-  private bunker: BunkerState = { catastrophe: '', years: 0, threats: [], conditions: [] }
+  private bunker: StoredBunkerState = { catastrophe: '', years: 0, threats: [], conditions: [] }
   private pendingThreats: string[] = []
   private charLayout: CharSlot[] = []
   private survivalReport: SurvivalReport | null = null
@@ -444,7 +450,7 @@ export class Lobby {
       stage: this.stage,
       settings: this.settings,
       turn: this.turn,
-      bunker: this.bunker,
+      bunker: toPublicBunker(this.bunker),
       actionCards: [],
       charLayout: this.charLayout,
       cardHistory: [],
@@ -813,7 +819,7 @@ export class Lobby {
     this.broadcastCardHistory()
     // Обновляем публичное состояние и бункер.
     this.broadcastCharacters()
-    this.io.to(this.code).emit('bunkerUpdated', { bunker: this.bunker })
+    this.io.to(this.code).emit('bunkerUpdated', { bunker: toPublicBunker(this.bunker) })
     // Приватно обновляем характеристики затронутых игроков.
     for (const p of this.players) {
       const sid = this.sockets.get(p.id)
@@ -1091,7 +1097,7 @@ export class Lobby {
       case 'revealCondition': {
         const cond = pickUnusedCondition(this.bunker.conditions.map((condition) => condition.text))
         if (!cond) return fail('Все дополнительные условия уже открыты')
-        const entry: BunkerCondition = {
+        const entry: StoredBunkerCondition = {
           text: cond,
           byPlayerId: playerId,
           byName: this.nameOf(playerId),
@@ -1184,7 +1190,7 @@ export class Lobby {
     const threat = this.pendingThreats.shift()
     if (!threat) return
     this.bunker.threats.push(threat)
-    this.io.to(this.code).emit('bunkerUpdated', { bunker: this.bunker })
+    this.io.to(this.code).emit('bunkerUpdated', { bunker: toPublicBunker(this.bunker) })
   }
 
   // ─── Раунд вскрытия и ходы ──────────────────────────────────────────────
@@ -1831,12 +1837,12 @@ export class Lobby {
       stage: this.stage,
       settings: this.settings,
       turn: this.turn,
-      bunker: this.bunker,
+      bunker: toPublicBunker(this.bunker),
       actionCards: [],
       charLayout: this.charLayout,
       cardHistory: this.cardHistoryFor(playerId),
     })
-    this.io.to(sid).emit('bunkerUpdated', { bunker: this.bunker })
+    this.io.to(sid).emit('bunkerUpdated', { bunker: toPublicBunker(this.bunker) })
     this.io.to(sid).emit('stageChanged', {
       stage: this.stage,
       timer: this.timer,

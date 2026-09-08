@@ -1,38 +1,23 @@
 import type {
-  BunkerState,
   Player,
   SurvivalChallengeResult,
   SurvivalFactor,
   SurvivalReport,
 } from '../shared/types'
-import { challengeByText, type BunkerChallenge } from './bunker'
-
-const TAG_LABELS: Record<string, string> = {
-  agriculture: 'сельское хозяйство', food: 'пища', water: 'чистая вода',
-  medical: 'медицина', infectious: 'инфекционные заболевания', biology: 'биология', science: 'наука',
-  engineering: 'инженерия', repair: 'ремонт', tools: 'инструменты', plumbing: 'сантехника',
-  power: 'энергия', ventilation: 'вентиляция', chemistry: 'химия', radiation: 'радиация',
-  nuclear: 'ядерные технологии', protection: 'защита', construction: 'строительство',
-  survival: 'выживание', rescue: 'спасательные работы', weapon: 'оружие', security: 'безопасность',
-  strength: 'физическая сила', leadership: 'лидерство', psychology: 'психология', computing: 'IT',
-  culture: 'культура', geology: 'геология', navigation: 'навигация', communication: 'связь',
-  animals: 'работа с животными', fire: 'пожарная безопасность', logistics: 'логистика',
-  reproductive_edge: 'условие репродуктивного сканера',
-  bunker_assistance_big: 'сильная помощь бункеру',
-  bunker_assistance_small: 'небольшая помощь бункеру',
-  light_danger: 'умеренная опасность',
-}
-
-function labelTag(tag: string): string {
-  return TAG_LABELS[tag] ?? tag
-}
+import {
+  challengeByText,
+  challengeFlavor,
+  type BunkerChallenge,
+  type StoredBunkerState,
+} from './bunker'
+import { labelTag } from './tagLabels'
 
 interface TeamTags {
   tags: Set<string>
   sources: Map<string, Set<string>>
 }
 
-function buildTeamTags(players: Player[], bunker: BunkerState): TeamTags {
+function buildTeamTags(players: Player[], bunker: StoredBunkerState): TeamTags {
   const tags = new Set<string>()
   const sources = new Map<string, Set<string>>()
   const add = (tag: string, source: string) => {
@@ -100,7 +85,7 @@ function evaluateChallenge(challenge: BunkerChallenge, team: TeamTags): Survival
         : `Не хватает: ${missing.join('; ')}.`
   return {
     kind: challenge.kind === 'catastrophe' ? 'catastrophe' : 'threat',
-    text: challenge.text,
+    text: challengeFlavor(challenge.text),
     success,
     delta,
     detail,
@@ -128,7 +113,7 @@ function factor(
 
 const BASE_SURVIVAL_CHANCE = 40
 
-export function calculateSurvival(players: Player[], bunker: BunkerState): SurvivalReport {
+export function calculateSurvival(players: Player[], bunker: StoredBunkerState): SurvivalReport {
   const survivors = players.filter((player) => player.isAlive)
   const team = buildTeamTags(survivors, bunker)
   const factors: SurvivalFactor[] = []
@@ -253,7 +238,15 @@ export function calculateSurvival(players: Player[], bunker: BunkerState): Survi
   const challengeTexts = [bunker.catastrophe, ...bunker.threats].filter(Boolean)
   const challenges = challengeTexts.map((text) => {
     const challenge = challengeByText(text)
-    if (!challenge) return { kind: text === bunker.catastrophe ? 'catastrophe' as const : 'threat' as const, text, success: false, delta: -10, detail: 'Для события не настроены требования в данных бункера.' }
+    if (!challenge) {
+      return {
+        kind: text === bunker.catastrophe ? ('catastrophe' as const) : ('threat' as const),
+        text: challengeFlavor(text),
+        success: false,
+        delta: -10,
+        detail: 'Для события не настроены требования в данных бункера.',
+      }
+    }
     return evaluateChallenge(challenge, team)
   })
 

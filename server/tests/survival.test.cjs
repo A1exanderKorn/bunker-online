@@ -2,7 +2,7 @@ const assert = require('node:assert/strict')
 const test = require('node:test')
 
 const { calculateSurvival } = require('../dist/server/survival.js')
-const { loadBunkerData } = require('../dist/server/bunker.js')
+const { loadBunkerData, challengeFlavor } = require('../dist/server/bunker.js')
 
 function survivor(id, name, sex, professionTags, age = 30) {
   return {
@@ -43,8 +43,9 @@ test('базовые потребности не требуют воду, а с�
 const SUPERVULCANO = loadBunkerData().challenges.find((item) => item.id === 'cat_004').text
 
 function challengeDelta(report, text) {
-  const item = report.challenges.find((c) => c.text === text)
-  assert.ok(item, `challenge не найден: ${text}`)
+  const flavor = challengeFlavor(text)
+  const item = report.challenges.find((c) => c.text === flavor)
+  assert.ok(item, `challenge не найден: ${flavor}`)
   return item
 }
 

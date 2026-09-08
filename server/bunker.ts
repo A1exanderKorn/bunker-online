@@ -1,4 +1,6 @@
+import type { BunkerState, PublicBunkerChallenge } from '../shared/types'
 import { readJson } from './loadJson'
+import { labelTag, labelTagGroups } from './tagLabels'
 
 /**
  * Каталог бункера: катастрофы, угрозы и доп. условия из JSON.
@@ -82,6 +84,58 @@ export function loadBunkerData(): BunkerData {
 
 export function challengeByText(text: string): BunkerChallenge | undefined {
   return loadBunkerData().challenges.find((challenge) => challenge.text === text)
+}
+
+const FLAVOR_MARKERS = ['Для решения нужны одновременно:', 'Для решения подойдёт:']
+
+/** Сюжет без хвоста «Для решения…». */
+export function challengeFlavor(text: string): string {
+  if (!text) return ''
+  let cut = -1
+  for (const marker of FLAVOR_MARKERS) {
+    const index = text.indexOf(marker)
+    if (index >= 0 && (cut < 0 || index < cut)) cut = index
+  }
+  return (cut < 0 ? text : text.slice(0, cut)).trim()
+}
+
+export interface StoredBunkerCondition {
+  text: string
+  byPlayerId: string
+  byName: string
+}
+
+export interface StoredBunkerState {
+  catastrophe: string
+  years: number
+  threats: string[]
+  conditions: StoredBunkerCondition[]
+}
+
+export function toPublicChallenge(text: string): PublicBunkerChallenge {
+  if (!text) return { flavor: '', requirements: [] }
+  const challenge = challengeByText(text)
+  return {
+    flavor: challengeFlavor(text),
+    requirements: labelTagGroups(challenge?.requirements ?? []),
+  }
+}
+
+export function toPublicBunker(bunker: StoredBunkerState): BunkerState {
+  return {
+    catastrophe: toPublicChallenge(bunker.catastrophe),
+    years: bunker.years,
+    threats: bunker.threats.map(toPublicChallenge),
+    conditions: bunker.conditions.map((condition) => {
+      const challenge = challengeByText(condition.text)
+      return {
+        flavor: challengeFlavor(condition.text),
+        grants: (challenge?.grants ?? []).map(labelTag),
+        byPlayerId: condition.byPlayerId,
+        byName: condition.byName,
+      }
+    }),
+  }
 }
 
 /** Краткое имя катастрофы / угрозы / условия для истории карт. */

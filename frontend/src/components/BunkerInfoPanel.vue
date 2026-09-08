@@ -5,6 +5,8 @@ import { useGameStore } from '@/stores/game'
 import { STAGE_LABELS } from '@shared/types'
 import ActionCardsPanel from '@/components/ActionCardsPanel.vue'
 import CardHistoryStrip from '@/components/CardHistoryStrip.vue'
+import ChallengeRequirements from '@/components/ChallengeRequirements.vue'
+import ConditionGrants from '@/components/ConditionGrants.vue'
 
 /**
  * Информационное окно: катастрофа, срок в бункере, доп. условия,
@@ -31,14 +33,16 @@ const conditions = computed(() => bunker.value.conditions ?? [])
       <ul>
         <li v-for="(c, i) in conditions" :key="i" class="condition-item">
           <div class="cond-by">Добавил: <b>{{ c.byName }}</b></div>
-          <div class="cond-text">{{ c.text }}</div>
+          <div class="cond-text">{{ c.flavor }}</div>
+          <ConditionGrants :grants="c.grants" />
         </li>
       </ul>
     </div>
 
     <div class="card info-block catastrophe">
       <h4>☢️ Катастрофа</h4>
-      <p class="cat-text">{{ bunker.catastrophe || '—' }}</p>
+      <p class="cat-text">{{ bunker.catastrophe.flavor || '—' }}</p>
+      <ChallengeRequirements v-if="bunker.catastrophe.flavor" :requirements="bunker.catastrophe.requirements" />
       <div class="years">🏠 Пребывание в бункере: <b>{{ bunker.years }}</b> {{ bunker.years === 1 ? 'год' : bunker.years < 5 ? 'года' : 'лет' }}</div>
     </div>
 
@@ -55,7 +59,10 @@ const conditions = computed(() => bunker.value.conditions ?? [])
     <div class="card info-block threats" v-if="settings.threatsEnabled">
       <h4>⚠️ Угрозы</h4>
       <TransitionGroup name="list" tag="ul" v-if="bunker.threats.length">
-        <li v-for="(t, i) in bunker.threats" :key="i" class="threat-item">{{ t }}</li>
+        <li v-for="(t, i) in bunker.threats" :key="i" class="threat-item">
+          <div class="threat-flavor">{{ t.flavor }}</div>
+          <ChallengeRequirements :requirements="t.requirements" />
+        </li>
       </TransitionGroup>
       <p v-else class="no-threats">Пока угроз нет.</p>
     </div>
@@ -143,6 +150,11 @@ const conditions = computed(() => bunker.value.conditions ?? [])
   margin-bottom: 4px;
 }
 .cond-text {
+  color: var(--text);
+}
+.threat-flavor {
+  font-size: 13px;
+  line-height: 1.4;
   color: var(--text);
 }
 .threat-item {
