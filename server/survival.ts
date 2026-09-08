@@ -1,4 +1,5 @@
 import type {
+  GameMode,
   Player,
   SurvivalChallengeResult,
   SurvivalFactor,
@@ -17,7 +18,7 @@ interface TeamTags {
   sources: Map<string, Set<string>>
 }
 
-function buildTeamTags(players: Player[], bunker: StoredBunkerState): TeamTags {
+function buildTeamTags(players: Player[], bunker: StoredBunkerState, mode: GameMode = 'classic'): TeamTags {
   const tags = new Set<string>()
   const sources = new Map<string, Set<string>>()
   const add = (tag: string, source: string) => {
@@ -48,22 +49,22 @@ function buildTeamTags(players: Player[], bunker: StoredBunkerState): TeamTags {
   }
 
   for (const condition of bunker.conditions) {
-    const challenge = challengeByText(condition.text)
+    const challenge = challengeByText(condition.text, mode)
     for (const tag of challenge?.grants ?? []) add(tag, `условие бункера: ${condition.text}`)
   }
   return { tags, sources }
 }
 
-function evaluateChallenge(challenge: BunkerChallenge, team: TeamTags): SurvivalChallengeResult {
+function evaluateChallenge(challenge: BunkerChallenge, team: TeamTags, mode: GameMode = 'classic'): SurvivalChallengeResult {
   const matched: string[] = []
   const missing: string[] = []
   for (const group of challenge.requirements) {
     const tag = group.find((candidate) => team.tags.has(candidate))
     if (tag) {
       const source = [...(team.sources.get(tag) ?? [])][0]
-      matched.push(`${labelTag(tag)}${source ? ` — ${source}` : ''}`)
+      matched.push(`${labelTag(tag, mode)}${source ? ` — ${source}` : ''}`)
     } else {
-      missing.push(group.map(labelTag).join(' или '))
+      missing.push(group.map((t) => labelTag(t, mode)).join(' или '))
     }
   }
   const total = challenge.requirements.length
@@ -113,9 +114,13 @@ function factor(
 
 const BASE_SURVIVAL_CHANCE = 40
 
-export function calculateSurvival(players: Player[], bunker: StoredBunkerState): SurvivalReport {
+export function calculateSurvival(
+  players: Player[],
+  bunker: StoredBunkerState,
+  mode: GameMode = 'classic',
+): SurvivalReport {
   const survivors = players.filter((player) => player.isAlive)
-  const team = buildTeamTags(survivors, bunker)
+  const team = buildTeamTags(survivors, bunker, mode)
   const factors: SurvivalFactor[] = []
 
   const ages = survivors.flatMap((player) => player.biology ? [player.biology.age] : [])
@@ -196,7 +201,7 @@ export function calculateSurvival(players: Player[], bunker: StoredBunkerState):
   if (assistanceBonuses.length > 0) {
     const assistanceDelta = assistanceBonuses.reduce((sum, bonus) => sum + bonus.delta, 0)
     const assistanceSources = assistanceBonuses.flatMap(({ tag }) =>
-      [...(team.sources.get(tag) ?? [])].map((source) => `${labelTag(tag)} — ${source}`),
+      [...(team.sources.get(tag) ?? [])].map((source) => `${labelTag(tag, mode)} — ${source}`),
     )
     factors.push(factor(
       'bunker_assistance',
@@ -231,13 +236,13 @@ export function calculateSurvival(players: Player[], bunker: StoredBunkerState):
       ? `Риск создают: ${dangerNames.join(', ')}. Опасные характеристики: −${dangerousPenalty}%, умеренно опасные: −${lightDangerPenalty}%, конфликтность: −${conflictPenalty}%.${hasLeadership && conflictPlayers.length ? ' Лидерство смягчает только конфликтность.' : ''}`
       : 'Психопаты, маньяки и выраженно конфликтные участники не обнаружены.'))
 
-  const conditionDelta = bunker.conditions.reduce((sum, condition) => sum + (challengeByText(condition.text)?.successDelta ?? 0), 0)
+  const conditionDelta = bunker.conditions.reduce((sum, condition) => sum + (challengeByText(condition.text, mode)?.successDelta ?? 0), 0)
   factors.push(factor('conditions', 'Условия бункера', bunker.conditions.length ? 'Использованы' : 'Нет дополнительных', conditionDelta,
     bunker.conditions.length ? `Полезных дополнительных условий: ${bunker.conditions.length}.` : 'Дополнительные условия не открыты.'))
 
   const challengeTexts = [bunker.catastrophe, ...bunker.threats].filter(Boolean)
   const challenges = challengeTexts.map((text) => {
-    const challenge = challengeByText(text)
+    const challenge = challengeByText(text, mode)
     if (!challenge) {
       return {
         kind: text === bunker.catastrophe ? ('catastrophe' as const) : ('threat' as const),
@@ -247,7 +252,7 @@ export function calculateSurvival(players: Player[], bunker: StoredBunkerState):
         detail: 'Для события не настроены требования в данных бункера.',
       }
     }
-    return evaluateChallenge(challenge, team)
+    return evaluateChallenge(challenge, team, mode)
   })
 
   const rawChance = BASE_SURVIVAL_CHANCE + factors.reduce((sum, item) => sum + item.delta, 0) + challenges.reduce((sum, item) => sum + item.delta, 0)

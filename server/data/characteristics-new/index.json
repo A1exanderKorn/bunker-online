@@ -1,0 +1,39 @@
+{
+  "slots": [
+    {
+      "category": "Профессия",
+      "file": "profession.json",
+      "weight": 0.8
+    },
+    {
+      "category": "Здоровье",
+      "file": "health.json",
+      "weight": 1
+    },
+    {
+      "category": "Биология",
+      "file": null,
+      "weight": 1
+    },
+    {
+      "category": "Хобби",
+      "file": "hobby.json",
+      "weight": 0.65
+    },
+    {
+      "category": "Фобия",
+      "file": "phobia.json",
+      "weight": 0.4
+    },
+    {
+      "category": "Багаж",
+      "file": "baggage.json",
+      "weight": 0.5
+    },
+    {
+      "category": "Факт",
+      "file": "fact.json",
+      "weight": 0.75
+    }
+  ]
+}

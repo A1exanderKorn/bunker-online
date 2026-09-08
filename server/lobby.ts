@@ -9,6 +9,7 @@ import type {
   CharSlot,
   ClientToServerEvents,
   GameStage,
+  GameMode,
   LobbySettings,
   Player,
   PublicPlayer,
@@ -23,6 +24,7 @@ import {
   SETTINGS_LIMITS,
   defaultRoundSteps,
   formatBiology,
+  formatCharacteristicValue,
 } from '../shared/types'
 import {
   LOBBY_RECONNECT_GRACE_MS,
@@ -37,8 +39,10 @@ import {
   drawUniqueCharacteristics,
   findChar,
   generateBiology,
+  generateOrdinaryBiology,
 } from './characteristics'
-import { rowsByCategory } from './data'
+import { generateRareBiology } from './dealNew'
+import { expandForDeal, rowsByCategory } from './data'
 import {
   pickCatastrophe,
   pickUnusedCondition,
@@ -149,6 +153,15 @@ export class Lobby {
   constructor(io: IO, code: string, private readonly onEmpty: () => void = () => {}) {
     this.io = io
     this.code = code
+  }
+
+  private gameMode(): GameMode {
+    return this.settings.gameMode === 'new' ? 'new' : 'classic'
+  }
+
+  private rollBiology(existing: Biology[]): Biology {
+    if (this.gameMode() !== 'new') return generateBiology(existing)
+    return generateRareBiology(existing) ?? generateOrdinaryBiology()
   }
 
   private freshSettings(): LobbySettings {
@@ -372,6 +385,7 @@ export class Lobby {
       actionCardsEnabled: !!s.actionCardsEnabled,
       revealPreviousCharacteristics: !!s.revealPreviousCharacteristics,
       cardsPower: s.cardsPower === 'weak' || s.cardsPower === 'strong' ? s.cardsPower : 'balanced',
+      gameMode: s.gameMode === 'new' ? 'new' : 'classic',
       roundSteps: cleanSteps.length > 0 ? cleanSteps : defaultRoundSteps(this.players.length, this.survivorsTarget(this.players.length)),
     }
   }
@@ -395,6 +409,7 @@ export class Lobby {
       targetCoef: this.settings.randomTargetCoef ? null : this.settings.targetCoef,
       extraBaggage: this.settings.extraBaggage,
       noPhobias: this.settings.noPhobias,
+      gameMode: this.gameMode(),
     })
     this.started = true
     this.startCount = this.players.length
@@ -404,9 +419,9 @@ export class Lobby {
     const threatSteps = this.settings.threatsEnabled
       ? this.settings.roundSteps.filter((s) => s.kind === 'reveal' && s.revealThreat).length
       : 0
-    this.pendingThreats = threatQueue(threatSteps)
+    this.pendingThreats = threatQueue(threatSteps, this.gameMode())
     this.bunker = {
-      catastrophe: pickCatastrophe(),
+      catastrophe: pickCatastrophe(this.gameMode()),
       years: 1 + Math.floor(Math.random() * 15),
       threats: [],
       conditions: [],
@@ -426,7 +441,7 @@ export class Lobby {
     this.voteBans = []
     this.voteInterrupts = []
     if (this.settings.actionCardsEnabled) {
-      const dealt = dealActionCards(this.players, this.settings.cardsPower)
+      const dealt = dealActionCards(this.players, this.settings.cardsPower, this.gameMode())
       for (const [pid, card] of dealt.entries()) this.cards.set(pid, [card])
     }
 
@@ -450,7 +465,7 @@ export class Lobby {
       stage: this.stage,
       settings: this.settings,
       turn: this.turn,
-      bunker: toPublicBunker(this.bunker),
+      bunker: toPublicBunker(this.bunker, this.gameMode()),
       actionCards: [],
       charLayout: this.charLayout,
       cardHistory: [],
@@ -520,28 +535,42 @@ export class Lobby {
     return false
   }
 
-  private randomCharValue(category: string): { value: string; coef: number; hint: string; tags: string[] } | null {
-    const rows = rowsByCategory(category)
-    if (!rows || rows.length === 0) return null
-    const r = rows[Math.floor(Math.random() * rows.length)]
+  private randomCharValue(category: string): {
+    value: string
+    coef: number
+    hint: string
+    tags: string[]
+    stageLabel?: string
+    stageIndex?: number
+    incurable?: boolean
+  } | null {
+    const pool = rowsByCategory(category, this.gameMode()).flatMap(expandForDeal)
+    if (pool.length === 0) return null
+    const r = pool[Math.floor(Math.random() * pool.length)]
     return {
-      value: String(r.name),
-      coef: Number(r.coef) || 0,
-      hint: String(r.hint ?? ''),
-      tags: [...(r.tags ?? [])],
+      value: r.row.name,
+      coef: r.coef,
+      hint: r.row.hint,
+      tags: [...r.row.tags],
+      stageLabel: r.stageLabel || undefined,
+      stageIndex: r.stageIndex ?? undefined,
+      incurable: r.incurable || undefined,
     }
   }
 
   private replaceChar(pl: Player, category: string, occ = 0): boolean {
     if (category === BIOLOGY_CATEGORY) return this.rerollBiology(pl)
-    const rc = this.randomCharValue(category)
-    if (!rc) return false
     const ch = findChar(pl.characteristics, category, occ)
     if (!ch) return false
+    const rc = this.randomCharValue(category)
+    if (!rc) return false
     ch.value = rc.value
     ch.coef = rc.coef
     ch.hint = rc.hint
     ch.tags = rc.tags
+    ch.stageLabel = rc.stageLabel
+    ch.stageIndex = rc.stageIndex
+    ch.incurable = rc.incurable
     return true
   }
 
@@ -557,7 +586,7 @@ export class Lobby {
         .filter((characteristic) => characteristic.type === category && (characteristic.occ ?? 0) !== occ)
         .map((characteristic) => characteristic.value),
     )
-    const replacements = drawUniqueCharacteristics(category, recipients.length, excluded)
+    const replacements = drawUniqueCharacteristics(category, recipients.length, excluded, this.gameMode())
     if (replacements.length < recipients.length) return false
 
     recipients.forEach(({ characteristic }, index) => {
@@ -566,6 +595,9 @@ export class Lobby {
       characteristic!.coef = replacement.coef
       characteristic!.hint = replacement.hint
       characteristic!.tags = replacement.tags
+      characteristic!.stageLabel = replacement.stageLabel
+      characteristic!.stageIndex = replacement.stageIndex
+      characteristic!.incurable = replacement.incurable
     })
     return true
   }
@@ -573,7 +605,7 @@ export class Lobby {
   private rerollBiology(pl: Player): boolean {
     const others = this.players.filter((p) => p.id !== pl.id && p.biology).map((p) => p.biology!)
     const visible = pl.biology?.isVisible ?? false
-    const bio = generateBiology(others)
+    const bio = this.rollBiology(others)
     bio.isVisible = visible
     pl.biology = bio
     return true
@@ -583,7 +615,7 @@ export class Lobby {
     const newBios: Biology[] = []
     for (const pl of this.alive()) {
       const visible = pl.biology?.isVisible ?? false
-      const bio = generateBiology(newBios)
+      const bio = this.rollBiology(newBios)
       bio.isVisible = visible
       pl.biology = bio
       newBios.push(bio)
@@ -611,7 +643,7 @@ export class Lobby {
   private slotDisplay(pl: Player, category: string, occ: number): string {
     const type = this.normalizeSlotType(category)
     if (type === BIOLOGY_CATEGORY) return formatBiology(pl.biology) ?? ''
-    return findChar(pl.characteristics, type, occ)?.value ?? ''
+    return formatCharacteristicValue(findChar(pl.characteristics, type, occ)) ?? ''
   }
 
   private pushChange(
@@ -819,7 +851,7 @@ export class Lobby {
     this.broadcastCardHistory()
     // Обновляем публичное состояние и бункер.
     this.broadcastCharacters()
-    this.io.to(this.code).emit('bunkerUpdated', { bunker: toPublicBunker(this.bunker) })
+    this.io.to(this.code).emit('bunkerUpdated', { bunker: toPublicBunker(this.bunker, this.gameMode()) })
     // Приватно обновляем характеристики затронутых игроков.
     for (const p of this.players) {
       const sid = this.sockets.get(p.id)
@@ -1088,14 +1120,14 @@ export class Lobby {
       }
       case 'changeCatastrophe': {
         const previous = this.bunker.catastrophe
-        this.bunker.catastrophe = pickCatastrophe()
-        const fromTitle = challengeTitle(previous)
-        const toTitle = challengeTitle(this.bunker.catastrophe)
+        this.bunker.catastrophe = pickCatastrophe(this.gameMode())
+        const fromTitle = challengeTitle(previous, this.gameMode())
+        const toTitle = challengeTitle(this.bunker.catastrophe, this.gameMode())
         this.pushPublicChange(charChanges, 'Катастрофа', fromTitle, toTitle)
         return ok(`Катастрофа: ${fromTitle} → ${toTitle}`)
       }
       case 'revealCondition': {
-        const cond = pickUnusedCondition(this.bunker.conditions.map((condition) => condition.text))
+        const cond = pickUnusedCondition(this.bunker.conditions.map((condition) => condition.text), this.gameMode())
         if (!cond) return fail('Все дополнительные условия уже открыты')
         const entry: StoredBunkerCondition = {
           text: cond,
@@ -1103,7 +1135,7 @@ export class Lobby {
           byName: this.nameOf(playerId),
         }
         this.bunker.conditions.push(entry)
-        const title = challengeTitle(cond)
+        const title = challengeTitle(cond, this.gameMode())
         this.pushPublicChange(charChanges, 'Доп. условие', 'не было', title)
         return ok(`Открыто доп. условие: ${title}`)
       }
@@ -1112,7 +1144,7 @@ export class Lobby {
         if (idx === undefined || idx < 0 || idx >= this.bunker.threats.length)
           return fail('Выберите угрозу')
         const removed = this.bunker.threats.splice(idx, 1)[0]
-        const title = challengeTitle(removed)
+        const title = challengeTitle(removed, this.gameMode())
         this.pushPublicChange(charChanges, 'Угроза', title, 'снята')
         return ok(`Убрана угроза: ${title}`)
       }
@@ -1190,7 +1222,7 @@ export class Lobby {
     const threat = this.pendingThreats.shift()
     if (!threat) return
     this.bunker.threats.push(threat)
-    this.io.to(this.code).emit('bunkerUpdated', { bunker: toPublicBunker(this.bunker) })
+    this.io.to(this.code).emit('bunkerUpdated', { bunker: toPublicBunker(this.bunker, this.gameMode()) })
   }
 
   // ─── Раунд вскрытия и ходы ──────────────────────────────────────────────
@@ -1712,7 +1744,7 @@ export class Lobby {
       p.characteristics.forEach((c) => (c.isVisible = true))
       if (p.biology) p.biology.isVisible = true
     }
-    this.survivalReport = calculateSurvival(this.players, this.bunker)
+    this.survivalReport = calculateSurvival(this.players, this.bunker, this.gameMode())
     this.io.to(this.code).emit('gameEnded', {
       survivorIds: this.alive().map((p) => p.id),
       players: this.publicPlayers(),
@@ -1837,12 +1869,12 @@ export class Lobby {
       stage: this.stage,
       settings: this.settings,
       turn: this.turn,
-      bunker: toPublicBunker(this.bunker),
+      bunker: toPublicBunker(this.bunker, this.gameMode()),
       actionCards: [],
       charLayout: this.charLayout,
       cardHistory: this.cardHistoryFor(playerId),
     })
-    this.io.to(sid).emit('bunkerUpdated', { bunker: toPublicBunker(this.bunker) })
+    this.io.to(sid).emit('bunkerUpdated', { bunker: toPublicBunker(this.bunker, this.gameMode()) })
     this.io.to(sid).emit('stageChanged', {
       stage: this.stage,
       timer: this.timer,
@@ -1851,7 +1883,7 @@ export class Lobby {
     })
     if (this.isVoting()) this.broadcastVotes()
     if (this.stage === 'end') {
-      this.survivalReport ??= calculateSurvival(this.players, this.bunker)
+      this.survivalReport ??= calculateSurvival(this.players, this.bunker, this.gameMode())
       this.io.to(sid).emit('gameEnded', {
         survivorIds: this.alive().map((p) => p.id),
         players: this.publicPlayers(playerId),

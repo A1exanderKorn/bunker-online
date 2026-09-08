@@ -29,8 +29,10 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
 
 try {
   loadCharacteristics()
+  loadCharacteristics('new')
   loadCards()
   loadBunkerData()
+  loadBunkerData('new')
 } catch (err) {
   console.error('Не удалось загрузить игровые JSON:', err)
 }

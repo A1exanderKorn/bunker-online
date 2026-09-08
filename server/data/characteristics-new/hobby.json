@@ -1,0 +1,936 @@
+{
+  "category": "Хобби",
+  "items": [
+    {
+      "name": "Выращивание растений",
+      "coef": 1,
+      "hint": "Сильно повышает шансы найти еду в бункере и после выхода из него",
+      "tags": [
+        "agriculture",
+        "food",
+        "bunker_assistance_small"
+      ]
+    },
+    {
+      "name": "Получение научных степеней",
+      "coef": 1,
+      "hint": "Доктор наук в одной из гуманитарных и в одной из технических отраслей",
+      "tags": [
+        "science",
+        "bunker_assistance_small"
+      ]
+    },
+    {
+      "name": "Разведение животных",
+      "coef": 1,
+      "hint": "Сильно повышает шансы найти еду в бункере и после выхода из него",
+      "tags": [
+        "animals",
+        "food"
+      ]
+    },
+    {
+      "name": "Канал по выживанию на 5млн подписчиков",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "survival"
+      ]
+    },
+    {
+      "name": "Почвоведение",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "geology"
+      ]
+    },
+    {
+      "name": "Садоводство",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food"
+      ]
+    },
+    {
+      "name": "Стрельба из огнестрельного оружия",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "weapon",
+        "security"
+      ]
+    },
+    {
+      "name": "Тактическая медицина",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "medical",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Вскрывание замков",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "tools",
+        "criminal",
+        "light_danger"
+      ]
+    },
+    {
+      "name": "Обслуживание вентиляции",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "ventilation",
+        "repair",
+        "engineering"
+      ]
+    },
+    {
+      "name": "Первая помощь",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
+      "name": "Радиосвязь на КВ",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "communication"
+      ]
+    },
+    {
+      "name": "Ремонт генераторов",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "power",
+        "repair"
+      ]
+    },
+    {
+      "name": "Электроника",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "engineering",
+        "repair",
+        "power"
+      ]
+    },
+    {
+      "name": "Волонтёр-пожарный",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "fire",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Гидропоника дома",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food"
+      ]
+    },
+    {
+      "name": "Готовка",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Грибоводство",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food",
+        "biology"
+      ]
+    },
+    {
+      "name": "Картография",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "navigation"
+      ]
+    },
+    {
+      "name": "Кузнечное дело",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "tools",
+        "repair"
+      ]
+    },
+    {
+      "name": "Полевая хирургия (кружок)",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
+      "name": "Радиолюбительство",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "communication"
+      ]
+    },
+    {
+      "name": "Робототехника",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "engineering",
+        "computing"
+      ]
+    },
+    {
+      "name": "Рыбоводство",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "food",
+        "animals"
+      ]
+    },
+    {
+      "name": "Монтаж солнечных батарей на даче",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "power"
+      ]
+    },
+    {
+      "name": "Программирование микроконтроллеров",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "computing",
+        "engineering"
+      ]
+    },
+    {
+      "name": "Разведение кроликов",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "animals",
+        "food"
+      ]
+    },
+    {
+      "name": "Иностранные языки",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "communication"
+      ]
+    },
+    {
+      "name": "Ориентирование на местности",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "navigation",
+        "survival"
+      ]
+    },
+    {
+      "name": "Ориентирование ночью",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "navigation",
+        "survival"
+      ]
+    },
+    {
+      "name": "Охота",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "food",
+        "weapon",
+        "survival"
+      ]
+    },
+    {
+      "name": "Очистка воды в походах",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "water",
+        "chemistry"
+      ]
+    },
+    {
+      "name": "Пасека",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "animals",
+        "food",
+        "agriculture"
+      ]
+    },
+    {
+      "name": "Плотницкая мастерская",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "construction"
+      ]
+    },
+    {
+      "name": "Ремонт двигателей",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "repair",
+        "engineering",
+        "tools"
+      ]
+    },
+    {
+      "name": "Столярное дело",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "construction",
+        "repair",
+        "tools"
+      ]
+    },
+    {
+      "name": "Ферментация продуктов",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "food",
+        "chemistry"
+      ]
+    },
+    {
+      "name": "Дозиметрия как хобби",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "radiation"
+      ]
+    },
+    {
+      "name": "Консервация",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Сити-фермерство",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "agriculture"
+      ]
+    },
+    {
+      "name": "Столярка мебели",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "construction"
+      ]
+    },
+    {
+      "name": "Токарка",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "tools"
+      ]
+    },
+    {
+      "name": "3D-печать",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "engineering",
+        "repair",
+        "tools"
+      ]
+    },
+    {
+      "name": "Вяление мяса",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Кинологи-волонтёры",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "animals"
+      ]
+    },
+    {
+      "name": "Монтаж солнечных панелей",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "power",
+        "engineering"
+      ]
+    },
+    {
+      "name": "Планирование и управление",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "leadership",
+        "logistics"
+      ]
+    },
+    {
+      "name": "Программирование",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "computing"
+      ]
+    },
+    {
+      "name": "Сбор дождевой воды",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "water"
+      ]
+    },
+    {
+      "name": "Сварные хобби-швы",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "repair"
+      ]
+    },
+    {
+      "name": "Строительство из дерева",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "construction",
+        "repair"
+      ]
+    },
+    {
+      "name": "Химические опыты",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "chemistry",
+        "science"
+      ]
+    },
+    {
+      "name": "Альпинизм",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "rescue",
+        "strength",
+        "survival"
+      ]
+    },
+    {
+      "name": "Коптильня",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Ориентирование по звёздам",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "navigation"
+      ]
+    },
+    {
+      "name": "Реставрация техники",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "repair",
+        "tools"
+      ]
+    },
+    {
+      "name": "Сбор грибов",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "food",
+        "biology"
+      ]
+    },
+    {
+      "name": "Травничество",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "medical",
+        "biology"
+      ]
+    },
+    {
+      "name": "Волонтёрство в поисково-спасательном отряде",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "rescue",
+        "medical"
+      ]
+    },
+    {
+      "name": "Дайвинг",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "water",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Рукопашный бой",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "strength",
+        "security"
+      ]
+    },
+    {
+      "name": "Сделает алкоголь из чего угодно",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "chemistry"
+      ]
+    },
+    {
+      "name": "Трекинг",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "survival"
+      ]
+    },
+    {
+      "name": "Шитье и ремонт одежды",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "repair"
+      ]
+    },
+    {
+      "name": "Лепка из глины",
+      "coef": 0.35,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Психология",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "psychology"
+      ]
+    },
+    {
+      "name": "Пчеловодство",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "animals",
+        "food",
+        "agriculture"
+      ]
+    },
+    {
+      "name": "Ремонт велосипедов",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "repair"
+      ]
+    },
+    {
+      "name": "Сборка компьютеров",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "computing",
+        "repair"
+      ]
+    },
+    {
+      "name": "Спелеология",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "geology",
+        "navigation"
+      ]
+    },
+    {
+      "name": "Фехтование",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "weapon"
+      ]
+    },
+    {
+      "name": "Холодное оружие",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "weapon"
+      ]
+    },
+    {
+      "name": "Жестовый язык",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "communication"
+      ]
+    },
+    {
+      "name": "Ночная охрана дач",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "security"
+      ]
+    },
+    {
+      "name": "Пиротехника",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "chemistry",
+        "fire"
+      ]
+    },
+    {
+      "name": "Стрельба из лука",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "weapon"
+      ]
+    },
+    {
+      "name": "Тхэквондо",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "strength",
+        "security"
+      ]
+    },
+    {
+      "name": "Выпечка",
+      "coef": 0.25,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "ЗОЖ",
+      "coef": 0.25,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Плавание",
+      "coef": 0.25,
+      "hint": "",
+      "tags": [
+        "water",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Аквариум",
+      "coef": 0.2,
+      "hint": "",
+      "tags": [
+        "animals"
+      ]
+    },
+    {
+      "name": "Массаж",
+      "coef": 0.2,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
+      "name": "Медитация",
+      "coef": 0.2,
+      "hint": "",
+      "tags": [
+        "psychology"
+      ]
+    },
+    {
+      "name": "Огород на балконе",
+      "coef": 0.2,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food"
+      ]
+    },
+    {
+      "name": "Вязание",
+      "coef": 0.15,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Квизы",
+      "coef": 0.15,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Компьютерные игры",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "computing"
+      ]
+    },
+    {
+      "name": "Серфинг",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "water",
+        "navigation"
+      ]
+    },
+    {
+      "name": "Дневник",
+      "coef": 0.1,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Киноман",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [
+        "culture"
+      ]
+    },
+    {
+      "name": "Косметология",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [
+        "chemistry"
+      ]
+    },
+    {
+      "name": "Косплей",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [
+        "culture"
+      ]
+    },
+    {
+      "name": "Настольный теннис",
+      "coef": 0.1,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Стендап",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [
+        "culture"
+      ]
+    },
+    {
+      "name": "Рисование",
+      "coef": 0.08,
+      "hint": "",
+      "tags": [
+        "culture"
+      ]
+    },
+    {
+      "name": "Тамада",
+      "coef": 0.08,
+      "hint": "",
+      "tags": [
+        "leadership",
+        "culture"
+      ]
+    },
+    {
+      "name": "Каллиграфия",
+      "coef": 0.05,
+      "hint": "",
+      "tags": [
+        "culture"
+      ]
+    },
+    {
+      "name": "Настольные игры",
+      "coef": 0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Фотография",
+      "coef": 0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Игрок в преферанс",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Коллекционирование",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Оригами",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Скейтборд",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Фокусы",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Астрология",
+      "coef": -0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Гороскопы",
+      "coef": -0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Ставки на спорт",
+      "coef": -0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Коллекционирование оружия без навыков",
+      "coef": -0.1,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Троллинг в сети",
+      "coef": -0.2,
+      "hint": "",
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "name": "Травля соседей",
+      "coef": -0.25,
+      "hint": "",
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "name": "Поджоги травы",
+      "coef": -0.4,
+      "hint": "",
+      "tags": [
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Взрывы петард в замкнутых помещениях",
+      "coef": -0.5,
+      "hint": "",
+      "tags": [
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Разведение опасных штаммов «из любопытства»",
+      "coef": -0.7,
+      "hint": "",
+      "tags": [
+        "dangerous",
+        "contagious"
+      ]
+    }
+  ]
+}
