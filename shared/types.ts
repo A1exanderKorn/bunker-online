@@ -85,6 +85,11 @@ export interface Characteristic {
   occ: number
   /** Служебные теги для финального расчёта выживания. */
   tags?: string[]
+  /** Подпись стадии болезни (новый режим). */
+  stageLabel?: string
+  stageIndex?: number
+  /** Третья стадия: не лечится. */
+  incurable?: boolean
 }
 
 export interface Biology {
@@ -98,6 +103,18 @@ export interface Biology {
 }
 
 /** Текст биологии на столе и в истории карт. */
+export function formatCharacteristicValue(c: Characteristic | null | undefined): string | null {
+  if (!c) return null
+  return c.stageLabel ? `${c.value}, ${c.stageLabel}` : c.value
+}
+
+export type GameMode = 'classic' | 'new'
+
+export const GAME_MODE_LABELS: Record<GameMode, string> = {
+  classic: 'Старый режим игры',
+  new: 'Новый режим игры',
+}
+
 export function formatBiology(bio: Biology | null | undefined): string | null {
   if (!bio) return null
   return `${bio.sex}, ${bio.age} лет, стаж ${bio.experience} лет` + (bio.infertile ? ', бесплоден' : '')
@@ -172,6 +189,9 @@ export interface LobbySettings {
   /** Влияние карт: сдвиг вероятностей категорий. */
   cardsPower: CardsPower
 
+  /** Режим колоды и алгоритма раздачи. */
+  gameMode: GameMode
+
   /**
    * Пошаговая программа раундов (II.5). Последовательность шагов:
    * вскрытие N характеристик либо голосование. Если список закончился,
@@ -222,6 +242,7 @@ export const DEFAULT_SETTINGS: LobbySettings = {
   actionCardsEnabled: false,
   revealPreviousCharacteristics: false,
   cardsPower: 'balanced',
+  gameMode: 'classic',
   roundSteps: [],
 }
 

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import {
+  GAME_MODE_LABELS,
   SETTINGS_LIMITS,
   VOTE_MODE_LABELS,
   CARDS_POWER_LABELS,
@@ -13,6 +14,7 @@ import {
   type RoundStep,
   type VoteMode,
   type CardsPower,
+  type GameMode,
 } from '@shared/types'
 
 /**
@@ -83,6 +85,19 @@ const survivorsHint = computed(() =>
     </header>
 
     <div class="settings-grid">
+      <label class="field">
+        <span class="field-label">Режим игры</span>
+        <select
+          class="input"
+          :value="settings.gameMode ?? 'classic'"
+          :disabled="!isHost"
+          @change="patch({ gameMode: ($event.target as HTMLSelectElement).value as GameMode })"
+        >
+          <option v-for="(label, mode) in GAME_MODE_LABELS" :key="mode" :value="mode">
+            {{ label }}
+          </option>
+        </select>
+      </label>
       <label class="field">
         <span class="field-label">Время хода, сек</span>
         <input

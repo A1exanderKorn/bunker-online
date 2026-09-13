@@ -3,6 +3,7 @@ import type {
   CardPickSpec,
   CardStage,
   CardsPower,
+  GameMode,
   Player,
 } from '../shared/types'
 import { characteristicWeight } from './characteristics'
@@ -241,7 +242,11 @@ function toActionCard(def: CardDef, instanceId: string): ActionCard {
  * случайная карта из категории. Уникальные карты (unique) не повторяются
  * между игроками; дубликаты (unique=false) — можно повторять.
  */
-export function dealActionCards(players: Player[], power: CardsPower): Map<string, ActionCard> {
+export function dealActionCards(
+  players: Player[],
+  power: CardsPower,
+  mode: GameMode = 'classic',
+): Map<string, ActionCard> {
   const defs = loadCards()
   const result = new Map<string, ActionCard>()
   if (defs.length === 0) return result
@@ -250,7 +255,7 @@ export function dealActionCards(players: Player[], power: CardsPower): Map<strin
   let instanceCounter = 1
 
   for (const player of players) {
-    const coef = averageCoef(player)
+    const coef = averageCoef(player, mode)
     let def: CardDef | undefined
 
     // Несколько попыток подобрать категорию/карту без коллизии уникальности.
@@ -284,16 +289,16 @@ export function makeCardByCatalogId(cardId: string, instanceId: string): ActionC
 }
 
 /** Средний коэффициент набора характеристик игрока (для ролла категории). */
-export function averageCoef(player: Player): number {
+export function averageCoef(player: Player, mode: GameMode = 'classic'): number {
   let weightedSum = 0
   let totalWeight = 0
   for (const characteristic of player.characteristics) {
-    const weight = characteristicWeight(characteristic.type)
+    const weight = characteristicWeight(characteristic.type, mode)
     weightedSum += characteristic.coef * weight
     totalWeight += weight
   }
   if (player.biology) {
-    const weight = characteristicWeight('Биология')
+    const weight = characteristicWeight('Биология', mode)
     weightedSum += player.biology.coef * weight
     totalWeight += weight
   }

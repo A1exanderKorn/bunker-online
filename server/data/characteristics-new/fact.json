@@ -1,0 +1,830 @@
+{
+  "category": "Факт",
+  "items": [
+    {
+      "name": "Лауреат двух нобелевских премий",
+      "coef": 1,
+      "hint": "в одной из гуманитарных и в одной из технических сфер",
+      "tags": [
+        "science",
+        "bunker_assistance_small"
+      ]
+    },
+    {
+      "name": "Выпускник Гарварда",
+      "coef": 0.9,
+      "hint": "Этот товарищ на кого-то выучился в топовом вузе, на кого-не говорит, но специальность нормальная",
+      "tags": [
+        "science",
+        "bunker_assistance_small"
+      ]
+    },
+    {
+      "name": "Ремонтировал исследовательский ядерный реактор",
+      "coef": 0.9,
+      "hint": "",
+      "tags": [
+        "nuclear",
+        "radiation",
+        "engineering"
+      ]
+    },
+    {
+      "name": "Брал золотую медаль в олимпийских играх",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "strength",
+        "bunker_assistance_small"
+      ]
+    },
+    {
+      "name": "Построил автономную теплицу",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food"
+      ]
+    },
+    {
+      "name": "Пять лет жил в автономном доме",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "construction",
+        "survival"
+      ]
+    },
+    {
+      "name": "Строил подобные бункеры",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "construction",
+        "survival"
+      ]
+    },
+    {
+      "name": "Организовал эвакуацию целого поселка",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "survival",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Служил в МЧС",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "rescue"
+      ]
+    },
+    {
+      "name": "Собрал автономный дом",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "construction",
+        "survival"
+      ]
+    },
+    {
+      "name": "Умеет ремонтировать системы очистки воды",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "water",
+        "repair"
+      ]
+    },
+    {
+      "name": "Управлял фермерским хозяйством",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food"
+      ]
+    },
+    {
+      "name": "Жил в тайге год",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "survival"
+      ]
+    },
+    {
+      "name": "Работал на полярной станции",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "survival",
+        "rescue",
+        "cold"
+      ]
+    },
+    {
+      "name": "Строил теплицы на севере",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "agriculture"
+      ]
+    },
+    {
+      "name": "Имеет второе высшее(специальное) образование",
+      "coef": 0.7,
+      "hint": "Этот товарищ на кого-то выучился в хорошем вузе, на кого-не говорит, но специальность нормальная",
+      "tags": [
+        "science"
+      ]
+    },
+    {
+      "name": "Победитель Всероса по физике",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "nuclear",
+        "radiation",
+        "engineering"
+      ]
+    },
+    {
+      "name": "Работал в инфекционном боксе",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "infectious",
+        "medical"
+      ]
+    },
+    {
+      "name": "Работал на очистных",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "water"
+      ]
+    },
+    {
+      "name": "Участвовал в медицинской экспедиции",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "medical",
+        "infectious"
+      ]
+    },
+    {
+      "name": "Учил полевую медицину",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
+      "name": "Владеет 5ю языками",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "culture"
+      ]
+    },
+    {
+      "name": "Волонтёр Красного Креста",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "medical",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Настраивал дизель-генераторы",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "power",
+        "repair"
+      ]
+    },
+    {
+      "name": "Пережил кораблекрушение",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "survival",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Победитель олимпиады по химии",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "science",
+        "chemistry"
+      ]
+    },
+    {
+      "name": "Прошел курс выживания в дикой природе",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "survival",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Вернулся из горячей точки",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "survival",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Взломал базу данных ЦРУ",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "computing"
+      ]
+    },
+    {
+      "name": "Прошёл курс радиационной безопасности",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "radiation"
+      ]
+    },
+    {
+      "name": "Чемпион по практической стрельбе",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "weapon"
+      ]
+    },
+    {
+      "name": "Чинил скважины",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "water",
+        "repair"
+      ]
+    },
+    {
+      "name": "Водил гуманитарные колонны",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "logistics"
+      ]
+    },
+    {
+      "name": "Вырос в деревне",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food"
+      ]
+    },
+    {
+      "name": "Держал пасеку",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "animals",
+        "food"
+      ]
+    },
+    {
+      "name": "Имеет лицензию пилота",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "aviation",
+        "navigation"
+      ]
+    },
+    {
+      "name": "Разбирается в съедобных грибах",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food"
+      ]
+    },
+    {
+      "name": "Разрабатывал Chat GPT",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "computing",
+        "science"
+      ]
+    },
+    {
+      "name": "Тушил торфяники",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "fire",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Обладает феноменальной памятью",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "science"
+      ]
+    },
+    {
+      "name": "Умеет читать карты генштаба",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "navigation"
+      ]
+    },
+    {
+      "name": "Чинил радиоточки",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "communication"
+      ]
+    },
+    {
+      "name": "Вырастил трех служебных собак",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "animals"
+      ]
+    },
+    {
+      "name": "Ковал ножи",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "tools",
+        "weapon"
+      ]
+    },
+    {
+      "name": "Варил мыло и щёлок",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "chemistry"
+      ]
+    },
+    {
+      "name": "Учил детей эвакуации",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "leadership",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Хорошо ладит с животными",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "animals"
+      ]
+    },
+    {
+      "name": "Дежурил на КПП",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "security"
+      ]
+    },
+    {
+      "name": "Учил жестовый язык группы",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "communication"
+      ]
+    },
+    {
+      "name": "Хорошо разбирается в людях",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "psychology"
+      ]
+    },
+    {
+      "name": "Варил пиво как стерильную ферментацию",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Душа компании",
+      "coef": 0.25,
+      "hint": "",
+      "tags": [
+        "culture",
+        "leadership"
+      ]
+    },
+    {
+      "name": "Вырастил двоих детей",
+      "coef": 0.2,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Лидер преступной группировки",
+      "coef": 0.2,
+      "hint": "",
+      "tags": [
+        "criminal",
+        "leadership",
+        "light_danger"
+      ]
+    },
+    {
+      "name": "Знает лично президента",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "leadership"
+      ]
+    },
+    {
+      "name": "Бродяжничал  2 года",
+      "coef": 0.1,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Боится черновиков решений",
+      "coef": 0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Коллекционирует мемы",
+      "coef": 0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Пересказывает сериалы",
+      "coef": 0.05,
+      "hint": "",
+      "tags": [
+        "culture"
+      ]
+    },
+    {
+      "name": "Храпит",
+      "coef": 0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Апнул 10к ммр в доте",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Боится принимать ответственные решения",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Верит гороскопам",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Грязно ругается",
+      "coef": 0,
+      "hint": "",
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "name": "Зануда",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Нытик",
+      "coef": 0,
+      "hint": "",
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "name": "Работал в эскорт услугах",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Спит до полудня",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Тормоз",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Часто рыгает",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Не умеет готовить",
+      "coef": -0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Не умеет хранить секреты",
+      "coef": -0.05,
+      "hint": "",
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "name": "Победитель битвы экстрасенсов",
+      "coef": -0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Путает ягоды",
+      "coef": -0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Спит по 14 часов в сутки",
+      "coef": -0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Врет и преувеличивает",
+      "coef": -0.1,
+      "hint": "",
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "name": "Извращенец",
+      "coef": -0.1,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Сидел на зоне",
+      "coef": -0.1,
+      "hint": "",
+      "tags": [
+        "criminal",
+        "light_danger"
+      ]
+    },
+    {
+      "name": "Имеет непогашенную судимость",
+      "coef": -0.15,
+      "hint": "",
+      "tags": [
+        "criminal",
+        "light_danger"
+      ]
+    },
+    {
+      "name": "Наркодилер",
+      "coef": -0.15,
+      "hint": "",
+      "tags": [
+        "addiction",
+        "light_danger",
+        "criminal"
+      ]
+    },
+    {
+      "name": "Постоянно конфликтует с руководством",
+      "coef": -0.15,
+      "hint": "",
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "name": "Довёл человека до истерики",
+      "coef": -0.2,
+      "hint": "",
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "name": "Ограбил своего деда",
+      "coef": -0.2,
+      "hint": "",
+      "tags": [
+        "criminal",
+        "light_danger"
+      ]
+    },
+    {
+      "name": "Разжигал конфликты в общежитии",
+      "coef": -0.2,
+      "hint": "",
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "name": "Кидал товарищей в походе",
+      "coef": -0.25,
+      "hint": "",
+      "tags": [
+        "conflict"
+      ]
+    },
+    {
+      "name": "Воровал гуманитарку",
+      "coef": -0.3,
+      "hint": "",
+      "tags": [
+        "criminal"
+      ]
+    },
+    {
+      "name": "Пытался поджечь сарай",
+      "coef": -0.35,
+      "hint": "",
+      "tags": [
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Участвовал в вооруженном ограблении",
+      "coef": -0.35,
+      "hint": "",
+      "tags": [
+        "criminal",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Преследуют суицидальные мысли",
+      "coef": -0.4,
+      "hint": "",
+      "tags": [
+        "suicidal",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Травил животных «ради шутки»",
+      "coef": -0.4,
+      "hint": "",
+      "tags": [
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Обвиняется в домашнем насилии",
+      "coef": -0.45,
+      "hint": "",
+      "tags": [
+        "criminal",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Скрыл заразную болезнь",
+      "coef": -0.45,
+      "hint": "",
+      "tags": [
+        "dangerous",
+        "contagious"
+      ]
+    },
+    {
+      "name": "Наркоман",
+      "coef": -0.5,
+      "hint": "",
+      "tags": [
+        "addiction",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Планировал захват склада группы",
+      "coef": -0.5,
+      "hint": "",
+      "tags": [
+        "criminal",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Пытал пленника",
+      "coef": -0.7,
+      "hint": "",
+      "tags": [
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Убил человека",
+      "coef": -0.7,
+      "hint": "Опыт лишним не бывает",
+      "tags": [
+        "criminal",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Педофил",
+      "coef": -0.85,
+      "hint": "ОСУЖДАЮ",
+      "tags": [
+        "dangerous",
+        "conflict"
+      ]
+    },
+    {
+      "name": "Серийно убивал и не раскаивается",
+      "coef": -0.95,
+      "hint": "",
+      "tags": [
+        "maniac",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Маньяк",
+      "coef": -1,
+      "hint": "резня",
+      "tags": [
+        "maniac",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Психопат",
+      "coef": -1,
+      "hint": "А твое какое дело, дружок",
+      "tags": [
+        "psychopath",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Психопат без эмпатии, готовит зачистку",
+      "coef": -1,
+      "hint": "",
+      "tags": [
+        "psychopath",
+        "dangerous"
+      ]
+    }
+  ]
+}

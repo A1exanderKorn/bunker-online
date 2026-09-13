@@ -1,0 +1,197 @@
+{
+  "items": [
+    {
+      "id": "condition_24",
+      "title": "Настольные игры",
+      "text": "Шкаф с обилием всевозможных настольных игр.",
+      "requirements": [],
+      "grants": [
+        "culture"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_25",
+      "title": "Гидропонная лаборатория",
+      "text": "Хим. Лаборатория и реактивы для создания гидропонной фермы.",
+      "requirements": [],
+      "grants": [
+        "chemistry",
+        "science",
+        "agriculture"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_26",
+      "title": "Останки заключённых",
+      "text": "Бункер строили заключенные. Жуткий запах привел вас в подвал, где вы нашли их останки, инструменты и оружие охранников - дубинки, ножи",
+      "requirements": [],
+      "grants": [
+        "tools",
+        "weapon"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_27",
+      "title": "Набор для рисования",
+      "text": "В бункере обнаруживается набор инструментов для рисования, доска с маркерами.",
+      "requirements": [],
+      "grants": [
+        "culture"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_28",
+      "title": "Автомастерская",
+      "text": "Рядом с бункером обнаружена оборудованная автомастерская и набор инструментов.",
+      "requirements": [],
+      "grants": [
+        "repair",
+        "tools"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_29",
+      "title": "Семена сельхозкультур",
+      "text": "В бункере вы находите набор семян для выращивания большого количества сельскохозяйственных культур.",
+      "requirements": [],
+      "grants": [
+        "agriculture",
+        "food"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_30",
+      "title": "Медицинский отсек",
+      "text": "В бункере находится оборудованный медицинский отсек",
+      "requirements": [],
+      "grants": [
+        "medical"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_31",
+      "title": "Инкубатор с яйцами",
+      "text": "В бункере находится инкубатор с яйцами. Нужен человек, имеющий опыт по выращиванию животных.",
+      "requirements": [],
+      "grants": [
+        "animals",
+        "food"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_32",
+      "title": "Не повезло",
+      "text": "Увы, вам не повезло",
+      "requirements": [],
+      "grants": [],
+      "successDelta": 0,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_33",
+      "title": "Не повезло",
+      "text": "Увы, вам не повезло",
+      "requirements": [],
+      "grants": [],
+      "successDelta": 0,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_34",
+      "title": "Склад СИЗ",
+      "text": "Герметичные ящики с полумасками, перчатками и хлоркой.",
+      "requirements": [],
+      "grants": [
+        "ppe"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_35",
+      "title": "Твердотопливная котельная",
+      "text": "Печь и запас угля на жилой контур.",
+      "requirements": [],
+      "grants": [
+        "cold",
+        "fire",
+        "power"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_36",
+      "title": "Тир за переборкой",
+      "text": "Стрелковый рубеж и кевларовые щиты.",
+      "requirements": [],
+      "grants": [
+        "weapon",
+        "protection"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_37",
+      "title": "Изолятор",
+      "text": "Отдельный бокс с шлюзом.",
+      "requirements": [],
+      "grants": [
+        "infectious",
+        "ppe"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_38",
+      "title": "Метеостанция у входа",
+      "text": "Датчики мороза и ветра, архив.",
+      "requirements": [],
+      "grants": [
+        "cold",
+        "navigation"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_39",
+      "title": "Собрание конституций",
+      "text": "Четыреста страниц чужих уставов, оферт и «честных» протоколов.",
+      "requirements": [],
+      "grants": [
+        "diplomacy",
+        "culture"
+      ],
+      "successDelta": 3,
+      "failureDelta": 0
+    },
+    {
+      "id": "condition_40",
+      "title": "Не повезло",
+      "text": "Увы, вам не повезло.",
+      "requirements": [],
+      "grants": [],
+      "successDelta": 0,
+      "failureDelta": 0
+    }
+  ]
+}

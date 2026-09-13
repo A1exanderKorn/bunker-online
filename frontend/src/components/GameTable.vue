@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import InlineConfirm from '@/components/InlineConfirm.vue'
-import { BIOLOGY_CATEGORY, fallbackCharLayout, formatBiology, type CharSlot, type PublicPlayer } from '@shared/types'
+import { BIOLOGY_CATEGORY, fallbackCharLayout, formatBiology, formatCharacteristicValue, type CharSlot, type PublicPlayer } from '@shared/types'
 
 /**
  * Игровое поле в виде адаптивной сетки карточек игроков.
@@ -45,7 +45,7 @@ function getValue(p: PublicPlayer, slot: CharSlot): string | null {
   if (slot.type === BIOLOGY_CATEGORY) {
     return formatBiology(isMe(p) ? game.myBiology : p.biology)
   }
-  return findSlotChar(p, slot)?.value ?? null
+  return formatCharacteristicValue(findSlotChar(p, slot))
 }
 
 function getHint(p: PublicPlayer, slot: CharSlot): string | null {
