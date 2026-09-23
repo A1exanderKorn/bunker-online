@@ -17,16 +17,18 @@ test('новый режим: размеры колод из спеки', () => {
   assert.equal(count('Факт'), 101)
 })
 
-test('новый режим не меняет старую колоду', () => {
-  assert.equal(loadCharacteristics('classic').filter((row) => row.category === 'Профессия').length, 90)
-  assert.equal(loadBunkerData('classic').challenges.find((item) => item.id === 'cat_005').requirements[2][0], 'protection')
+test('режимы используют одинаковые характеристики и события', () => {
+  assert.deepEqual(loadCharacteristics('classic'), loadCharacteristics('new'))
+  assert.deepEqual(loadBunkerData('classic'), loadBunkerData('new'))
+  assert.equal(loadCharacteristics('classic').filter((row) => row.category === 'Профессия').length, 153)
+  assert.equal(loadBunkerData('classic').challenges.find((item) => item.id === 'cat_005').requirements[2][0], 'ppe')
 })
 
-test('веса нового режима: хобби 0.65, фобия 0.4', () => {
+test('общие веса: хобби 0.65, фобия 0.4', () => {
   assert.equal(characteristicWeight('Хобби', 'new'), 0.65)
   assert.equal(characteristicWeight('Фобия', 'new'), 0.4)
-  assert.equal(characteristicWeight('Хобби', 'classic'), 1)
-  assert.equal(characteristicWeight('Фобия', 'classic'), 0.75)
+  assert.equal(characteristicWeight('Хобби', 'classic'), 0.65)
+  assert.equal(characteristicWeight('Фобия', 'classic'), 0.4)
 })
 
 test('новые теги и правки бункера', () => {

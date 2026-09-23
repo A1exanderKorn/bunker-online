@@ -41,34 +41,21 @@ export function isNewGameMode(mode: GameMode | undefined): boolean {
   return mode === 'new'
 }
 
-function indexFile(mode: GameMode): string {
-  return isNewGameMode(mode) ? 'characteristics-new/index.json' : 'characteristics/index.json'
+// Каталог и веса общие; режим влияет только на алгоритм раздачи.
+let cache: CharacteristicDef[] | null = null
+let slotsCache: CharacteristicIndex['slots'] | null = null
+
+function loadIndex(_mode: GameMode = 'classic'): CharacteristicIndex['slots'] {
+  if (!slotsCache) slotsCache = readJson<CharacteristicIndex>('characteristics/index.json').slots
+  return slotsCache
 }
 
-function charDir(mode: GameMode): string {
-  return isNewGameMode(mode) ? 'characteristics-new' : 'characteristics'
-}
-
-const cache = new Map<GameMode, CharacteristicDef[]>()
-const slotsCache = new Map<GameMode, CharacteristicIndex['slots']>()
-
-function loadIndex(mode: GameMode = 'classic'): CharacteristicIndex['slots'] {
-  const key = isNewGameMode(mode) ? 'new' : 'classic'
-  const hit = slotsCache.get(key)
-  if (hit) return hit
-  const slots = readJson<CharacteristicIndex>(indexFile(key)).slots
-  slotsCache.set(key, slots)
-  return slots
-}
-
-export function loadCharacteristics(mode: GameMode = 'classic'): CharacteristicDef[] {
-  const key = isNewGameMode(mode) ? 'new' : 'classic'
-  const hit = cache.get(key)
-  if (hit) return hit
+export function loadCharacteristics(_mode: GameMode = 'classic'): CharacteristicDef[] {
+  if (cache) return cache
   const items: CharacteristicDef[] = []
-  for (const slot of loadIndex(key)) {
+  for (const slot of loadIndex()) {
     if (!slot.file) continue
-    const file = readJson<CharacteristicFile>(`${charDir(key)}/${slot.file}`)
+    const file = readJson<CharacteristicFile>(`characteristics/${slot.file}`)
     const category = file.category || slot.category
     for (const item of file.items) {
       if (!String(item.name ?? '').trim()) continue
@@ -83,7 +70,7 @@ export function loadCharacteristics(mode: GameMode = 'classic'): CharacteristicD
       })
     }
   }
-  cache.set(key, items)
+  cache = items
   return items
 }
 
@@ -124,7 +111,7 @@ export function displayCategoryOrder(mode: GameMode = 'classic'): string[] {
 }
 
 export function newModeDataReady(): boolean {
-  return fs.existsSync(path.join(DATA_DIR, 'characteristics-new', 'index.json'))
+  return fs.existsSync(path.join(DATA_DIR, 'characteristics', 'index.json'))
 }
 
 export const DEFAULT_STAGE_LABELS = ['ранняя', 'средняя', 'терминальная'] as const

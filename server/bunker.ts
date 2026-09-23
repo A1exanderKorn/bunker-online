@@ -1,7 +1,6 @@
 import type { BunkerState, GameMode, PublicBunkerChallenge } from '../shared/types'
 import { readJson } from './loadJson'
 import { labelTag, labelTagGroups } from './tagLabels'
-import { isNewGameMode } from './data'
 
 /**
  * Каталог бункера: катастрофы, угрозы и доп. условия из JSON.
@@ -46,12 +45,8 @@ function deriveTitle(text: string): string {
   return text.slice(0, 48).trim()
 }
 
-function bunkerDir(mode: GameMode = 'classic'): string {
-  return isNewGameMode(mode) ? 'bunker-new' : 'bunker'
-}
-
-function loadKind(kind: BunkerChallenge['kind'], file: string, mode: GameMode = 'classic'): BunkerChallenge[] {
-  const items = readJson<BunkerFile>(`${bunkerDir(mode)}/${file}`).items ?? []
+function loadKind(kind: BunkerChallenge['kind'], file: string): BunkerChallenge[] {
+  const items = readJson<BunkerFile>(`bunker/${file}`).items ?? []
   return items
     .filter((item) => String(item.text ?? '').trim())
     .map((item) => {
@@ -70,15 +65,13 @@ function loadKind(kind: BunkerChallenge['kind'], file: string, mode: GameMode = 
     })
 }
 
-const cache = new Map<string, BunkerData>()
+let cache: BunkerData | null = null
 
-export function loadBunkerData(mode: GameMode = 'classic'): BunkerData {
-  const key = isNewGameMode(mode) ? 'new' : 'classic'
-  const hit = cache.get(key)
-  if (hit) return hit
-  const catastrophes = loadKind('catastrophe', 'catastrophes.json', key)
-  const threats = loadKind('threat', 'threats.json', key)
-  const conditions = loadKind('condition', 'conditions.json', key)
+export function loadBunkerData(_mode: GameMode = 'classic'): BunkerData {
+  if (cache) return cache
+  const catastrophes = loadKind('catastrophe', 'catastrophes.json')
+  const threats = loadKind('threat', 'threats.json')
+  const conditions = loadKind('condition', 'conditions.json')
   const challenges = [...catastrophes, ...threats, ...conditions]
   const data: BunkerData = {
     catastrophes: catastrophes.map((item) => item.text),
@@ -86,7 +79,7 @@ export function loadBunkerData(mode: GameMode = 'classic'): BunkerData {
     conditions: conditions.map((item) => item.text),
     challenges,
   }
-  cache.set(key, data)
+  cache = data
   return data
 }
 

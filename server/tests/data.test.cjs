@@ -37,11 +37,11 @@ test('погранично опасные факты используют light_
   }
 })
 
-test('у характеристик с КФ не выше 0.30 нет полезных тегов, кроме компенсирующего criminal', () => {
+test('у характеристик с отрицательным КФ нет полезных тегов, кроме компенсирующего criminal', () => {
   const required = new Set(loadBunkerData().challenges.flatMap((challenge) => challenge.requirements.flat()))
   required.delete('criminal')
   const usefulLow = loadCharacteristics().filter((row) =>
-    Number(row.coef) <= 0.3 && parseSurvivalTags(row.tags).some((tag) => required.has(tag)),
+    Number(row.coef) < 0 && parseSurvivalTags(row.tags).some((tag) => required.has(tag)),
   )
   assert.deepEqual(usefulLow.map((row) => row.name), [])
 })

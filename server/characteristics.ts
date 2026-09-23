@@ -6,7 +6,8 @@ import {
   displayCategoryOrder,
   rowsByCategory,
   characteristicWeight,
-  type CharacteristicDef,
+  expandForDeal,
+  type HealthVariant,
   type GameMode,
 } from './data'
 
@@ -141,18 +142,19 @@ export function generateOrdinaryBiology(): Biology {
   return { sex, age, experience, coef, infertile, isVisible: false }
 }
 
-function parseRow(row: CharacteristicDef, mode: GameMode = 'classic'): Characteristic {
+function parseVariant(variant: HealthVariant): Characteristic {
+  const row = variant.row
   return {
     type: row.category,
     value: String(row.name ?? '').trim(),
-    coef: Number(row.coef) || 0,
+    coef: variant.coef,
     hint: String(row.hint ?? ''),
     isVisible: false,
     occ: 0,
     tags: [...(row.tags ?? [])],
-    stageLabel: undefined,
-    stageIndex: undefined,
-    incurable: undefined,
+    stageLabel: variant.stageLabel || undefined,
+    stageIndex: variant.stageIndex ?? undefined,
+    incurable: variant.incurable || undefined,
   }
 }
 
@@ -237,7 +239,8 @@ function dealToPlayer(
 
   for (const category of shuffleArray([...categoryProgram])) {
     const available = rowsByCategory(category, mode)
-      .map((row) => parseRow(row, mode))
+      .flatMap(expandForDeal)
+      .map(parseVariant)
       .filter((c) => !usedValues.has(c.value))
     if (available.length === 0) continue
 
@@ -327,7 +330,8 @@ export function drawUniqueCharacteristics(
   const excluded = new Set(excludedValues)
   const unique = new Map<string, Characteristic>()
   for (const row of rowsByCategory(category, mode)) {
-    const characteristic = parseRow(row, mode)
+    const variants = expandForDeal(row)
+    const characteristic = parseVariant(variants[Math.floor(Math.random() * variants.length)])
     if (characteristic.value && !excluded.has(characteristic.value) && !unique.has(characteristic.value)) {
       unique.set(characteristic.value, characteristic)
     }
