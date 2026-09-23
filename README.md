@@ -18,7 +18,12 @@ cd frontend && npm i && npm run dev
 
 Проект рассчитан на **один Node-сервис** (Express раздаёт собранный Vue + Socket.io). Подходят [Render](https://render.com), [Railway](https://railway.app) или [Fly.io](https://fly.io) — у всех есть WebSocket. Vercel/Netlify как serverless для сокетов не подойдут.
 
-### Render (рекомендуется)
+### VPS
+
+Docker Compose + Caddy, запуск после перезагрузки, обновление из `master`
+и откат образа: [инструкция](deploy/README.md).
+
+### Render
 
 1. Репозиторий на GitHub.
 2. New → Web Service → Docker (есть `Dockerfile` и `render.yaml`).

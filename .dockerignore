@@ -6,3 +6,6 @@ frontend/dist
 server/dist
 *.log
 .cursor
+.deploy
+.env
+.env.*

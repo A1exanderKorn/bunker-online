@@ -31,3 +31,4 @@ Thumbs.db
 
 # Локальные спеки и правила Cursor (не коммитить)
 .cursor/
+.deploy/
