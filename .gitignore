@@ -1,4 +1,5 @@
 # Зависимости
+# Устанавливаются через npm ci; не храним их ни в корне, ни во вложенных пакетах.
 node_modules/
 **/node_modules/
 
@@ -32,3 +33,5 @@ Thumbs.db
 # Локальные спеки и правила Cursor (не коммитить)
 .cursor/
 .deploy/
+.history-outbox/
+**/.history-outbox/
