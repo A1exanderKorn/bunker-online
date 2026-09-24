@@ -169,6 +169,7 @@ function toggleVoters(id: string) {
     >
       <header class="card-head">
         <div class="head-left">
+          <img v-if="p.avatarUrl" :src="p.avatarUrl" alt="" width="28" height="28" style="border-radius: 50%; flex-shrink: 0" />
           <span class="player-name">{{ p.name }}</span>
           <span v-if="isMe(p)" class="you-badge">вы</span>
           <span v-if="!p.connected" class="offline-badge" title="Игрок отключился">⚠</span>

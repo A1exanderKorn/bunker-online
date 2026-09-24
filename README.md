@@ -23,6 +23,12 @@ cd frontend && npm i && npm run dev
 Docker Compose + Caddy, запуск после перезагрузки, обновление из `master`
 и откат образа: [инструкция](deploy/README.md).
 
+### Профили и Discord
+
+Вход через Discord, локальный ник, аватар и приватная история завершённых игр:
+[настройка PostgreSQL и OAuth](deploy/AUTH.md). Страница профиля — `/profile`.
+БД подключается отдельным `compose.auth.yaml`; без настройки можно играть гостем.
+
 ### Render
 
 1. Репозиторий на GitHub.

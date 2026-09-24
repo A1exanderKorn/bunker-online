@@ -4,6 +4,7 @@ import LobbyView from '@/views/LobbyView.vue'
 
 const routes: Array<RouteRecordRaw> = [
   { path: '/', name: 'Home', component: HomeView },
+  { path: '/profile', name: 'Profile', component: () => import('@/views/ProfileView.vue') },
   { path: '/lobby/:code', name: 'Lobby', component: LobbyView },
 ]
 

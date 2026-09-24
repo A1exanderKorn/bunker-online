@@ -10,6 +10,7 @@ RUN npm --prefix server ci
 RUN npm --prefix frontend ci
 RUN npm --prefix frontend run build-only
 RUN npm --prefix server run build
+RUN mkdir -p /app/history-outbox && chown node:node /app/history-outbox
 
 ENV NODE_ENV=production
 ENV PORT=3000

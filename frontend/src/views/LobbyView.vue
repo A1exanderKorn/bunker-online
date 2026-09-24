@@ -12,10 +12,12 @@ import LobbySettingsPanel from '@/components/LobbySettingsPanel.vue'
 import BunkerInfoPanel from '@/components/BunkerInfoPanel.vue'
 import CardAdminPanel from '@/components/CardAdminPanel.vue'
 import RoundProgress from '@/components/RoundProgress.vue'
+import { useProfileStore } from '@/stores/profile'
 
 const route = useRoute()
 const session = useSessionStore()
 const game = useGameStore()
+const profile = useProfileStore()
 
 const {
   started,
@@ -44,6 +46,7 @@ const {
 const code = computed(() => (route.params.code as string) ?? session.lobbyCode)
 const nameInput = ref(session.name)
 const nameEntered = ref(false)
+let disposed = false
 
 function join() {
   const name = nameInput.value.trim()
@@ -65,15 +68,18 @@ function copyCode() {
     .catch(() => {})
 }
 
-onMounted(() => {
+onMounted(async () => {
   session.loadSession()
+  await profile.load()
+  if (disposed) return
+  if (profile.user) session.setName(profile.user.nickname)
   if (session.hasName) {
     nameInput.value = session.name
     join()
   }
 })
 
-onUnmounted(() => disconnectSocket())
+onUnmounted(() => { disposed = true; disconnectSocket() })
 
 // Имя выбывшего для баннера результата голосования.
 const eliminatedName = computed(() => {
@@ -284,6 +290,7 @@ const survivalColor = computed(() => {
         <h2>Игроки ({{ roster.length }})</h2>
         <ul class="player-list">
           <li v-for="(p, i) in roster" :key="p.id" class="player-list-item">
+            <img v-if="p.avatarUrl" :src="p.avatarUrl" alt="" width="28" height="28" style="border-radius: 50%" />
             <span class="pl-name">{{ p.name }}</span>
             <span v-if="i === 0" class="host-tag">хост</span>
             <span v-if="!p.connected" class="off-tag">оффлайн</span>

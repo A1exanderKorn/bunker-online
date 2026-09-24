@@ -1,6 +1,7 @@
 import type { Server, Socket } from 'socket.io'
 import type { ClientToServerEvents, ServerToClientEvents } from '../shared/types'
 import { LobbyManager } from './lobby'
+import type { Profile } from '../shared/profile'
 
 type IO = Server<ClientToServerEvents, ServerToClientEvents>
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>
@@ -21,9 +22,12 @@ export function registerSocketHandlers(io: IO): void {
 
   io.on('connection', (socket: GameSocket) => {
     const q = socket.handshake.query as Partial<HandshakeQuery>
-    const name = (q.name ?? '').trim()
-    const lobbyCode = (q.lobbyCode ?? '').toUpperCase()
-    const clientId = (q.clientId ?? '').trim()
+    const profile = socket.data.profile as Profile | undefined
+    const name = profile?.nickname ?? (typeof q.name === 'string' ? q.name.trim().slice(0, 32) : '')
+    const lobbyCode = typeof q.lobbyCode === 'string' ? q.lobbyCode.toUpperCase() : ''
+    const rawId = typeof q.clientId === 'string' ? q.clientId.trim() : ''
+    // Namespaces prevent guests impersonating Discord accounts through localStorage.
+    const clientId = profile ? `account:${profile.id}` : rawId ? `guest:${rawId}` : ''
     const mode = q.mode === 'create' ? 'create' : 'join'
 
     if (!name || !clientId || clientId.length > 128 || !CODE_RE.test(lobbyCode)) {
@@ -55,7 +59,7 @@ export function registerSocketHandlers(io: IO): void {
 
     // Входим в комнату ДО добавления игрока, чтобы broadcast со списком дошёл и до нас (I.5).
     socket.join(lobbyCode)
-    const joinResult = lobby.addOrReconnect(socket.id, clientId, name)
+    const joinResult = lobby.addOrReconnect(socket.id, clientId, name, profile)
     const playerId = joinResult.playerId
     if (!playerId) {
       socket.leave(lobbyCode)

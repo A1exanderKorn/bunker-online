@@ -1,0 +1,36 @@
+# Opt-in overlay: docker compose -f compose.yaml -f compose.auth.yaml up -d --build
+services:
+  app:
+    environment:
+      APP_ORIGIN: ${APP_ORIGIN:?Set APP_ORIGIN to the public HTTPS origin}
+      DATABASE_URL: postgresql://bunker:${POSTGRES_PASSWORD:?Set a random hex POSTGRES_PASSWORD}@db:5432/bunker
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+      HISTORY_OUTBOX_DIR: /app/history-outbox
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - history_outbox:/app/history-outbox
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bunker
+      POSTGRES_DB: bunker
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a random hex POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bunker -d bunker"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  postgres_data:
+  history_outbox:

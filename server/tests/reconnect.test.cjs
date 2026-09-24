@@ -23,13 +23,13 @@ function createHarness() {
 
   registerSocketHandlers(io)
 
-  function connect(id, query) {
+  function connect(id, query, profile) {
     const handlers = new Map()
     const direct = []
     const socket = {
       id,
       handshake: { query },
-      data: {},
+      data: { profile },
       disconnected: false,
       join() {},
       leave() {},
@@ -116,4 +116,22 @@ test('новая вкладка добавляет игрока, а F5 восс�
     roster.map((player) => player.name),
     ['Хост', 'Игрок'],
   )
+})
+
+test('аккаунт использует серверный ник, гостевой clientId не перехватывает аккаунт', () => {
+  const { connect, emitted } = createHarness()
+  const profile = {id:'trusted-profile',nickname:'Профиль',avatarUrl:'https://cdn.discordapp.com/embed/avatars/0.png'}
+  const host = connect('account-one',{name:'Поддельное имя',lobbyCode:'AUTH',mode:'create',clientId:'one'},profile)
+  const hostId = lastEvent(emitted,'account-one','welcome').playerId
+  connect('fake',{name:'Гость',lobbyCode:'AUTH',mode:'join',clientId:'account:trusted-profile',profileId:'trusted-profile'})
+  const fakeId = lastEvent(emitted,'fake','welcome').playerId
+  assert.notEqual(fakeId,hostId)
+  assert.equal(host.socket.disconnected,false)
+  connect('account-two',{name:'Другое',lobbyCode:'AUTH',mode:'join',clientId:'different-device'},profile)
+  assert.equal(lastEvent(emitted,'account-two','welcome').playerId,hostId)
+  assert.equal(host.socket.disconnected,true)
+  const roster = lastEvent(emitted,'account-two','updatePlayers')
+  assert.deepEqual(roster.map(p=>p.name),['Профиль','Гость'])
+  assert.equal(roster[0].avatarUrl,profile.avatarUrl)
+  assert.equal(roster[0].profileId,undefined)
 })

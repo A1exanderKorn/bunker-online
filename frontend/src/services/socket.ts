@@ -56,6 +56,7 @@ function ensureVisibilityReconnect(): void {
 export function connectSocket(name: string, lobbyCode: string, mode: JoinMode): GameSocket {
   if (socket) socket.disconnect()
   socket = io(SERVER_URL, {
+    withCredentials: true,
     query: { name, lobbyCode, mode, clientId: clientId() },
     // Разрешаем socket.io-клиенту автоматически переподключаться после обрыва —
     // сервер восстановит игрока по имени в течение grace-периода.

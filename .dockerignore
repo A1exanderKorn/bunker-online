@@ -9,3 +9,4 @@ server/dist
 .deploy
 .env
 .env.*
+**/.history-outbox

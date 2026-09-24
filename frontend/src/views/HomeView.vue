@@ -1,13 +1,24 @@
 <template>
   <div class="main-block">
     <h1 class="title-text">Добро пожаловать!</h1>
+    <p v-if="profile.loading">Загружаем профиль…</p>
+    <div v-else class="profile-entry">
+      <template v-if="profile.user">
+        <img :src="profile.user.avatarUrl" alt="" width="44" height="44" style="border-radius: 50%" />
+        <span>{{ profile.user.nickname }}</span>
+      </template>
+      <a v-else-if="profile.authEnabled" :href="discordLoginUrl">Войти через Discord</a>
+      <RouterLink to="/profile">{{ profile.user ? 'Профиль и история' : 'О профиле' }}</RouterLink>
+      <small v-if="!profile.user">Можно играть гостем — без истории игр.</small>
+      <p v-if="profile.error" role="alert">{{ profile.error }}</p>
+    </div>
 
-    <div class="buttons-set" v-if="!nameSet">
+    <div class="buttons-set" v-if="!profile.loading && !nameSet">
       <input class="name-input" type="text" v-model="name" placeholder="Введите имя" />
       <LobbyButton @click="confirmName" customClass="confirm-button" text="ОК" />
     </div>
 
-    <div class="buttons-set" v-else>
+    <div class="buttons-set" v-else-if="!profile.loading">
       <LobbyButton @click="createLobby" customClass="base-button" text="Создать игру" />
       <LobbyButton
         @click="joinMode = !joinMode"
@@ -35,11 +46,19 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 import LobbyButton from '@/components/LobbyButton.vue'
+import { useProfileStore, discordLoginUrl } from '@/stores/profile'
 
 const session = useSessionStore()
 const router = useRouter()
+const profile = useProfileStore()
 
-onMounted(() => session.loadName())
+onMounted(async () => {
+  session.loadName()
+  await profile.load()
+  if (profile.user) session.setName(profile.user.nickname)
+  name.value = session.name
+  nameSet.value = session.hasName
+})
 
 const name = ref(session.name)
 const code = ref('')
@@ -86,7 +105,7 @@ function generateLobbyCode() {
   display: flex;
   flex-direction: column;
   margin: auto;
-  height: 100vh;
+  min-height: 100dvh;
   justify-content: center;
   gap: 30px;
   width: 400px;
@@ -102,6 +121,9 @@ function generateLobbyCode() {
   width: 100%;
   align-items: center;
 }
+.profile-entry { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; font-size: 16px; }
+.profile-entry a { color: var(--accent); }
+.profile-entry small { flex-basis: 100%; text-align: center; }
 
 .name-input {
   border: 2px solid var(--accent);

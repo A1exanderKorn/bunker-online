@@ -55,6 +55,8 @@ import {
 import { dealActionCards, makeCardByCatalogId, loadCards } from './cards'
 import { calculateSurvival } from './survival'
 import { filterCardHistory } from './cardHistory'
+import { MatchRecorder, enqueueMatch } from './matchHistory'
+import type { Profile } from '../shared/profile'
 
 type IO = Server<ClientToServerEvents, ServerToClientEvents>
 
@@ -95,6 +97,7 @@ export class Lobby {
   readonly code: string
   private io: IO
   players: Player[] = []
+  private matchRecorder: MatchRecorder | null = null
   stage: GameStage = 'lobby'
   started = false
   settings: LobbySettings = this.freshSettings()
@@ -201,6 +204,7 @@ export class Lobby {
     socketId: string,
     clientId: string,
     name: string,
+    profile?: Profile,
   ): { playerId: string | null; error?: string } {
     // Реконнект: игрок с таким clientId уже есть. Ловим оба случая:
     // 1) старый сокет уже отвалился (connected=false) — обычный реконнект;
@@ -233,6 +237,7 @@ export class Lobby {
         }
       }
       existing.connected = true
+      existing.avatarUrl = profile?.avatarUrl
       this.broadcastPlayers()
       return { playerId: existing.id }
     }
@@ -250,6 +255,8 @@ export class Lobby {
       id: playerId,
       clientId,
       name,
+      profileId: profile?.id,
+      avatarUrl: profile?.avatarUrl,
       characteristics: [],
       biology: null,
       isAlive: true,
@@ -281,6 +288,7 @@ export class Lobby {
   }
 
   private removePlayerNow(playerId: string): void {
+    if (this.started && this.stage !== 'end') this.matchRecorder?.eliminate(playerId)
     const wasCurrent = this.turn.currentPlayerId === playerId
     const wasVoter = this.turn.currentVoterId === playerId
     this.players = this.players.filter((p) => p.id !== playerId)
@@ -320,6 +328,7 @@ export class Lobby {
       this.players.map((p) => ({
         id: p.id,
         name: p.name,
+        avatarUrl: p.avatarUrl,
         isAlive: p.isAlive,
         connected: p.connected,
       })),
@@ -412,6 +421,7 @@ export class Lobby {
       gameMode: this.gameMode(),
     })
     this.started = true
+    this.matchRecorder = new MatchRecorder(this.players, this.gameMode(), this.settings.targetCoef, this.settings.randomTargetCoef)
     this.startCount = this.players.length
     this.stepIndex = 0
 
@@ -485,6 +495,7 @@ export class Lobby {
    */
   newGame(requesterId: string): void {
     if (!this.isHost(requesterId)) return
+    this.matchRecorder = null
     this.stopTimer()
     const host = this.host
     // Тасуем остальных, хост остаётся players[0].
@@ -1696,6 +1707,7 @@ export class Lobby {
     const eliminated = this.players.find((p) => p.id === eliminatedId)
     if (eliminated) {
       eliminated.isAlive = false
+      this.matchRecorder?.eliminate(eliminated.id)
       // III.1: у исключённого раскрываются все характеристики.
       eliminated.characteristics.forEach((c) => (c.isVisible = true))
       if (eliminated.biology) eliminated.biology.isVisible = true
@@ -1736,6 +1748,7 @@ export class Lobby {
   }
 
   private endGame(): void {
+    enqueueMatch(this.matchRecorder?.finish(this.alive().map(p => p.id)) ?? null)
     this.stopTimer()
     this.stage = 'end'
     this.turn = { ...this.turn, currentPlayerId: null, currentVoterId: null }
@@ -1822,6 +1835,7 @@ export class Lobby {
       isAlive: p.isAlive,
       connected: p.connected,
       characteristics: revealAll ? p.characteristics : p.characteristics.filter((c) => c.isVisible),
+      avatarUrl: p.avatarUrl,
       biology: revealAll ? p.biology : p.biology?.isVisible ? p.biology : null,
     }))
   }
@@ -1849,6 +1863,7 @@ export class Lobby {
       this.players.map((p) => ({
         id: p.id,
         name: p.name,
+        avatarUrl: p.avatarUrl,
         isAlive: p.isAlive,
         connected: p.connected,
       })),

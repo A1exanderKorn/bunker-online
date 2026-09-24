@@ -22,6 +22,7 @@ import { connectSocket, getSocket, type JoinMode } from '@/services/socket'
 
 interface RosterPlayer {
   id: string
+  avatarUrl?: string
   name: string
   isAlive: boolean
   connected: boolean
@@ -137,6 +138,9 @@ export const useGameStore = defineStore('game', {
 
       socket.on('updatePlayers', (players) => {
         this.roster = players
+      })
+      socket.on('connect_error', (error) => {
+        this.error = error.message || 'Не удалось подключиться к серверу'
       })
 
       socket.on('settingsUpdated', (payload) => {

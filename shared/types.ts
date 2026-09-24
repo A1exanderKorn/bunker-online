@@ -123,6 +123,9 @@ export function formatBiology(bio: Biology | null | undefined): string | null {
 /** Полные данные игрока (живут только на сервере). */
 export interface Player {
   id: string
+  /** Server-verified identity; never accepted from a socket query. */
+  profileId?: string
+  avatarUrl?: string
   /** Стабильный идентификатор браузера из localStorage — по нему идёт реконнект. */
   clientId: string
   name: string
@@ -138,6 +141,7 @@ export interface Player {
  */
 export interface PublicPlayer {
   id: string
+  avatarUrl?: string
   name: string
   isAlive: boolean
   connected: boolean
@@ -610,7 +614,7 @@ export interface ServerToClientEvents {
   /** Приветствие после успешного подключения: назначаем стабильный playerId. */
   welcome: (payload: { playerId: string; isHost: boolean; settings: LobbySettings }) => void
   updatePlayers: (
-    players: { id: string; name: string; isAlive: boolean; connected: boolean }[],
+    players: { id: string; name: string; isAlive: boolean; connected: boolean; avatarUrl?: string }[],
   ) => void
   settingsUpdated: (payload: SettingsPayload) => void
   gameStarted: (payload: GameStartedPayload) => void

@@ -11,16 +11,22 @@ import { loadCharacteristics } from './data'
 import { loadCards } from './cards'
 import { loadBunkerData } from './bunker'
 import { registerSocketHandlers } from './socket'
+import { migrate } from './database'
+import { appOrigin, authenticatedProfile, profileApi, sessionToken, digest } from './auth'
+import { startHistoryWriter } from './matchHistory'
 
 const app = express()
-app.use(cors())
+// Caddy is the only trusted proxy in Compose; never trust arbitrary forwarded hops.
+app.set('trust proxy', 'loopback, linklocal, uniquelocal')
+app.use(cors({ origin: appOrigin, credentials: true }))
+app.use(express.json({ limit: '4kb' }))
 app.get('/health', (_req, res) => {
   res.json({ ok: true })
 })
 
 const server = http.createServer(app)
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
-  cors: { origin: '*' },
+  cors: { origin: appOrigin, credentials: true },
   // Мобильные браузеры замораживают свёрнутую вкладку (JS и WebSocket-пинги встают).
   // Даём больше времени на пинг, чтобы короткое сворачивание не рвало соединение.
   pingInterval: 25_000,
@@ -37,6 +43,42 @@ try {
   console.error('Не удалось загрузить игровые JSON:', err)
 }
 
+io.use(async (socket, next) => {
+  try {
+    if (socket.handshake.headers.origin && socket.handshake.headers.origin !== appOrigin) {
+      next(new Error('Недопустимый источник подключения')); return
+    }
+    const token = sessionToken(socket.handshake.headers.cookie)
+    const profile = await authenticatedProfile(socket.handshake.headers.cookie)
+    if (token && !profile) { next(new Error('Сессия истекла. Войдите заново или выйдите из профиля.')); return }
+    socket.data.profile = profile || undefined
+    socket.data.sessionHash = token ? digest(token) : undefined
+    if (profile) {
+      // Keep long-lived sockets from outliving or reviving a revoked session.
+      socket.use(async (_packet, proceed) => {
+        try {
+          const current = await authenticatedProfile(socket.handshake.headers.cookie)
+          if (current?.id === profile.id) { proceed(); return }
+        } catch { /* Fail closed when the session cannot be checked. */ }
+        socket.disconnect(true)
+        proceed(new Error('Сессия недоступна'))
+      })
+      const expiryCheck = setInterval(() => {
+        void authenticatedProfile(socket.handshake.headers.cookie).then(current => {
+          if (current?.id !== profile.id) socket.disconnect(true)
+        }).catch(() => socket.disconnect(true))
+      }, 60000)
+      expiryCheck.unref()
+      socket.on('disconnect', () => clearInterval(expiryCheck))
+    }
+    next()
+  } catch { next(new Error('Авторизация временно недоступна')) }
+})
+app.use('/api', profileApi(hash => {
+  for (const socket of io.sockets.sockets.values()) {
+    if (socket.data.sessionHash === hash) socket.disconnect(true)
+  }
+}))
 registerSocketHandlers(io)
 
 const frontendDist = [
@@ -56,6 +98,10 @@ if (frontendDist) {
   console.log(`Статика фронтенда: ${frontendDist}`)
 }
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Сервер запущен на http://0.0.0.0:${PORT}`)
+void migrate().then(() => {
+  startHistoryWriter()
+  server.listen(PORT, '0.0.0.0', () => console.log(`Сервер запущен на http://0.0.0.0:${PORT}`))
+}).catch(() => {
+  console.error('Database migration failed; refusing to start')
+  process.exit(1)
 })
