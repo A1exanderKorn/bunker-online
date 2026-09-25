@@ -6,6 +6,8 @@
     "dev:server": "npm --prefix server run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "report:coverage": "node server/scripts/generate-coverage-report.cjs",
+    "report:balance": "node server/scripts/audit-catalog.cjs",
+    "report:deals": "node server/scripts/check-deal-balance.cjs",
     "build": "npm --prefix frontend ci && npm --prefix frontend run build-only && npm --prefix server ci && npm --prefix server run build",
     "start": "npm --prefix server start"
   }

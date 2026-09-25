@@ -97,7 +97,6 @@ const survivorsHint = computed(() =>
             {{ label }}
           </option>
         </select>
-        <small>Меняется способ раздачи. Характеристики и события общие для обоих режимов.</small>
       </label>
       <label class="field">
         <span class="field-label">Время хода, сек</span>

@@ -56,6 +56,12 @@ characteristics.push({
   coef: null,
   tags: ['reproductive_edge'],
 })
+characteristics.push({
+  category: 'Биология',
+  name: 'Андроид: автоматически даёт инженерные навыки',
+  coef: null,
+  tags: ['engineering', 'bunker_assistance_big'],
+})
 
 const conditionRows = loadBunkerKind('condition', 'conditions.json')
 const conditions = conditionRows.map((row) => ({ text: row.text, tags: row.grants }))

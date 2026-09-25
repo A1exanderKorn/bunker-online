@@ -39,7 +39,7 @@ test('новые теги и правки бункера', () => {
   assert.equal(data.threats.length, 70)
   assert.equal(data.conditions.length, 17)
   assert.deepEqual(data.challenges.find((item) => item.id === 'cat_005').requirements[2], ['ppe'])
-  assert.deepEqual(data.challenges.find((item) => item.id === 'threat_031').requirements[1], ['ppe', 'medical'])
+  assert.deepEqual(data.challenges.find((item) => item.id === 'threat_031').requirements[1], ['ppe'])
   assert.ok(data.challenges.find((item) => item.id === 'cat_020'))
   assert.ok(data.challenges.find((item) => item.id === 'threat_070'))
 })

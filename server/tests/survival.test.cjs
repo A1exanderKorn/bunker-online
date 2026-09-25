@@ -39,7 +39,7 @@ test('базовые потребности не требуют воду, а с�
 })
 
 // Реальная катастрофа cat_004 «Супервулканы»: 2 группы требований
-// [geology|navigation] и [engineering|computing], успех +6 / провал -16.
+// [geology|navigation] и [engineering|construction], успех +6 / провал -16.
 const SUPERVULCANO = loadBunkerData().challenges.find((item) => item.id === 'cat_004').text
 
 function challengeDelta(report, text) {
@@ -61,7 +61,7 @@ test('катастрофа: полностью закрытые требован
 })
 
 test('катастрофа: частично закрытые требования дают промежуточную дельту, а не полный провал', () => {
-  // Закрыта только 1 из 2 групп (geology есть, engineering|computing нет).
+  // Закрыта только 1 из 2 групп (geology есть, engineering|construction нет).
   const players = [
     survivor('g', 'Геолог', 'М', ['geology']),
     survivor('x', 'Пустой', 'Ж', []),

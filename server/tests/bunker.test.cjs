@@ -73,9 +73,11 @@ test('challengeFlavor отрезает хвост механики', () => {
   assert.equal(challengeFlavor(cat002.text).includes('Для решения'), false)
   assert.ok(challengeFlavor(cat002.text).startsWith('Ядерная война:'))
 
-  assert.ok(cat007.text.includes('вируса Для решения'))
+  // Historical input without punctuation must still be parsed after catalog copy edits.
+  assert.equal(challengeFlavor('Защита от вируса Для решения подойдёт: медицина.'), 'Защита от вируса')
+  assert.ok(cat007.text.includes('Для решения'))
   assert.equal(challengeFlavor(cat007.text).includes('Для решения'), false)
-  assert.ok(challengeFlavor(cat007.text).includes('зомби'))
+  assert.ok(challengeFlavor(cat007.text).toLowerCase().includes('зомби'))
 
   assert.equal(challengeFlavor(lucky.text), lucky.text)
   assert.equal(challengeFlavor(condition.text), condition.text)

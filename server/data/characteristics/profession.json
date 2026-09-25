@@ -2,17 +2,6 @@
   "category": "Профессия",
   "items": [
     {
-      "name": "Военный врач",
-      "coef": 1,
-      "hint": "",
-      "tags": [
-        "medical",
-        "security",
-        "weapon",
-        "strength"
-      ]
-    },
-    {
       "name": "Инженер жизнеобеспечения",
       "coef": 1,
       "hint": "",
@@ -23,14 +12,31 @@
       ]
     },
     {
-      "name": "Хирург",
-      "coef": 1,
-      "hint": "",
+      "name": "Военный врач",
+      "coef": 0.95,
+      "hint": "Полевое лечение и эвакуация раненых; профессия не гарантирует боевую подготовку.",
       "tags": [
         "medical",
-        "leadership",
-        "psychology",
-        "science"
+        "rescue"
+      ]
+    },
+    {
+      "name": "Инженер по вентиляции",
+      "coef": 0.95,
+      "hint": "",
+      "tags": [
+        "engineering",
+        "ventilation"
+      ]
+    },
+    {
+      "name": "Инженер-энергетик",
+      "coef": 0.95,
+      "hint": "",
+      "tags": [
+        "engineering",
+        "power",
+        "repair"
       ]
     },
     {
@@ -39,6 +45,33 @@
       "hint": "",
       "tags": [
         "medical"
+      ]
+    },
+    {
+      "name": "Агроном",
+      "coef": 0.9,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food"
+      ]
+    },
+    {
+      "name": "Анестезиолог-реаниматолог",
+      "coef": 0.9,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
+      "name": "Инженер-гидротехник",
+      "coef": 0.9,
+      "hint": "",
+      "tags": [
+        "water",
+        "engineering",
+        "plumbing"
       ]
     },
     {
@@ -53,28 +86,19 @@
       ]
     },
     {
+      "name": "Хирург",
+      "coef": 0.9,
+      "hint": "Операции и послеоперационное наблюдение; лидерские качества не подразумеваются автоматически.",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
       "name": "Врач-инфекционист полевой",
       "coef": 0.85,
       "hint": "",
       "tags": [
         "infectious",
-        "medical"
-      ]
-    },
-    {
-      "name": "Агроном",
-      "coef": 0.8,
-      "hint": "",
-      "tags": [
-        "agriculture",
-        "food"
-      ]
-    },
-    {
-      "name": "Анестезиолог-реаниматолог",
-      "coef": 0.8,
-      "hint": "",
-      "tags": [
         "medical"
       ]
     },
@@ -102,17 +126,7 @@
       "coef": 0.8,
       "hint": "",
       "tags": [
-        "medical",
-        "psychology"
-      ]
-    },
-    {
-      "name": "Инженер-гидротехник",
-      "coef": 0.8,
-      "hint": "",
-      "tags": [
-        "water",
-        "engineering"
+        "medical"
       ]
     },
     {
@@ -137,6 +151,38 @@
       ]
     },
     {
+      "name": "Начальник службы безопасности",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "security",
+        "weapon",
+        "leadership",
+        "protection"
+      ]
+    },
+    {
+      "name": "Пожарный",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "rescue",
+        "survival",
+        "fire",
+        "protection"
+      ]
+    },
+    {
+      "name": "Радиоинженер",
+      "coef": 0.75,
+      "hint": "Радиоаппаратура, антенны и помехи; не специалист по ядерным реакторам.",
+      "tags": [
+        "engineering",
+        "repair",
+        "communication"
+      ]
+    },
+    {
       "name": "Токсиколог",
       "coef": 0.75,
       "hint": "",
@@ -146,30 +192,20 @@
       ]
     },
     {
+      "name": "Фермер",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food"
+      ]
+    },
+    {
       "name": "Инженер",
       "coef": 0.7,
       "hint": "",
       "tags": [
         "engineering"
-      ]
-    },
-    {
-      "name": "Инженер по вентиляции",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "engineering",
-        "ventilation"
-      ]
-    },
-    {
-      "name": "Инженер-энергетик",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "engineering",
-        "power",
-        "repair"
       ]
     },
     {
@@ -192,15 +228,12 @@
       ]
     },
     {
-      "name": "Радиоинженер",
+      "name": "Психотерапевт",
       "coef": 0.7,
       "hint": "",
       "tags": [
-        "engineering",
-        "radiation",
-        "nuclear",
-        "science",
-        "communication"
+        "psychology",
+        "diplomacy"
       ]
     },
     {
@@ -212,15 +245,6 @@
         "survival",
         "fire",
         "protection"
-      ]
-    },
-    {
-      "name": "Спасатель-водолаз",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "rescue",
-        "water"
       ]
     },
     {
@@ -242,6 +266,14 @@
       ]
     },
     {
+      "name": "Фельдшер",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
       "name": "Физик-ядерщик",
       "coef": 0.7,
       "hint": "",
@@ -249,6 +281,127 @@
         "radiation",
         "nuclear",
         "science"
+      ]
+    },
+    {
+      "name": "Военный летчик",
+      "coef": 0.65,
+      "hint": "Лётная подготовка, навигация и служебная безопасность; не универсальный специалист по оружию.",
+      "tags": [
+        "aviation",
+        "navigation",
+        "security"
+      ]
+    },
+    {
+      "name": "Инструктор ГО",
+      "coef": 0.65,
+      "hint": "Укрытия, защитное снаряжение и порядок действий при авариях.",
+      "tags": [
+        "survival",
+        "protection",
+        "ppe"
+      ]
+    },
+    {
+      "name": "Медсестра",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
+      "name": "Механик",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "repair",
+        "tools"
+      ]
+    },
+    {
+      "name": "Оператор очистных сооружений",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "water",
+        "plumbing",
+        "repair"
+      ]
+    },
+    {
+      "name": "Психолог",
+      "coef": 0.65,
+      "hint": "Кризисная поддержка и посредничество в конфликтах.",
+      "tags": [
+        "psychology",
+        "diplomacy"
+      ]
+    },
+    {
+      "name": "Робототехник",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "engineering",
+        "computing"
+      ]
+    },
+    {
+      "name": "Сантехник",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "water",
+        "plumbing",
+        "repair"
+      ]
+    },
+    {
+      "name": "Спасатель-водолаз",
+      "coef": 0.65,
+      "hint": "Спасение и безопасные работы под водой; не очистка питьевой воды.",
+      "tags": [
+        "rescue",
+        "protection"
+      ]
+    },
+    {
+      "name": "Химик",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "chemistry",
+        "science"
+      ]
+    },
+    {
+      "name": "Шеф-повар",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Электрик",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "power",
+        "repair"
+      ]
+    },
+    {
+      "name": "Военный",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "security",
+        "weapon",
+        "strength",
+        "protection"
       ]
     },
     {
@@ -261,6 +414,15 @@
       ]
     },
     {
+      "name": "Гидролог",
+      "coef": 0.6,
+      "hint": "Оценка источников и качества воды; не ремонтник насосов.",
+      "tags": [
+        "water",
+        "science"
+      ]
+    },
+    {
       "name": "Дозиметрист",
       "coef": 0.6,
       "hint": "",
@@ -269,25 +431,40 @@
       ]
     },
     {
-      "name": "Начальник службы безопасности",
+      "name": "Оружейник",
       "coef": 0.6,
       "hint": "",
       "tags": [
-        "security",
         "weapon",
-        "strength",
-        "leadership"
+        "repair",
+        "tools"
       ]
     },
     {
-      "name": "Оператор очистных сооружений",
+      "name": "Печник",
+      "coef": 0.6,
+      "hint": "Отопительные печи, безопасные дымоходы и тяга.",
+      "tags": [
+        "construction",
+        "fire",
+        "cold",
+        "ventilation"
+      ]
+    },
+    {
+      "name": "Программист",
       "coef": 0.6,
       "hint": "",
       "tags": [
-        "water",
-        "plumbing",
-        "repair",
-        "ventilation"
+        "computing"
+      ]
+    },
+    {
+      "name": "Системный администратор",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "computing"
       ]
     },
     {
@@ -297,15 +474,6 @@
       "tags": [
         "medical",
         "chemistry"
-      ]
-    },
-    {
-      "name": "Фермер",
-      "coef": 0.6,
-      "hint": "",
-      "tags": [
-        "agriculture",
-        "food"
       ]
     },
     {
@@ -327,12 +495,22 @@
       ]
     },
     {
-      "name": "Инструктор ГО",
+      "name": "Геодезист",
       "coef": 0.55,
       "hint": "",
       "tags": [
+        "geology",
+        "navigation"
+      ]
+    },
+    {
+      "name": "Лесник",
+      "coef": 0.55,
+      "hint": "Ориентируется в лесу и знает местные съедобные ресурсы.",
+      "tags": [
         "survival",
-        "protection"
+        "navigation",
+        "food"
       ]
     },
     {
@@ -345,6 +523,25 @@
       ]
     },
     {
+      "name": "Пчеловод",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "animals",
+        "food"
+      ]
+    },
+    {
+      "name": "Сварщик",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "repair",
+        "construction",
+        "tools"
+      ]
+    },
+    {
       "name": "Сварщик-аргонщик",
       "coef": 0.55,
       "hint": "",
@@ -354,11 +551,44 @@
       ]
     },
     {
-      "name": "Фельдшер",
+      "name": "Сотрудник полиции",
       "coef": 0.55,
       "hint": "",
       "tags": [
-        "medical"
+        "security",
+        "weapon",
+        "protection"
+      ]
+    },
+    {
+      "name": "Строитель",
+      "coef": 0.55,
+      "hint": "Укрепляет перекрытия и баррикады, восстанавливает помещения.",
+      "tags": [
+        "construction",
+        "repair",
+        "tools",
+        "protection"
+      ]
+    },
+    {
+      "name": "Шахтер",
+      "coef": 0.55,
+      "hint": "Знает горные выработки, крепления и безопасность шахтного воздуха.",
+      "tags": [
+        "geology",
+        "construction",
+        "tools",
+        "ventilation"
+      ]
+    },
+    {
+      "name": "Архитектор",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "engineering",
+        "construction"
       ]
     },
     {
@@ -370,13 +600,12 @@
       ]
     },
     {
-      "name": "Гидролог",
+      "name": "Глава транснациональной корпорации",
       "coef": 0.5,
       "hint": "",
       "tags": [
-        "water",
-        "plumbing",
-        "repair"
+        "leadership",
+        "logistics"
       ]
     },
     {
@@ -389,12 +618,29 @@
       ]
     },
     {
+      "name": "Кинолог",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "animals",
+        "security"
+      ]
+    },
+    {
       "name": "Лаборант",
       "coef": 0.5,
       "hint": "",
       "tags": [
         "science",
         "biology"
+      ]
+    },
+    {
+      "name": "Логист",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "logistics"
       ]
     },
     {
@@ -407,31 +653,21 @@
       ]
     },
     {
-      "name": "Медсестра",
+      "name": "Метеоролог",
       "coef": 0.5,
-      "hint": "",
+      "hint": "Погода и выбор безопасного маршрута; не специалист по породам и отоплению.",
       "tags": [
-        "medical"
+        "science",
+        "navigation"
       ]
     },
     {
-      "name": "Механик",
+      "name": "Переводчик",
       "coef": 0.5,
-      "hint": "",
+      "hint": "Перевод и сопровождение переговоров; не ремонт радиосвязи.",
       "tags": [
-        "repair",
-        "construction",
-        "tools"
-      ]
-    },
-    {
-      "name": "Оружейник",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "weapon",
-        "repair",
-        "tools"
+        "culture",
+        "diplomacy"
       ]
     },
     {
@@ -444,64 +680,29 @@
       ]
     },
     {
-      "name": "Психолог",
+      "name": "Учитель биологии",
       "coef": 0.5,
       "hint": "",
       "tags": [
-        "psychology"
-      ]
-    },
-    {
-      "name": "Психотерапевт",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "psychology",
-        "diplomacy"
-      ]
-    },
-    {
-      "name": "Робототехник",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "engineering"
-      ]
-    },
-    {
-      "name": "Сантехник",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "water",
-        "plumbing",
-        "repair"
-      ]
-    },
-    {
-      "name": "Химик",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "chemistry",
+        "biology",
         "science"
       ]
     },
     {
-      "name": "Шеф-повар",
-      "coef": 0.5,
+      "name": "Адвокат",
+      "coef": 0.45,
       "hint": "",
       "tags": [
-        "food"
+        "diplomacy"
       ]
     },
     {
-      "name": "Электрик",
-      "coef": 0.5,
-      "hint": "",
+      "name": "Боец ММА",
+      "coef": 0.45,
+      "hint": "Физическая подготовка и защита в ближнем бою; владение огнестрельным оружием не гарантировано.",
       "tags": [
-        "power",
-        "repair"
+        "strength",
+        "protection"
       ]
     },
     {
@@ -514,22 +715,29 @@
       ]
     },
     {
-      "name": "Печник",
+      "name": "Портной",
       "coef": 0.45,
-      "hint": "",
+      "hint": "Шьёт и чинит одежду, помогает утеплить спальные места; не ремонтирует механизмы.",
       "tags": [
-        "construction",
-        "fire",
+        "tailoring",
         "cold"
       ]
     },
     {
-      "name": "Пчеловод",
-      "coef": 0.45,
+      "name": "Археолог",
+      "coef": 0.4,
       "hint": "",
       "tags": [
-        "animals",
-        "food"
+        "geology",
+        "culture"
+      ]
+    },
+    {
+      "name": "Воспитатель детсада",
+      "coef": 0.4,
+      "hint": "Организация занятий и поддержка детей; не командование всей группой.",
+      "tags": [
+        "psychology"
       ]
     },
     {
@@ -574,13 +782,12 @@
       ]
     },
     {
-      "name": "Переводчик",
+      "name": "Охранник ТЦ",
       "coef": 0.4,
       "hint": "",
       "tags": [
-        "culture",
-        "communication",
-        "diplomacy"
+        "security",
+        "protection"
       ]
     },
     {
@@ -593,67 +800,35 @@
       ]
     },
     {
-      "name": "Портной",
+      "name": "Садовник",
       "coef": 0.4,
       "hint": "",
       "tags": [
-        "tailoring"
+        "agriculture"
       ]
     },
     {
-      "name": "Программист",
+      "name": "Учитель истории",
       "coef": 0.4,
       "hint": "",
       "tags": [
-        "computing"
+        "culture"
       ]
     },
     {
-      "name": "Сварщик",
+      "name": "Фитнес-тренер",
       "coef": 0.4,
       "hint": "",
       "tags": [
-        "repair",
-        "construction",
-        "tools"
-      ]
-    },
-    {
-      "name": "Системный администратор",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "computing"
-      ]
-    },
-    {
-      "name": "Сотрудник полиции",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "security",
-        "weapon",
         "strength"
       ]
     },
     {
-      "name": "Пожарный",
-      "coef": 0.4,
+      "name": "Актер",
+      "coef": 0.35,
       "hint": "",
       "tags": [
-        "rescue",
-        "survival",
-        "fire",
-        "protection"
-      ]
-    },
-    {
-      "name": "Охранник ТЦ",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "security",
-        "protection"
+        "culture"
       ]
     },
     {
@@ -666,98 +841,10 @@
     },
     {
       "name": "Ассистент психиатра",
-      "coef": 0.32,
+      "coef": 0.3,
       "hint": "",
       "tags": [
         "psychology"
-      ]
-    },
-    {
-      "name": "Боец ММА",
-      "coef": 0.32,
-      "hint": "",
-      "tags": [
-        "security",
-        "weapon",
-        "strength"
-      ]
-    },
-    {
-      "name": "Геодезист",
-      "coef": 0.32,
-      "hint": "",
-      "tags": [
-        "geology",
-        "navigation"
-      ]
-    },
-    {
-      "name": "Глава транснациональной корпорации",
-      "coef": 0.32,
-      "hint": "",
-      "tags": [
-        "leadership"
-      ]
-    },
-    {
-      "name": "Диетолог",
-      "coef": 0.32,
-      "hint": "",
-      "tags": [
-        "food"
-      ]
-    },
-    {
-      "name": "Кинолог",
-      "coef": 0.32,
-      "hint": "",
-      "tags": [
-        "animals",
-        "security"
-      ]
-    },
-    {
-      "name": "Лесник",
-      "coef": 0.32,
-      "hint": "",
-      "tags": [
-        "agriculture",
-        "food"
-      ]
-    },
-    {
-      "name": "Логист",
-      "coef": 0.32,
-      "hint": "",
-      "tags": [
-        "logistics"
-      ]
-    },
-    {
-      "name": "Метеоролог",
-      "coef": 0.32,
-      "hint": "",
-      "tags": [
-        "geology",
-        "navigation"
-      ]
-    },
-    {
-      "name": "Пекарь",
-      "coef": 0.32,
-      "hint": "",
-      "tags": [
-        "food"
-      ]
-    },
-    {
-      "name": "Строитель",
-      "coef": 0.32,
-      "hint": "",
-      "tags": [
-        "repair",
-        "construction",
-        "tools"
       ]
     },
     {
@@ -769,6 +856,22 @@
       ]
     },
     {
+      "name": "Диетолог",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Журналист",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "culture"
+      ]
+    },
+    {
       "name": "Кладовщик",
       "coef": 0.3,
       "hint": "",
@@ -777,55 +880,38 @@
       ]
     },
     {
-      "name": "Архитектор",
-      "coef": 0.26,
+      "name": "Массажист",
+      "coef": 0.3,
+      "hint": "Навыки массажа полезны для комфорта, но не заменяют врача.",
+      "tags": []
+    },
+    {
+      "name": "Пекарь",
+      "coef": 0.3,
       "hint": "",
       "tags": [
-        "engineering"
+        "food"
+      ]
+    },
+    {
+      "name": "Junior-аналитик",
+      "coef": 0.3,
+      "hint": "Начальные навыки обработки данных и скриптов, небольшой практический опыт.",
+      "tags": [
+        "computing"
       ]
     },
     {
       "name": "Библиотекарь",
-      "coef": 0.26,
+      "coef": 0.25,
       "hint": "",
       "tags": [
         "culture"
       ]
     },
     {
-      "name": "Военный",
-      "coef": 0.26,
-      "hint": "",
-      "tags": [
-        "security",
-        "weapon",
-        "strength"
-      ]
-    },
-    {
-      "name": "Военный летчик",
-      "coef": 0.26,
-      "hint": "",
-      "tags": [
-        "security",
-        "weapon",
-        "strength",
-        "aviation",
-        "navigation"
-      ]
-    },
-    {
-      "name": "Журналист",
-      "coef": 0.26,
-      "hint": "",
-      "tags": [
-        "culture",
-        "communication"
-      ]
-    },
-    {
       "name": "Киллер",
-      "coef": 0.26,
+      "coef": 0.25,
       "hint": "",
       "tags": [
         "weapon",
@@ -836,63 +922,11 @@
     },
     {
       "name": "Оператор дрона",
-      "coef": 0.26,
+      "coef": 0.25,
       "hint": "",
       "tags": [
         "aviation",
         "navigation"
-      ]
-    },
-    {
-      "name": "Учитель биологии",
-      "coef": 0.26,
-      "hint": "",
-      "tags": [
-        "biology",
-        "science",
-        "culture"
-      ]
-    },
-    {
-      "name": "Учитель истории",
-      "coef": 0.26,
-      "hint": "",
-      "tags": [
-        "culture"
-      ]
-    },
-    {
-      "name": "Фитнес-тренер",
-      "coef": 0.26,
-      "hint": "",
-      "tags": [
-        "strength"
-      ]
-    },
-    {
-      "name": "Художник",
-      "coef": 0.26,
-      "hint": "",
-      "tags": [
-        "culture"
-      ]
-    },
-    {
-      "name": "Шахтер",
-      "coef": 0.26,
-      "hint": "",
-      "tags": [
-        "repair",
-        "construction",
-        "tools"
-      ]
-    },
-    {
-      "name": "Массажист",
-      "coef": 0.25,
-      "hint": "",
-      "tags": [
-        "medical"
       ]
     },
     {
@@ -914,57 +948,11 @@
       "tags": []
     },
     {
-      "name": "Адвокат",
-      "coef": 0.22,
-      "hint": "",
-      "tags": [
-        "diplomacy"
-      ]
-    },
-    {
-      "name": "Актер",
-      "coef": 0.22,
+      "name": "Художник",
+      "coef": 0.25,
       "hint": "",
       "tags": [
         "culture"
-      ]
-    },
-    {
-      "name": "Археолог",
-      "coef": 0.22,
-      "hint": "",
-      "tags": [
-        "geology",
-        "culture"
-      ]
-    },
-    {
-      "name": "Воспитатель детсада",
-      "coef": 0.22,
-      "hint": "",
-      "tags": [
-        "psychology",
-        "leadership"
-      ]
-    },
-    {
-      "name": "Дворник",
-      "coef": 0.22,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Сомелье",
-      "coef": 0.22,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Сторож",
-      "coef": 0.22,
-      "hint": "",
-      "tags": [
-        "security"
       ]
     },
     {
@@ -984,6 +972,36 @@
       ]
     },
     {
+      "name": "Дворник",
+      "coef": 0.2,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Дизайнер",
+      "coef": 0.2,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Кассир",
+      "coef": 0.2,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Киберспортсмен",
+      "coef": 0.2,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Маркетолог",
+      "coef": 0.2,
+      "hint": "",
+      "tags": []
+    },
+    {
       "name": "Почтальон",
       "coef": 0.2,
       "hint": "",
@@ -996,58 +1014,30 @@
       "tags": []
     },
     {
-      "name": "Садовник",
+      "name": "Сомелье",
+      "coef": 0.2,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Сторож",
       "coef": 0.2,
       "hint": "",
       "tags": [
-        "agriculture"
+        "security"
       ]
+    },
+    {
+      "name": "Финансовый менеджер",
+      "coef": 0.2,
+      "hint": "",
+      "tags": []
     },
     {
       "name": "Экоактивист",
       "coef": 0.2,
-      "hint": "",
-      "tags": [
-        "biology"
-      ]
-    },
-    {
-      "name": "Дизайнер",
-      "coef": 0.18,
-      "hint": "",
+      "hint": "Общественная деятельность сама по себе не даёт специальности биолога.",
       "tags": []
-    },
-    {
-      "name": "Кассир",
-      "coef": 0.18,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Киберспортсмен",
-      "coef": 0.18,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Маркетолог",
-      "coef": 0.18,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Финансовый менеджер",
-      "coef": 0.18,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Junior-аналитик",
-      "coef": 0.18,
-      "hint": "",
-      "tags": [
-        "computing"
-      ]
     },
     {
       "name": "Курьер",
@@ -1062,12 +1052,16 @@
       "tags": []
     },
     {
+      "name": "Блогер",
+      "coef": 0.1,
+      "hint": "",
+      "tags": []
+    },
+    {
       "name": "Ведущий подкаста",
       "coef": 0.1,
       "hint": "",
-      "tags": [
-        "culture"
-      ]
+      "tags": []
     },
     {
       "name": "Стажер во «Вкусно и точка»",
@@ -1082,28 +1076,16 @@
       "tags": []
     },
     {
-      "name": "Блогер",
-      "coef": 0.08,
-      "hint": "",
-      "tags": [
-        "culture"
-      ]
-    },
-    {
       "name": "Тиктокер",
-      "coef": 0.08,
+      "coef": 0.1,
       "hint": "",
-      "tags": [
-        "culture"
-      ]
+      "tags": []
     },
     {
       "name": "Актёр массовки",
       "coef": 0.05,
       "hint": "",
-      "tags": [
-        "culture"
-      ]
+      "tags": []
     },
     {
       "name": "Коуч",
@@ -1121,9 +1103,7 @@
       "name": "Реалити-звезда",
       "coef": 0.05,
       "hint": "",
-      "tags": [
-        "culture"
-      ]
+      "tags": []
     },
     {
       "name": "Безработный",
@@ -1162,9 +1142,15 @@
       "tags": []
     },
     {
-      "name": "Продавец БАДов",
+      "name": "Ведьма",
       "coef": -0.05,
-      "hint": "",
+      "hint": "Ритуалы не подтверждают полезных навыков или опасного поведения.",
+      "tags": []
+    },
+    {
+      "name": "Оккультист",
+      "coef": -0.05,
+      "hint": "Мистические убеждения не дают прикладного навыка, но сами по себе не угрожают группе.",
       "tags": []
     },
     {
@@ -1174,25 +1160,36 @@
       "tags": []
     },
     {
-      "name": "Шарлатан-целитель",
-      "coef": -0.2,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Агитатор паники",
-      "coef": -0.25,
-      "hint": "",
+      "name": "Продавец БАДов",
+      "coef": -0.1,
+      "hint": "Уговаривает заменять необходимые лекарства непроверенными добавками.",
       "tags": [
-        "conflict"
+        "light_danger"
       ]
     },
     {
       "name": "Провокатор",
       "coef": -0.25,
-      "hint": "",
+      "hint": "Намеренно разжигает ссоры и подстрекает жильцов к дракам.",
       "tags": [
-        "conflict"
+        "conflict",
+        "light_danger"
+      ]
+    },
+    {
+      "name": "Шарлатан-целитель",
+      "coef": -0.25,
+      "hint": "Отговаривает больных от лечения и навязывает опасные «чудо-средства».",
+      "tags": [
+        "light_danger"
+      ]
+    },
+    {
+      "name": "Агитатор паники",
+      "coef": -0.3,
+      "hint": "Распространяет ложные сообщения об авариях и провоцирует опасную давку.",
+      "tags": [
+        "light_danger"
       ]
     },
     {
@@ -1214,17 +1211,12 @@
       ]
     },
     {
-      "name": "Оккультист",
-      "coef": -0.3,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Ведьма",
+      "name": "Вербовщик принудительного культа",
       "coef": -0.35,
-      "hint": "",
+      "hint": "Принуждает других вступать в культ, запрещает обращаться за медицинской помощью.",
       "tags": [
-        "conflict"
+        "conflict",
+        "light_danger"
       ]
     },
     {
@@ -1241,14 +1233,6 @@
       "hint": "",
       "tags": [
         "dangerous"
-      ]
-    },
-    {
-      "name": "Сектант",
-      "coef": -0.4,
-      "hint": "",
-      "tags": [
-        "conflict"
       ]
     },
     {

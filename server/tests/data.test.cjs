@@ -25,8 +25,8 @@ test('погранично опасные факты используют light_
   const expected = new Set([
     'Наркодилер',
     'Ограбил своего деда',
-    'Сидел на зоне',
-    'Имеет непогашенную судимость',
+    'Воровал гуманитарку',
+    'Лидер преступной группировки',
   ])
   const rows = loadCharacteristics().filter((row) => expected.has(row.name))
   assert.equal(rows.length, expected.size)
@@ -76,9 +76,14 @@ test('теги protection и criminal имеют достаточно источ
   assert.ok(new Set(protection.map((row) => row.category)).size >= 2)
   assert.ok(criminal.length >= 10)
   assert.deepEqual(new Set(criminal.map((row) => row.category)), new Set(['Профессия', 'Хобби', 'Факт']))
+  const neutralContacts = new Set(['Сидел на зоне', 'Имеет непогашенную судимость'])
   for (const row of criminal) {
     const tags = parseSurvivalTags(row.tags)
-    assert.ok(tags.includes('light_danger') || tags.includes('dangerous'), row.name)
+    if (neutralContacts.has(row.name)) {
+      assert.equal(tags.includes('light_danger') || tags.includes('dangerous'), false, row.name)
+    } else {
+      assert.ok(tags.includes('light_danger') || tags.includes('dangerous'), row.name)
+    }
   }
 })
 
