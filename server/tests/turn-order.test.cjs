@@ -3,6 +3,45 @@ const test = require('node:test')
 
 const { Lobby } = require('../dist/server/lobby.js')
 
+test('старт перемешивает все места, сохраняет хоста и использует одну очередь для стола и раундов', () => {
+  const lobby = new Lobby(ioStub(), 'SHUFFLE')
+  lobby.players = Array.from({ length: 6 }, (_, i) => player(i + 1))
+  lobby.settings.voteMode = 'sequential'
+  lobby.settings.roundSteps = [
+    { kind: 'reveal', revealThreat: false },
+    { kind: 'reveal', revealThreat: false },
+    { kind: 'vote', revealThreat: false },
+  ]
+  const original = Math.random
+  let calls = 0, seed = 12345
+  Math.random = () => calls++ < 5 ? 0 : ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296)
+  try {
+    lobby.start('p2')
+    assert.deepEqual(lobby.matchOrder, [])
+    lobby.start('p1')
+    assert.deepEqual(lobby.matchOrder, ['p2', 'p3', 'p4', 'p5', 'p6', 'p1'])
+    assert.equal(lobby.isHost('p1'), true)
+    assert.equal(lobby.isHost('p2'), false)
+    assert.deepEqual(lobby.publicPlayers().map(p => p.id), lobby.matchOrder)
+    lobby.beginRounds('p1')
+    assert.deepEqual(lobby.turnOrder, lobby.matchOrder)
+    lobby.runStep(1)
+    assert.deepEqual(lobby.turnOrder, ['p3', 'p4', 'p5', 'p6', 'p1', 'p2'])
+    lobby.runStep(2)
+    assert.deepEqual(lobby.voteOrder, lobby.matchOrder)
+    lobby.removePlayerNow('p2')
+    lobby.stepIndex = 1
+    assert.deepEqual(lobby.rotatedAliveOrder('reveal'), ['p3', 'p4', 'p5', 'p6', 'p1'])
+    lobby.newGame('p1')
+    assert.deepEqual(lobby.matchOrder, [])
+    assert.equal(lobby.isHost('p1'), true)
+    lobby.start('p1')
+    assert.equal(lobby.matchOrder.length, 5)
+    assert.equal(new Set(lobby.matchOrder).size, 5)
+    assert.equal(lobby.isHost('p1'), true)
+  } finally { Math.random = original; lobby.dispose() }
+})
+
 function player(index) {
   return {
     id: `p${index}`,

@@ -38,6 +38,7 @@ import {
   buildCharLayout,
   drawUniqueCharacteristics,
   findChar,
+  shuffleArray,
   generateBiology,
   generateOrdinaryBiology,
 } from './characteristics'
@@ -113,6 +114,8 @@ export class Lobby {
   // ── Программа раундов ──
   private stepIndex = 0
   private startCount = 0
+  /** Стартовые места матча, отдельно от списка лобби и прав хоста. */
+  private matchOrder: string[] = []
 
   // ── Состояние ходов ──
   private turn: TurnState = { ...EMPTY_TURN }
@@ -428,7 +431,8 @@ export class Lobby {
       return
     }
 
-    dealCharacteristics(this.players, {
+    this.matchOrder = shuffleArray(this.players.map(p => p.id))
+    dealCharacteristics(this.playersInMatchOrder(), {
       targetCoef: this.settings.randomTargetCoef ? null : this.settings.targetCoef,
       extraBaggage: this.settings.extraBaggage,
       noPhobias: this.settings.noPhobias,
@@ -526,6 +530,7 @@ export class Lobby {
       p.biology = null
     }
     this.started = false
+    this.matchOrder = []
     this.stage = 'lobby'
     this.turn = { ...EMPTY_TURN }
     this.votes.clear()
@@ -1278,10 +1283,10 @@ export class Lobby {
     for (let i = 0; i <= this.stepIndex && i < this.settings.roundSteps.length; i++) {
       if (this.settings.roundSteps[i].kind === kind) occurrence += 1
     }
-    const offset = Math.max(0, occurrence - 1) % this.players.length
-    return [...this.players.slice(offset), ...this.players.slice(0, offset)]
-      .filter((player) => player.isAlive)
-      .map((player) => player.id)
+    const order = this.matchOrder.length ? this.matchOrder : this.players.map(p => p.id)
+    const offset = Math.max(0, occurrence - 1) % order.length
+    return [...order.slice(offset), ...order.slice(0, offset)]
+      .filter(id => this.players.some(p => p.id === id && p.isAlive))
   }
 
   private beginRevealStep(step: RoundStep): void {
@@ -1860,10 +1865,15 @@ export class Lobby {
 
   // ─── Публичное представление ────────────────────────────────────────────
 
+  private playersInMatchOrder(): Player[] {
+    if (!this.matchOrder.length) return this.players
+    return [...this.players].sort((a, b) => this.matchOrder.indexOf(a.id) - this.matchOrder.indexOf(b.id))
+  }
+
   private publicPlayers(viewerId?: string): PublicPlayer[] {
     const viewer = viewerId ? this.players.find((p) => p.id === viewerId) : undefined
     const revealAll = this.stage === 'end' || viewer?.isAlive === false
-    return this.players.map((p) => ({
+    return this.playersInMatchOrder().map((p) => ({
       id: p.id,
       name: p.name,
       isAlive: p.isAlive,
