@@ -79,6 +79,10 @@ export function registerSocketHandlers(io: IO): void {
     console.log(`${name} (${playerId}) подключился к лобби ${lobbyCode} [${mode}]`)
 
     socket.on('updateSettings', ({ settings }) => lobby!.updateSettings(playerId, settings))
+    socket.on('kickPlayer', (payload) => {
+      if (lobby!.socketOf(playerId) === socket.id && typeof payload?.playerId === 'string')
+        lobby!.kickPlayer(playerId, payload.playerId)
+    })
     socket.on('startGame', () => lobby!.start(playerId))
     socket.on('beginRounds', () => lobby!.beginRounds(playerId))
     socket.on('newGame', () => lobby!.newGame(playerId))

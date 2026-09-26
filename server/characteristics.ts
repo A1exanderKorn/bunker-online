@@ -1,4 +1,4 @@
-import type { Biology, Characteristic, CharacteristicCategory, CharSlot, Player, Sex } from '../shared/types'
+import type { Biology, Characteristic, CharacteristicCategory, CharSlot, Player } from '../shared/types'
 import { BIOLOGY_CATEGORY, slotsFromTypes } from '../shared/types'
 import { CATEGORY_ORDER } from './config'
 import {
@@ -20,127 +20,9 @@ export function shuffleArray<T>(array: T[]): T[] {
   return array
 }
 
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value))
-
 export { characteristicWeight }
-
-/** Стаж линейно растёт от −0.02 за 1 год до +0.06 за максимально возможный стаж. */
-export function experienceModifier(age: number, experience: number): number {
-  const availableYears = Math.max(0, age - 16)
-  if (availableYears <= 0 || experience <= 1) return -0.02
-  if (availableYears <= 1) return 0.06
-  const progress = Math.max(0, Math.min(1, (experience - 1) / (availableYears - 1)))
-  return -0.02 + 0.08 * progress
-}
-
-function rollExperience(age: number): number {
-  const maxExperience = Math.max(0, age - 16)
-  return Math.floor(Math.random() * (maxExperience * 2 + 1)) / 2
-}
-
-export const MIN_BIOLOGY_AGE = 19
-export const MAX_BIOLOGY_AGE = 90
-const OLDEST_AGE_WEIGHT = 0.45
-
-/** Относительный вес возраста: плавно уменьшается от 1.0 в 19 лет до 0.45 в 90. */
-export function biologyAgeWeight(age: number): number {
-  const clampedAge = Math.max(MIN_BIOLOGY_AGE, Math.min(MAX_BIOLOGY_AGE, age))
-  const progress = (clampedAge - MIN_BIOLOGY_AGE) / (MAX_BIOLOGY_AGE - MIN_BIOLOGY_AGE)
-  return 1 - (1 - OLDEST_AGE_WEIGHT) * progress
-}
-
-const BIOLOGY_AGES = Array.from(
-  { length: MAX_BIOLOGY_AGE - MIN_BIOLOGY_AGE + 1 },
-  (_, index) => MIN_BIOLOGY_AGE + index,
-)
-const TOTAL_AGE_WEIGHT = BIOLOGY_AGES.reduce((sum, age) => sum + biologyAgeWeight(age), 0)
-
-/** Вероятность выпадения конкретного возраста в обычной биологии. */
-export function biologyAgeProbability(age: number): number {
-  if (!Number.isInteger(age) || age < MIN_BIOLOGY_AGE || age > MAX_BIOLOGY_AGE) return 0
-  return biologyAgeWeight(age) / TOTAL_AGE_WEIGHT
-}
-
-/** Взвешенный возраст: каждый следующий год немного менее вероятен предыдущего. */
-export function rollBiologyAge(randomValue = Math.random()): number {
-  let cursor = Math.max(0, Math.min(1 - Number.EPSILON, randomValue)) * TOTAL_AGE_WEIGHT
-  for (const age of BIOLOGY_AGES) {
-    cursor -= biologyAgeWeight(age)
-    if (cursor < 0) return age
-  }
-  return MAX_BIOLOGY_AGE
-}
-
-/** Генерирует биологию игрока с учётом уже выданных (уникальность андроида/гермафродита). */
-export function generateBiology(existing: Biology[]): Biology {
-  const hasAndroid = existing.some((b) => b.sex === 'Андроид')
-  const hasHerm = existing.some((b) => b.sex === 'Гермафродит')
-
-  const rand = Math.random() * 100
-  let hint: string | undefined
-  let sex: Sex
-
-  if (rand <= 1.75 && !hasHerm) {
-    sex = 'Гермафродит'
-  } else if (rand <= 1.75 + 2.25 && !hasAndroid) {
-    sex = 'Андроид'
-  } else {
-    sex = Math.random() < 0.5 ? 'М' : 'Ж'
-  }
-
-  const age = sex === 'Андроид'
-    ? Math.floor(Math.random() * 20)
-    : sex === 'Гермафродит'
-      ? Math.floor(Math.random() * 15) + 25
-      : rollBiologyAge()
-  const experience = rollExperience(age)
-
-  let baseCoef = 0.5
-  if (sex === 'Ж') {
-    baseCoef = age <= 50
-      ? 0.92 - 0.012 * Math.abs(30 - age)
-      : 0.78 - 0.006 * (age - 50)
-  } else if (sex === 'М') {
-    baseCoef = age <= 60
-      ? 0.9 - 0.008 * Math.abs(35 - age)
-      : 0.8 - 0.005 * (age - 60)
-  }
-
-  const guaranteedInfertility =
-    ((sex === 'Ж' || sex === 'Гермафродит') && age > 50) ||
-    (sex === 'М' && age > 60)
-  const infertile = sex !== 'Андроид' && (guaranteedInfertility || Math.random() < 0.1)
-
-  if (sex === 'Андроид') {
-    baseCoef = 0.95
-    hint = 'Обнуляет проблемы со здоровьем и фобии'
-  }
-
-  if (sex === 'Гермафродит') {
-    baseCoef = 0.95
-    hint = 'Выступает в роли и мужчины, и женщины'
-  }
-
-  // Репродуктивный штраф отдельно учитывается в финальном выживании, поэтому
-  // здесь он не должен обнулять в остальном полезную биологию персонажа.
-  const coef = clamp01(baseCoef + experienceModifier(age, experience) - (infertile ? 0.2 : 0))
-  return { sex, age, experience, coef, infertile, isVisible: false, hint }
-}
-
-/** Обычный М/Ж: возраст 19–90. Без андроида и гермафродита. */
-export function generateOrdinaryBiology(): Biology {
-  const sex: Sex = Math.random() < 0.5 ? 'М' : 'Ж'
-  const age = rollBiologyAge()
-  const experience = rollExperience(age)
-  const baseCoef = sex === 'Ж'
-    ? (age <= 50 ? 0.92 - 0.012 * Math.abs(30 - age) : 0.78 - 0.006 * (age - 50))
-    : (age <= 60 ? 0.9 - 0.008 * Math.abs(35 - age) : 0.8 - 0.005 * (age - 60))
-  const guaranteedInfertility =
-    (sex === 'Ж' && age > 50) || (sex === 'М' && age > 60)
-  const infertile = guaranteedInfertility || Math.random() < 0.1
-  const coef = clamp01(baseCoef + experienceModifier(age, experience) - (infertile ? 0.2 : 0))
-  return { sex, age, experience, coef, infertile, isVisible: false }
-}
+export { experienceModifier, biologyAgeWeight, biologyAgeProbability, rollBiologyAge, MIN_BIOLOGY_AGE, MAX_BIOLOGY_AGE, generateBiology, generateOrdinaryBiology } from './biology'
+import { generateBiology } from './biology'
 
 function parseVariant(variant: HealthVariant): Characteristic {
   const row = variant.row
@@ -148,13 +30,13 @@ function parseVariant(variant: HealthVariant): Characteristic {
     type: row.category,
     value: String(row.name ?? '').trim(),
     coef: variant.coef,
-    hint: String(row.hint ?? ''),
+    hint: variant.hint,
+    stageLabel: variant.stageLabel,
+    stageIndex: variant.stageIndex,
+    incurable: variant.incurable,
     isVisible: false,
     occ: 0,
     tags: [...(row.tags ?? [])],
-    stageLabel: variant.stageLabel || undefined,
-    stageIndex: variant.stageIndex ?? undefined,
-    incurable: variant.incurable || undefined,
   }
 }
 
@@ -232,7 +114,7 @@ function dealToPlayer(
   biology: Biology
   characteristics: Characteristic[]
 } {
-  const biology = generateBiology(biologies)
+  const biology = generateBiology(biologies, targetCoef)
   const characteristics: Characteristic[] = []
   let weightedSum = biology.coef * characteristicWeight(BIOLOGY_CATEGORY, mode)
   let totalWeight = characteristicWeight(BIOLOGY_CATEGORY, mode)

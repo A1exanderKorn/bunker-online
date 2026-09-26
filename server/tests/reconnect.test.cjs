@@ -47,7 +47,7 @@ function createHarness() {
     }
     io.sockets.sockets.set(id, socket)
     connectHandler(socket)
-    return { socket, direct }
+    return { socket, direct, send: (event, payload) => handlers.get(event)?.(payload) }
   }
 
   return { connect, emitted }
@@ -134,4 +134,25 @@ test('аккаунт использует серверный ник, госте�
   assert.deepEqual(roster.map(p=>p.name),['Профиль','Гость'])
   assert.equal(roster[0].avatarUrl,profile.avatarUrl)
   assert.equal(roster[0].profileId,undefined)
+})
+
+test('сокет кикает гостя только по команде актуального хоста и разрешает ему вернуться', () => {
+  const { connect, emitted } = createHarness()
+  const query = { name: 'Хост', lobbyCode: 'KICK', mode: 'create', clientId: 'host-kick' }
+  const host = connect('kick-host', query)
+  const guestQuery = { name: 'Гость', lobbyCode: 'KICK', mode: 'join', clientId: 'guest-kick' }
+  const guest = connect('kick-guest', guestQuery)
+  const guestId = lastEvent(emitted, 'kick-guest', 'welcome').playerId
+  const hostId = lastEvent(emitted, 'kick-host', 'welcome').playerId
+  guest.send('kickPlayer', { playerId: hostId })
+  assert.equal(host.socket.disconnected, false)
+  const nextHost = connect('kick-host-new', query)
+  host.send('kickPlayer', { playerId: guestId })
+  assert.equal(guest.socket.disconnected, false)
+  nextHost.send('kickPlayer', { playerId: guestId })
+  assert.equal(guest.socket.disconnected, true)
+  assert.ok(guest.direct.some(e => e.event === 'kicked'))
+  const returned = connect('kick-guest-new', guestQuery)
+  assert.equal(returned.socket.disconnected, false)
+  assert.ok(lastEvent(emitted, 'kick-guest-new', 'welcome').playerId)
 })

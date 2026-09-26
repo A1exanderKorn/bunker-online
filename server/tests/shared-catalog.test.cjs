@@ -29,9 +29,11 @@ test('обе раздачи выдают полный уникальный на�
             const row = catalog.find((r) => r.category === char.type && r.name === char.value)
             assert.ok(row, char.value)
             assert.deepEqual(char.tags, row.tags)
-            const variant = expandForDeal(row).find((v) => v.coef === char.coef && (v.stageIndex ?? undefined) === char.stageIndex)
+            const variant = expandForDeal(row).find((v) => v.coef === char.coef && v.stageIndex === char.stageIndex)
             assert.ok(variant, `${gameMode}: ${char.value}`)
-            assert.equal(char.stageLabel, variant.stageLabel || undefined)
+            assert.equal(char.stageLabel, variant.stageLabel)
+            assert.equal(char.incurable, variant.incurable)
+            assert.equal(char.hint, row.hint)
             if (row.staged) stagedCount++
           }
         }
@@ -52,8 +54,9 @@ test('массовая перераздача здоровья сохраняе�
     for (const char of dealt) {
       const row = rows.find((r) => r.name === char.value)
       if (!row.staged) continue
-      assert.ok(expandForDeal(row).some((v) => v.coef === char.coef && v.stageLabel === char.stageLabel))
-      assert.equal(!!char.incurable, char.stageIndex === 2)
+      assert.ok(expandForDeal(row).some((v) => v.coef === char.coef && v.hint === char.hint))
+      assert.equal(char.stageLabel, require('../dist/server/data.js').stageLabelsOf(row)[char.stageIndex])
+      assert.equal(char.incurable, char.stageIndex === 2)
     }
   }
 })

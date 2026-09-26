@@ -73,7 +73,6 @@ test('риски сосредоточены на слабых характери
   }
   for (const x of rows.filter(x => x.category === 'Багаж' && x.coef < .4)) {
     assert.ok(x.tags.includes('light_danger') || x.tags.includes('dangerous'), x.name)
-    assert.ok(x.hint.trim().length > 0, x.name)
   }
   for (const x of rows.filter(x => x.tags.includes('critical') || x.tags.includes('contagious'))) {
     assert.ok(x.coef < .35, x.name)
@@ -108,4 +107,21 @@ test('ресурсы не приобретают несвязанные навы
     assert.ok(x, name)
     assert.equal(x.tags.some(t => risk.includes(t)), false, name)
   }
+})
+
+test('подсказки краткие, фобии поясняются отдельно от названия', () => {
+  for (const row of rows) {
+    assert.equal(row.name, row.name.trim())
+    assert.doesNotMatch(row.name, /\s{2,}/)
+    assert.doesNotMatch(row.hint, /не даёт|в игре даёт|автоматического штрафа|не заменяет|Для игровой карты/)
+    if (row.category === 'Фобия') {
+      assert.doesNotMatch(row.name, /[()]/)
+      if (row.name !== 'Нет фобии') assert.ok(row.hint.trim())
+    }
+    if (!['Фобия', 'Здоровье'].includes(row.category))
+      assert.ok(!row.hint || ['ОСУЖДАЮ', 'резня'].includes(row.hint), row.name)
+  }
+  assert.ok(rows.some(r => r.name === 'Оператор очистных сооружений'))
+  assert.ok(rows.some(r => r.name === 'Работал на очистных сооружениях'))
+  assert.ok(rows.some(r => r.name === 'Электронная книга с библиотекой из 10 000 книг'))
 })

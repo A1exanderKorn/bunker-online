@@ -18,7 +18,7 @@ import type {
   PublicBunkerChallenge,
 } from '@shared/types'
 import { DEFAULT_SETTINGS, EMPTY_BUNKER } from '@shared/types'
-import { connectSocket, getSocket, type JoinMode } from '@/services/socket'
+import { connectSocket, disconnectSocket, getSocket, type JoinMode } from '@/services/socket'
 
 interface RosterPlayer {
   id: string
@@ -88,6 +88,7 @@ export const useGameStore = defineStore('game', {
     autoEndTurn: false,
 
     error: '' as string,
+    kicked: false,
   }),
 
   getters: {
@@ -123,6 +124,9 @@ export const useGameStore = defineStore('game', {
   },
 
   actions: {
+    kickPlayer(playerId: string) {
+      getSocket()?.emit('kickPlayer', { playerId })
+    },
     /** Подключается к лобби и навешивает обработчики серверных событий. */
     connect(name: string, lobbyCode: string, mode: JoinMode) {
       clearCardPopupTimer()
@@ -141,6 +145,14 @@ export const useGameStore = defineStore('game', {
       })
       socket.on('connect_error', (error) => {
         this.error = error.message || 'Не удалось подключиться к серверу'
+      })
+
+      socket.on('kicked', (payload) => {
+        clearCardPopupTimer()
+        disconnectSocket()
+        this.$reset()
+        this.kicked = true
+        this.error = payload.message
       })
 
       socket.on('settingsUpdated', (payload) => {
@@ -245,6 +257,9 @@ export const useGameStore = defineStore('game', {
             mine.coef = vis.coef
             mine.hint = vis.hint
             mine.tags = vis.tags
+            mine.stageLabel = vis.stageLabel
+            mine.stageIndex = vis.stageIndex
+            mine.incurable = vis.incurable
           }
         }
         if (me.biology && this.myBiology) {
@@ -287,7 +302,7 @@ export const useGameStore = defineStore('game', {
         this.votedIds = payload.voted
         this.votesByTarget = payload.votesByTarget
         this.revoteFrom = payload.revoteFrom ?? {}
-        if (!payload.voted.includes(this.myId)) this.myVote = ''
+        this.myVote = payload.ownVote ?? ''
       })
 
       socket.on('voteResult', (payload) => {
@@ -352,7 +367,6 @@ export const useGameStore = defineStore('game', {
       getSocket()?.emit('endTurn')
     },
     vote(targetId: string) {
-      this.myVote = targetId
       getSocket()?.emit('vote', { targetId })
     },
     resolveVote() {

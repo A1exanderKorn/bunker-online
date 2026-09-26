@@ -4,40 +4,36 @@ import {
   characteristicWeight,
   clampCoef,
   expandForDeal,
-  roundCoef,
   rowsByCategory,
   type GameMode,
   type HealthVariant,
 } from './data'
 import {
   assignOccurrences,
-  experienceModifier,
   generateOrdinaryBiology,
   shuffleArray,
   type DealOptions,
 } from './characteristics'
 
+import { generateRareBiology } from './biology'
+export { generateRareBiology } from './biology'
+
 const MAX_ATTEMPTS = 8000
-const ANDROID_BASE = 1.25
-const HERM_BASE = 1.15
-const ANDROID_MAX = 1.31
 
 export function slotMinMax(category: string): { min: number; max: number } {
-  if (category === BIOLOGY_CATEGORY) return { min: 0, max: 1 }
   if (category === 'Багаж') return { min: -1, max: 1.15 }
   return { min: -1, max: 1 }
 }
 
-function remainingBounds(slots: string[], fromIndex: number, filledBiology: boolean): { minW: number; maxW: number } {
+function remainingBounds(slots: string[], fromIndex: number): { minW: number; maxW: number } {
   let minW = 0
   let maxW = 0
   for (let i = fromIndex; i < slots.length; i += 1) {
     const cat = slots[i]
     const w = characteristicWeight(cat, 'new')
     const range = slotMinMax(cat)
-    minW += w * (cat === BIOLOGY_CATEGORY ? 0 : range.min)
-    if (cat === BIOLOGY_CATEGORY && !filledBiology) maxW += w * ANDROID_MAX
-    else maxW += w * range.max
+    minW += w * range.min
+    maxW += w * range.max
   }
   return { minW, maxW }
 }
@@ -95,69 +91,18 @@ export function sampleTruncatedNormal(min: number, max: number, random: () => nu
   return mu
 }
 
-function rollExperience(age: number, random: () => number): number {
-  const maxExperience = Math.max(0, age - 16)
-  return Math.floor(random() * (maxExperience * 2 + 1)) / 2
-}
-
-export function generateRareBiology(
-  existing: Biology[],
-  random: () => number = Math.random,
-): Biology | null {
-  const hasAndroid = existing.some((b) => b.sex === 'Андроид')
-  const hasHerm = existing.some((b) => b.sex === 'Гермафродит')
-  const hermRoll = random()
-  if (hermRoll < 0.01 && !hasHerm) {
-    const age = Math.floor(random() * 15) + 25
-    const experience = rollExperience(age, random)
-    const infertile = random() < 0.1
-    const coef = Math.max(0, HERM_BASE + experienceModifier(age, experience) - (infertile ? 0.2 : 0))
-    return {
-      sex: 'Гермафродит',
-      age,
-      experience,
-      coef: roundCoef(coef),
-      infertile,
-      isVisible: false,
-      hint: 'Выступает в роли и мужчины, и женщины',
-    }
-  }
-  const androidRoll = random()
-  if (androidRoll < 0.015 && !hasAndroid) {
-    const age = 18 + Math.floor(random() * 20)
-    const experience = rollExperience(age, random)
-    const coef = Math.max(0, ANDROID_BASE + experienceModifier(age, experience))
-    return {
-      sex: 'Андроид',
-      age,
-      experience,
-      coef: roundCoef(coef),
-      infertile: false,
-      isVisible: false,
-      hint: 'Обнуляет проблемы со здоровьем и фобии',
-    }
-  }
-  return null
-}
-
-function ordinaryBiologyForCoef(target: number): Biology {
-  const biology = generateOrdinaryBiology()
-  biology.coef = clampCoef(target, 0, 1)
-  return biology
-}
-
 function variantToChar(variant: HealthVariant, category: string): Characteristic {
   return {
     type: category,
     value: variant.row.name,
     coef: variant.coef,
-    hint: variant.row.hint,
+    hint: variant.hint,
+    stageLabel: variant.stageLabel,
+    stageIndex: variant.stageIndex,
+    incurable: variant.incurable,
     isVisible: false,
     occ: 0,
     tags: [...variant.row.tags],
-    stageLabel: variant.stageLabel || undefined,
-    stageIndex: variant.stageIndex ?? undefined,
-    incurable: variant.incurable || undefined,
   }
 }
 
@@ -197,11 +142,13 @@ function dealOnePlayer(
   slots: string[],
   targetCoeff: number,
   random: () => number,
+  forcedRare?: Biology | null,
 ): { biology: Biology; characteristics: Characteristic[] } | null {
   const weights = slots.map((cat) => characteristicWeight(cat, 'new'))
   const wTotal = weights.reduce((s, w) => s + w, 0)
   const targetSum = targetCoeff * wTotal
   const perk = highPerkThreshold(targetCoeff)
+  const rareBiology = forcedRare === undefined ? generateRareBiology(biologies, random, targetCoeff) : forcedRare
 
   for (let attemptCount = 1; attemptCount <= MAX_ATTEMPTS; attemptCount += 1) {
     const order = shuffleArray([...slots])
@@ -216,13 +163,9 @@ function dealOnePlayer(
       const category = order[i]
       const w = characteristicWeight(category, 'new')
       const range = slotMinMax(category)
-      const rest = remainingBounds(order, i + 1, biology != null || category === BIOLOGY_CATEGORY)
+      const rest = remainingBounds(order, i + 1)
       let vmin = Math.max(range.min, (targetSum - currentSum - rest.maxW) / w)
       let vmax = Math.min(range.max, (targetSum - currentSum - rest.minW) / w)
-      if (category === BIOLOGY_CATEGORY) {
-        vmin = Math.max(vmin, 0)
-        vmax = Math.min(vmax, ANDROID_MAX)
-      }
 
       const last = i === order.length - 1
       const remainSlots = order.length - i
@@ -242,10 +185,10 @@ function dealOnePlayer(
         raw = attemptCount <= 100 ? sampleWShape(vmin, vmax, random) : sampleTruncatedNormal(vmin, vmax, random)
       } else raw = sampleUniform(vmin, vmax, random)
 
-      const value = clampCoef(raw, range.min, category === BIOLOGY_CATEGORY ? ANDROID_MAX : range.max)
+      const value = clampCoef(raw, range.min, range.max)
 
       if (category === BIOLOGY_CATEGORY) {
-        const rare = generateRareBiology(biologies, random)
+        const rare = rareBiology
         if (rare) {
           if (rare.coef < vmin - 1e-9 || rare.coef > vmax + 1e-9) {
             failed = true
@@ -253,14 +196,14 @@ function dealOnePlayer(
           }
           biology = rare
         } else {
-          biology = ordinaryBiologyForCoef(clampCoef(value, 0, 1))
+          biology = generateOrdinaryBiology(value, random)
         }
         if (biology.coef >= 0.5) highPerkCount += 1
         currentSum += biology.coef * w
         continue
       }
 
-      const variant = pickVariant(category, last ? value : value, attemptUsed, 'new')
+      const variant = pickVariant(category, value, attemptUsed, 'new')
       if (!variant) {
         failed = true
         break
@@ -282,6 +225,12 @@ function dealOnePlayer(
     if (avg < targetCoeff - 0.08 || avg > targetCoeff + 0.08) continue
     assignOccurrences(characteristics)
     return { biology, characteristics }
+  }
+  if (rareBiology) {
+    // A rare negative biology must not vanish or leave the player's hand empty
+    // when the requested overall coefficient cannot be reached with it.
+    const fallback = dealOnePlayer(used, biologies, slots, targetCoeff, random, null)
+    if (fallback) return { ...fallback, biology: rareBiology }
   }
   return null
 }

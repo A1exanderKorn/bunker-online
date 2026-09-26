@@ -5,7 +5,7 @@
 
 // ─── Доменная модель ────────────────────────────────────────────────────────
 
-export type Sex = 'М' | 'Ж' | 'Андроид' | 'Гермафродит'
+export type Sex = 'М' | 'Ж' | 'Андроид' | 'Гермафродит' | 'транс' | 'оно/мы'
 
 /**
  * Базовые категории (фолбэк, если JSON недоступен).
@@ -85,10 +85,10 @@ export interface Characteristic {
   occ: number
   /** Служебные теги для финального расчёта выживания. */
   tags?: string[]
-  /** Подпись стадии болезни (новый режим). */
+  /** Стадия заболевания переносится вместе со здоровьем. */
   stageLabel?: string
   stageIndex?: number
-  /** Третья стадия: не лечится. */
+  /** Признак терминальной стадии. */
   incurable?: boolean
 }
 
@@ -531,14 +531,16 @@ export interface TimerPayload {
 }
 
 export interface VotesUpdatedPayload {
-  /** targetId -> количество голосов */
+  /** Только собственный подтверждённый сервером голос. */
+  ownVote?: string | null
+  /** targetId -> количество голосов; пусто при скрытом голосовании. */
   tally: Record<string, number>
   /** id живых игроков, которые уже проголосовали */
   voted: string[]
-  /** targetId -> список voterId, отдавших голос за этого игрока (II.4). */
+  /** Публичные цели только для поочерёдного режима; иначе пусто. */
   votesByTarget: Record<string, string[]>
   /**
-   * Переголосование картой: voterId → предыдущая цель.
+   * Переголосование картой: voterId → предыдущая цель. В скрытом режиме — только своя.
    * Нельзя выбрать её снова, если есть другие варианты.
    */
   revoteFrom?: Record<string, string>
@@ -639,11 +641,13 @@ export interface ServerToClientEvents {
   votesUpdated: (payload: VotesUpdatedPayload) => void
   voteResult: (payload: VoteResultPayload) => void
   gameEnded: (payload: GameEndedPayload) => void
+  kicked: (payload: { message: string }) => void
   errorMessage: (payload: { message: string }) => void
 }
 
 /** События, которые клиент отправляет серверу. */
 export interface ClientToServerEvents {
+  kickPlayer: (payload: { playerId: string }) => void
   updateSettings: (payload: SettingsPayload) => void
   startGame: () => void
   /** Сыграть карту действия с выбранными целями. */

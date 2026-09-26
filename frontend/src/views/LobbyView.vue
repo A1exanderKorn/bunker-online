@@ -109,7 +109,13 @@ const survivalColor = computed(() => {
 
 <template>
   <!-- Экран ввода имени -->
-  <div v-if="!nameEntered" class="main-block">
+  <div v-if="game.kicked" class="main-block">
+    <h1>Вы удалены из лобби</h1>
+    <p>{{ error }}</p>
+    <LobbyButton @click="join" text="Войти снова" customClass="confirm-button" />
+    <RouterLink to="/">На главную</RouterLink>
+  </div>
+  <div v-else-if="!nameEntered" class="main-block">
     <h1>Лобби: {{ code }}</h1>
     <div class="buttons-set">
       <input
@@ -294,6 +300,8 @@ const survivalColor = computed(() => {
             <span class="pl-name">{{ p.name }}</span>
             <span v-if="i === 0" class="host-tag">хост</span>
             <span v-if="!p.connected" class="off-tag">оффлайн</span>
+            <button v-if="isHost && p.id !== game.myId" class="kick-player"
+              :aria-label="'Удалить из лобби: ' + p.name" @click="game.kickPlayer(p.id)">Удалить</button>
           </li>
         </ul>
         <LobbyButton
@@ -313,6 +321,7 @@ const survivalColor = computed(() => {
 </template>
 
 <style scoped>
+.kick-player { margin-left: auto; flex-shrink: 0; padding: 4px 8px; border: 1px solid #a95555; border-radius: 6px; background: transparent; color: #c45a5a; cursor: pointer; }
 .main-block {
   display: flex;
   flex-direction: column;

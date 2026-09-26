@@ -41,7 +41,7 @@ import {
   generateBiology,
   generateOrdinaryBiology,
 } from './characteristics'
-import { generateRareBiology } from './dealNew'
+import { generateRareBiology, biologyCoefficient } from './biology'
 import { expandForDeal, rowsByCategory } from './data'
 import {
   pickCatastrophe,
@@ -287,6 +287,19 @@ export class Lobby {
     this.removalTimers.set(playerId, t)
   }
 
+  kickPlayer(requesterId: string, targetId: string): void {
+    if (!this.isHost(requesterId) || this.started || targetId === requesterId) return
+    if (!this.players.some(p => p.id === targetId)) return
+    const sid = this.socketOf(targetId)
+    const socket = sid ? this.io.sockets.sockets.get(sid) : undefined
+    this.removePlayerNow(targetId)
+    if (socket) {
+      socket.emit('kicked', { message: 'Хост удалил вас из лобби. Вы можете войти снова.' })
+      socket.leave(this.code)
+      socket.disconnect(true)
+    }
+  }
+
   private removePlayerNow(playerId: string): void {
     if (this.started && this.stage !== 'end') this.matchRecorder?.eliminate(playerId)
     const wasCurrent = this.turn.currentPlayerId === playerId
@@ -294,6 +307,7 @@ export class Lobby {
     this.players = this.players.filter((p) => p.id !== playerId)
     this.sockets.delete(playerId)
     this.votes.delete(playerId)
+    for (const [voter, target] of this.votes) if (target === playerId) this.votes.delete(voter)
     this.turnOrder = this.turnOrder.filter((id) => id !== playerId)
     const rt = this.removalTimers.get(playerId)
     if (rt) {
@@ -316,7 +330,7 @@ export class Lobby {
       if (this.stage === 'reveal' && wasCurrent) this.advanceTurn()
       if (this.isVoting()) {
         if (this.settings.voteMode === 'sequential' && wasVoter) this.advanceVoter()
-        else this.broadcastVotes()
+        else { this.broadcastVotes(); this.finishIfEveryoneVoted() }
       }
       this.checkWinCondition()
     }
@@ -561,11 +575,11 @@ export class Lobby {
     return {
       value: r.row.name,
       coef: r.coef,
-      hint: r.row.hint,
+      hint: r.hint,
       tags: [...r.row.tags],
-      stageLabel: r.stageLabel || undefined,
-      stageIndex: r.stageIndex ?? undefined,
-      incurable: r.incurable || undefined,
+      stageLabel: r.stageLabel,
+      stageIndex: r.stageIndex,
+      incurable: r.incurable,
     }
   }
 
@@ -1071,19 +1085,25 @@ export class Lobby {
         if (!a.isVisible || !b.isVisible) {
           return fail('Обменивать можно только открытые характеристики')
         }
-        const oldA = a.value
-        const oldB = b.value
-        const tmp = { value: a.value, coef: a.coef, hint: a.hint, tags: [...(a.tags ?? [])] }
+        const oldA = formatCharacteristicValue(a)!
+        const oldB = formatCharacteristicValue(b)!
+        const tmp = { ...a, tags: [...(a.tags ?? [])] }
         a.value = b.value
         a.coef = b.coef
         a.hint = b.hint
         a.tags = [...(b.tags ?? [])]
+        a.stageLabel = b.stageLabel
+        a.stageIndex = b.stageIndex
+        a.incurable = b.incurable
         b.value = tmp.value
         b.coef = tmp.coef
         b.hint = tmp.hint
         b.tags = tmp.tags
-        this.pushChange(charChanges, self, category, give.occ ?? 0, 'swap', oldA, a.value, true)
-        this.pushChange(charChanges, other, category, receive.occ ?? 0, 'swap', oldB, b.value, true)
+        b.stageLabel = tmp.stageLabel
+        b.stageIndex = tmp.stageIndex
+        b.incurable = tmp.incurable
+        this.pushChange(charChanges, self, category, give.occ ?? 0, 'swap', oldA, formatCharacteristicValue(a)!, true)
+        this.pushChange(charChanges, other, category, receive.occ ?? 0, 'swap', oldB, formatCharacteristicValue(b)!, true)
         return ok(
           `Обмен с ${this.nameOf(otherId)}: отдан «${this.slotLabel(category, give.occ ?? 0, self)}», получен «${this.slotLabel(category, receive.occ ?? 0, other)}»`,
         )
@@ -1095,7 +1115,7 @@ export class Lobby {
           const oldValue = this.slotDisplay(healPl, BIOLOGY_CATEGORY, 0)
           const wasVisible = healPl.biology.isVisible
           healPl.biology.infertile = false
-          healPl.biology.coef = Math.min(1, healPl.biology.coef + 0.32)
+          healPl.biology.coef = biologyCoefficient(healPl.biology)
           this.pushChange(
             charChanges,
             healPl,
@@ -1183,7 +1203,7 @@ export class Lobby {
         if (!this.isVoting()) return fail('Только во время голосования')
         const originalTargetId = this.votes.get(playerId)
         const uniqueTargets = [...new Set(this.votes.values())]
-        for (const [voterId, targetId] of this.votes) {
+        if (this.settings.voteMode === 'sequential') for (const [voterId, targetId] of this.votes) {
           const voter = this.players.find((p) => p.id === voterId)
           this.pushPublicChange(charChanges, 'Голос', this.nameOf(targetId), 'другой кандидат', voter)
         }
@@ -1195,7 +1215,7 @@ export class Lobby {
           ? this.nameOf(originalTargetId)
           : uniqueTargets.map((id) => this.nameOf(id)).join(', ')
         return ok(
-          originalName
+          this.settings.voteMode === 'sequential' && originalName
             ? `Переголосование. Изначальный кандидат: ${originalName}`
             : 'Объявлено переголосование — выберите другого кандидата',
         )
@@ -1600,6 +1620,7 @@ export class Lobby {
 
     this.votes.set(voterId, targetId)
     this.broadcastVotes()
+    this.finishIfEveryoneVoted()
   }
 
   private tally(): Record<string, number> {
@@ -1617,15 +1638,28 @@ export class Lobby {
     for (const [voterId, targetId] of this.votes.entries()) (result[targetId] ??= []).push(voterId)
     return result
   }
+  private finishIfEveryoneVoted(): void {
+    const alive = this.alive()
+    if (this.isVoting() && this.settings.voteMode !== 'sequential'
+      && alive.length > 0 && alive.every(p => this.votes.has(p.id))) this.finishVote()
+  }
+
   private broadcastVotes(): void {
-    const revoteFrom: Record<string, string> = {}
-    for (const [k, v] of this.revoteFrom.entries()) revoteFrom[k] = v
-    this.io.to(this.code).emit('votesUpdated', {
-      tally: this.tally(),
-      voted: [...this.votes.keys()],
-      votesByTarget: this.votesByTarget(),
-      revoteFrom: Object.keys(revoteFrom).length ? revoteFrom : undefined,
-    })
+    const secret = this.settings.voteMode !== 'sequential'
+    for (const player of this.players) {
+      const sid = this.socketOf(player.id)
+      if (!sid) continue
+      const previous = secret
+        ? [...this.revoteFrom].filter(([id]) => id === player.id)
+        : [...this.revoteFrom]
+      this.io.to(sid).emit('votesUpdated', {
+        tally: secret ? {} : this.tally(),
+        voted: [...this.votes.keys()],
+        votesByTarget: secret ? {} : this.votesByTarget(),
+        revoteFrom: Object.fromEntries(previous),
+        ownVote: this.votes.get(player.id) ?? null,
+      })
+    }
   }
 
   private fillRandomVotes(): void {

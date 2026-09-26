@@ -132,20 +132,22 @@ export function clampCoef(value: number, min: number, max: number): number {
 export interface HealthVariant {
   row: CharacteristicDef
   coef: number
-  stageIndex: number | null
-  stageLabel: string
-  incurable: boolean
+  hint: string
+  stageIndex?: number
+  stageLabel?: string
+  incurable?: boolean
 }
 
 export function healthVariants(row: CharacteristicDef): HealthVariant[] {
   if (row.category !== 'Здоровье' || !row.staged) {
-    return [{ row, coef: roundCoef(row.coef), stageIndex: null, stageLabel: '', incurable: false }]
+    return [{ row, coef: roundCoef(row.coef), hint: row.hint }]
   }
   const labels = stageLabelsOf(row)
   const deltas = [0.05, 0, -0.15]
   return labels.map((label, stageIndex) => ({
     row,
     coef: clampCoef(row.coef + deltas[stageIndex], -1, 1),
+    hint: row.hint,
     stageIndex,
     stageLabel: label,
     incurable: stageIndex === 2,
@@ -154,5 +156,5 @@ export function healthVariants(row: CharacteristicDef): HealthVariant[] {
 
 export function expandForDeal(row: CharacteristicDef): HealthVariant[] {
   if (row.category === 'Здоровье') return healthVariants(row)
-  return [{ row, coef: roundCoef(row.coef), stageIndex: null, stageLabel: '', incurable: false }]
+  return [{ row, coef: roundCoef(row.coef), hint: row.hint }]
 }

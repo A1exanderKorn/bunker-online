@@ -182,7 +182,7 @@ function toggleVoters(id: string) {
           <span v-else-if="isVoterTurn(p)" class="turn-badge">🗳 голосует</span>
           <span v-if="!p.isAlive" class="dead-badge">исключён</span>
           <span
-            v-if="voteTally[p.id]"
+            v-if="settings.voteMode === 'sequential' && voteTally[p.id]"
             class="vote-count"
             :title="'Голосовали: ' + votersFor(p).join(', ')"
             @click="toggleVoters(p.id)"
@@ -191,7 +191,7 @@ function toggleVoters(id: string) {
         </div>
       </header>
 
-      <div v-if="openVoters === p.id && voteTally[p.id]" class="voters-pop">
+      <div v-if="settings.voteMode === 'sequential' && openVoters === p.id && voteTally[p.id]" class="voters-pop">
         Голосовали: {{ votersFor(p).join(', ') }}
       </div>
 

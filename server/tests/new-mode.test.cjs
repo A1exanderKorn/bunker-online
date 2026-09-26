@@ -90,7 +90,7 @@ test('редкая биология нового режима: гермафро�
   try {
     const bio = generateRareBiology([])
     assert.equal(bio.sex, 'Гермафродит')
-    assert.ok(bio.coef >= 0.9)
+    assert.equal(bio.coef, require('../dist/server/biology.js').biologyCoefficient(bio))
   } finally {
     Math.random = original
   }
@@ -129,7 +129,7 @@ test('обычный М/Ж в новом режиме не младше 19, ан
 test('андроид нового режима: возраст 18…37', () => {
   const original = Math.random
   let n = 0
-  Math.random = () => [0.5, 0.01, 0][n++] ?? 0.5
+  Math.random = () => [0.015, 0][n++] ?? 0.5
   try {
     const bio = generateRareBiology([])
     assert.equal(bio.sex, 'Андроид')
