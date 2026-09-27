@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, onBeforeRouteLeave } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useSessionStore } from '@/stores/session'
 import { useGameStore } from '@/stores/game'
@@ -47,6 +47,8 @@ const code = computed(() => (route.params.code as string) ?? session.lobbyCode)
 const nameInput = ref(session.name)
 const nameEntered = ref(false)
 let disposed = false
+let visitingProfile = false
+onBeforeRouteLeave(to => { visitingProfile = to.name === 'Profile' })
 
 function join() {
   const name = nameInput.value.trim()
@@ -79,13 +81,15 @@ onMounted(async () => {
   }
 })
 
-onUnmounted(() => { disposed = true; disconnectSocket() })
+onUnmounted(() => { disposed = true; if (!visitingProfile) disconnectSocket() })
 
 // Имя выбывшего для баннера результата голосования.
 const eliminatedName = computed(() => {
   const id = lastResult.value?.eliminatedId
   return id ? (roster.value.find((p) => p.id === id)?.name ?? '') : ''
 })
+const tiedNames = computed(() => (lastResult.value?.tiedIds ?? [])
+  .map(id => roster.value.find(p => p.id === id)?.name ?? id).join(', '))
 
 // I.3: кнопка активна, только если в этот ход уже что-то вскрыто.
 const canEndTurn = computed(() => game.turn.revealedThisTurn >= 1)
@@ -108,6 +112,9 @@ const survivalColor = computed(() => {
 </script>
 
 <template>
+  <nav v-if="nameEntered && !game.kicked" class="profile-nav">
+    <RouterLink :to="{ name: 'Profile', query: { returnTo: `/lobby/${code}` } }">Профиль и никнейм</RouterLink>
+  </nav>
   <!-- Экран ввода имени -->
   <div v-if="game.kicked" class="main-block">
     <h1>Вы удалены из лобби</h1>
@@ -212,7 +219,7 @@ const survivalColor = computed(() => {
     <p v-if="error" class="error game-error">{{ error }}</p>
 
     <div v-if="lastResult" class="result-banner">
-      <template v-if="lastResult.tie">Ничья — назначено переголосование</template>
+      <template v-if="lastResult.tie">Ничья: {{ tiedNames }}. Переголосование только между ними.</template>
       <template v-else-if="eliminatedName">Исключён: {{ eliminatedName }}</template>
       <template v-else>Никто не выбыл</template>
     </div>
@@ -321,6 +328,8 @@ const survivalColor = computed(() => {
 </template>
 
 <style scoped>
+.profile-nav { padding: 12px 20px; text-align: right; }
+.profile-nav a { color: var(--accent); }
 .kick-player { margin-left: auto; flex-shrink: 0; padding: 4px 8px; border: 1px solid #a95555; border-radius: 6px; background: transparent; color: #c45a5a; cursor: pointer; }
 .main-block {
   display: flex;

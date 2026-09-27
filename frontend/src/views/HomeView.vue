@@ -8,7 +8,7 @@
         <span>{{ profile.user.nickname }}</span>
       </template>
       <a v-else-if="profile.authEnabled" :href="discordLoginUrl">Войти через Discord</a>
-      <RouterLink to="/profile">{{ profile.user ? 'Профиль и история' : 'О профиле' }}</RouterLink>
+      <RouterLink to="/profile">{{ profile.user ? 'Профиль и история' : 'Профиль и никнейм' }}</RouterLink>
       <small v-if="!profile.user">Можно играть гостем — без истории игр.</small>
       <p v-if="profile.error" role="alert">{{ profile.error }}</p>
     </div>

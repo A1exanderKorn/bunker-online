@@ -20,7 +20,7 @@ function isVoterTurn(p: PublicPlayer): boolean {
 
 /** Имена тех, кто отдал голос за игрока p (II.4). */
 function votersFor(p: PublicPlayer): string[] {
-  const ids = votesByTarget.value[p.id] ?? []
+  const ids = (isVoting.value ? votesByTarget.value : lastResult.value?.votesByTarget)?.[p.id] ?? []
   return ids.map((id) => publicPlayers.value.find((x) => x.id === id)?.name ?? '?')
 }
 
@@ -137,6 +137,7 @@ function isRevoteLocked(p: PublicPlayer): boolean {
 
 function canVoteFor(p: PublicPlayer): boolean {
   if (!isVoting.value || !amAlive.value || !p.isAlive || isMe(p)) return false
+  if (game.voteCandidates && !game.voteCandidates.includes(p.id)) return false
   if (settings.value.voteMode === 'sequential' && !game.isMyVoteTurn) return false
   if (isRevoteLocked(p)) return false
   return true
@@ -146,6 +147,13 @@ function hasVoted(p: PublicPlayer): boolean {
 }
 
 const displayPlayers = computed(() => publicPlayers.value)
+const shownTally = computed(() => isVoting.value ? voteTally.value : lastResult.value?.tally ?? {})
+function lastVoteFor(p: PublicPlayer): string | null {
+  const target = Object.entries(lastResult.value?.votesByTarget ?? {}).find(([, ids]) => ids.includes(p.id))?.[0]
+  if (!target) return null
+  const name = publicPlayers.value.find(x => x.id === target)?.name ?? target
+  return name + (lastResult.value?.cancelledVoters?.includes(p.id) ? ' (голос не учтён)' : '')
+}
 
 // II.4: на телефоне — тап по счётчику голосов показывает, кто проголосовал.
 const openVoters = ref<string | null>(null)
@@ -182,16 +190,16 @@ function toggleVoters(id: string) {
           <span v-else-if="isVoterTurn(p)" class="turn-badge">🗳 голосует</span>
           <span v-if="!p.isAlive" class="dead-badge">исключён</span>
           <span
-            v-if="settings.voteMode === 'sequential' && voteTally[p.id]"
+            v-if="(!isVoting || settings.voteMode === 'sequential') && shownTally[p.id]"
             class="vote-count"
             :title="'Голосовали: ' + votersFor(p).join(', ')"
             @click="toggleVoters(p.id)"
-            >{{ voteTally[p.id] }} 🗳</span
+            >{{ shownTally[p.id] }} 🗳</span
           >
         </div>
       </header>
 
-      <div v-if="settings.voteMode === 'sequential' && openVoters === p.id && voteTally[p.id]" class="voters-pop">
+      <div v-if="(!isVoting || settings.voteMode === 'sequential') && openVoters === p.id && shownTally[p.id]" class="voters-pop">
         Голосовали: {{ votersFor(p).join(', ') }}
       </div>
 
@@ -254,13 +262,18 @@ function toggleVoters(id: string) {
           {{ myVote === p.id ? '✓ Ваш голос' : 'Голосовать' }}
         </button>
         <span v-else-if="isRevoteLocked(p)" class="voted-mark">уже выбирали</span>
-        <span v-else-if="hasVoted(p)" class="voted-mark">проголосовал</span>
+        <span v-if="hasVoted(p)" class="voted-mark" role="status">✓ проголосовал</span>
+      </footer>
+      <footer v-else-if="lastVoteFor(p)" class="last-vote">
+        Последний голос → {{ lastVoteFor(p) }}
       </footer>
     </article>
   </div>
 </template>
 
 <style scoped>
+.last-vote { margin-top: auto; padding: 8px; border-radius: 6px; background: var(--surface); border: 1px solid var(--accent); font-size: .85rem; }
+.card-foot { flex-wrap: wrap; gap: 8px; }
 .players-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));

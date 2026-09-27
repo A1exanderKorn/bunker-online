@@ -198,8 +198,8 @@ export interface LobbySettings {
 
   /**
    * Пошаговая программа раундов (II.5). Последовательность шагов:
-   * вскрытие N характеристик либо голосование. Если список закончился,
-   * а игра не завершена — повторяется последний цикл (вскрытие+голосование).
+   * вскрытие характеристики либо голосование. Программа по умолчанию
+   * содержит достаточно голосований, чтобы осталась заданная часть игроков.
    */
   roundSteps: RoundStep[]
 }
@@ -238,15 +238,15 @@ export const DEFAULT_SETTINGS: LobbySettings = {
   targetCoef: 0.5,
   randomTargetCoef: false,
   survivorsCount: 0,
-  voteMode: 'simultaneous',
+  voteMode: 'sequential',
   sequentialVoteSeconds: 30,
   extraBaggage: false,
   noPhobias: false,
   threatsEnabled: true,
-  actionCardsEnabled: false,
+  actionCardsEnabled: true,
   revealPreviousCharacteristics: false,
   cardsPower: 'balanced',
-  gameMode: 'classic',
+  gameMode: 'new',
   roundSteps: [],
 }
 
@@ -267,20 +267,19 @@ export function characteristicsCount(s: Pick<LobbySettings, 'extraBaggage' | 'no
 
 /**
  * Генерирует программу раундов по умолчанию (логика из ТЗ):
- *   2 вскрытия → голосование → while(не осталась половина){ 1 вскрытие+угроза → голосование }
+ *   3 вскрытия (угроза на третьем) → голосование → 2 вскрытия (угроза на втором)
+ *   → голосование → циклы 1 вскрытие + голосование без новых угроз.
  * playerCount и survivors задают, сколько циклов голосования нужно (сколько исключений).
  */
 export function defaultRoundSteps(playerCount: number, survivors: number): RoundStep[] {
   const eliminations = Math.max(0, playerCount - survivors)
   const steps: RoundStep[] = []
   if (eliminations <= 0) return steps
-  // Первый цикл: 2 мирных раунда вскрытия → голосование.
-  steps.push({ kind: 'reveal', revealThreat: false })
-  steps.push({ kind: 'reveal', revealThreat: false })
-  steps.push({ kind: 'vote', revealThreat: false })
-  // Остальные исключения: 1 вскрытие+угроза → голосование.
-  for (let i = 1; i < eliminations; i++) {
-    steps.push({ kind: 'reveal', revealThreat: true })
+  for (let i = 0; i < eliminations; i++) {
+    const reveals = i === 0 ? 3 : i === 1 ? 2 : 1
+    for (let j = 0; j < reveals; j++) {
+      steps.push({ kind: 'reveal', revealThreat: i < 2 && j === reveals - 1 })
+    }
     steps.push({ kind: 'vote', revealThreat: false })
   }
   return steps
@@ -531,6 +530,8 @@ export interface TimerPayload {
 }
 
 export interface VotesUpdatedPayload {
+  /** Во втором туре можно голосовать только за этих игроков. */
+  candidates?: string[] | null
   /** Только собственный подтверждённый сервером голос. */
   ownVote?: string | null
   /** targetId -> количество голосов; пусто при скрытом голосовании. */
@@ -547,6 +548,9 @@ export interface VotesUpdatedPayload {
 }
 
 export interface VoteResultPayload {
+  /** Раскрываются после исключения, но не при промежуточной ничьей. */
+  votesByTarget?: Record<string, string[]>
+  cancelledVoters?: string[]
   eliminatedId: string | null
   /** true — ничья, объявлен второй тур */
   tie: boolean

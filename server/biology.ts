@@ -14,14 +14,17 @@ export function experienceModifier(age: number, experience: number): number {
 export function biologyCoefficient(bio: Pick<Biology, 'sex' | 'age' | 'experience' | 'infertile'>): number {
   if (bio.sex === 'Андроид') return 1
   const age = Math.max(MIN_BIOLOGY_AGE, Math.min(MAX_BIOLOGY_AGE, bio.age))
-  const ageCoef = age <= 35 ? 0.2 + (age - 19) * 0.05
+  const ageCoef = age <= 35 ? 0.5 + (age - 19) / 32
     : age <= 55 ? 1 - (age - 35) * 0.045
       : 0.1 - (age - 55) * 0.032
   if (bio.sex === 'транс' || bio.sex === 'оно/мы') {
     // Условная игровая шкала этих карт: возраст/стаж, без дополнительных штрафов.
     return Number(((clamp(ageCoef + experienceModifier(age, bio.experience)) - 1) / 2).toFixed(2))
   }
-  return Number(clamp(ageCoef + experienceModifier(age, bio.experience) - (bio.infertile ? 0.3 : 0)).toFixed(2))
+  let coef = clamp(ageCoef + experienceModifier(age, bio.experience) - (bio.infertile ? 0.3 : 0))
+  if (bio.infertile) coef = Math.min(0, coef)
+  else if (age <= 35) coef = Math.max(0.5, coef)
+  return Number(coef.toFixed(2))
 }
 
 export function biologyAgeWeight(age: number): number {

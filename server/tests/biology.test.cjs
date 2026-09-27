@@ -12,21 +12,26 @@ test('стаж даёт только −0.01…+0.01 и растёт линей�
   assert.equal(experienceModifier(30, 14), .01)
   assert.equal(experienceModifier(30, 7.5), 0)
 })
-test('35 лет — пик, молодость без бесплодия не уходит в минус', () => {
+test('35 лет — пик, молодость без бесплодия имеет КФ не меньше 0.5', () => {
   for (let age = 19; age < 35; age++) {
-    assert.ok(biologyCoefficient(bio(age)) >= 0)
+    assert.ok(biologyCoefficient(bio(age)) >= .5)
     assert.ok(biologyCoefficient(bio(age)) < biologyCoefficient(bio(age + 1)))
   }
   for (let age = 36; age <= 80; age++)
     assert.ok(biologyCoefficient(bio(age)) < biologyCoefficient(bio(age - 1)))
   assert.equal(biologyCoefficient(bio(35, false, 19)), 1)
 })
-test('бесплодие штрафует молодость, старость приближается к −1', () => {
-  assert.ok(biologyCoefficient(bio(19, true)) < 0)
+test('КФ бесплодных не выше нуля во всех возрастах, старость приближается к −1', () => {
+  for (let age = 19; age <= 90; age++) for (const sex of ['М', 'Ж', 'Гермафродит']) {
+    for (const experience of [0, 1, age - 16]) {
+      assert.ok(biologyCoefficient({ age, sex, experience, infertile: true }) <= 0)
+      if (age <= 35) assert.ok(biologyCoefficient({ age, sex, experience, infertile: false }) >= .5)
+    }
+  }
   assert.ok(biologyCoefficient(bio(59)) < 0)
   assert.equal(biologyCoefficient(bio(80, true)), -1)
   assert.equal(biologyCoefficient(bio(90, true)), -1)
-  assert.ok(Math.abs(biologyCoefficient(bio(30)) - biologyCoefficient(bio(30, true)) - .3) < 1e-9)
+  assert.equal(biologyCoefficient(bio(35, true, 19)), 0)
 })
 test('возрастной вес плавно снижается и нормирован', () => {
   let sum = 0

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, onBeforeRouteLeave } from 'vue-router'
+import { disconnectSocket } from '@/services/socket'
 import { useProfileStore, profileRequest, discordLoginUrl } from '@/stores/profile'
 import { useSessionStore } from '@/stores/session'
 import type { MatchSummary, MatchDetail } from '@shared/profile'
@@ -8,6 +9,9 @@ import type { MatchSummary, MatchDetail } from '@shared/profile'
 const profile = useProfileStore()
 const session = useSessionStore()
 const route = useRoute()
+const returnTo = computed(() => typeof route.query.returnTo === 'string' && /^\/lobby\/[A-Z]{4}$/.test(route.query.returnTo)
+  ? route.query.returnTo : '/')
+onBeforeRouteLeave(to => { if (to.name !== 'Lobby') disconnectSocket() })
 const nickname = ref('')
 const error = ref('')
 const notice = ref('')
@@ -53,10 +57,14 @@ async function openMatch(match: MatchSummary) {
 async function save() {
   busy.value = true; error.value = ''; notice.value = ''
   try {
-    await profile.save(nickname.value)
-    session.setName(profile.user!.nickname)
-    nickname.value = profile.user!.nickname
-    notice.value = 'Ник сохранён. В текущей партии имя не меняется.'
+    const value = nickname.value.trim()
+    if (!value || [...value].length > 32 || /[\u0000-\u001f\u007f-\u009f]/.test(value)) {
+      throw new Error('Ник: от 1 до 32 символов, без управляющих символов')
+    }
+    if (profile.user) await profile.save(value)
+    session.setName(profile.user?.nickname ?? value)
+    nickname.value = session.name
+    notice.value = 'Ник сохранён. В лобби он обновится после возвращения; в начавшейся партии имя останется прежним.'
   } catch (e) { error.value = (e as Error).message }
   finally { busy.value = false }
 }
@@ -71,7 +79,9 @@ async function logout() {
   finally { busy.value = false }
 }
 onMounted(async () => {
+  session.loadName()
   await profile.load()
+  nickname.value = profile.user?.nickname ?? session.name
   if (route.query.authError) error.value = 'Не удалось войти через Discord. Попробуйте ещё раз.'
   if (profile.user) { nickname.value = profile.user.nickname; await loadHistory() }
 })
@@ -79,14 +89,21 @@ onMounted(async () => {
 
 <template>
   <main class="profile-page">
-    <RouterLink to="/" class="back-link">← К игре</RouterLink>
+    <RouterLink :to="returnTo" class="back-link">{{ returnTo === '/' ? '← К игре' : '← Вернуться в лобби' }}</RouterLink>
     <h1>Профиль игрока</h1>
     <p v-if="profile.loading" role="status">Загружаем профиль…</p>
     <p v-if="error || profile.error" role="alert" class="error">{{ error || profile.error }}</p>
     <template v-if="!profile.loading && !profile.user">
       <section class="panel">
-        <h2>Играйте с профилем</h2>
-        <p>Войдите через Discord, чтобы сохранить ник, аватар и историю завершённых игр.</p>
+        <h2>Гостевой профиль</h2>
+        <form @submit.prevent="save">
+          <label for="guest-nickname">Ник в игре</label>
+          <input id="guest-nickname" v-model="nickname" maxlength="32" required autocomplete="nickname" :disabled="busy" />
+          <p class="muted">Гостевой ник сохраняется в этом браузере.</p>
+          <button class="action" :disabled="busy || !nickname.trim()">Сохранить ник</button>
+          <p v-if="notice" role="status">{{ notice }}</p>
+        </form>
+        <p>Войдите через Discord, чтобы привязать ник к аккаунту, загрузить аватар и сохранять историю игр.</p>
         <a v-if="profile.authEnabled" :href="discordLoginUrl" class="action">Войти через Discord</a>
         <p v-else>Вход через Discord пока не настроен на сервере.</p>
         <p>Без авторизации можно играть гостем. История гостевых игр не сохраняется и не переносится в профиль.</p>

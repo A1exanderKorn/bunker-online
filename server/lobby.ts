@@ -17,6 +17,7 @@ import type {
   ServerToClientEvents,
   SurvivalReport,
   TurnState,
+  VoteResultPayload,
 } from '../shared/types'
 import {
   BIOLOGY_CATEGORY,
@@ -126,6 +127,7 @@ export class Lobby {
   // ── Голосование ──
   private votes = new Map<string, string>()
   private voteCandidates: string[] | null = null
+  private lastVoteResult: VoteResultPayload | null = null
 
   // ── Бункер ──
   private bunker: StoredBunkerState = { catastrophe: '', years: 0, threats: [], conditions: [] }
@@ -439,6 +441,7 @@ export class Lobby {
       gameMode: this.gameMode(),
     })
     this.started = true
+    this.lastVoteResult = null
     this.matchRecorder = new MatchRecorder(this.players, this.gameMode(), this.settings.targetCoef, this.settings.randomTargetCoef)
     this.startCount = this.players.length
     this.stepIndex = 0
@@ -530,6 +533,7 @@ export class Lobby {
       p.biology = null
     }
     this.started = false
+    this.lastVoteResult = null
     this.matchOrder = []
     this.stage = 'lobby'
     this.turn = { ...EMPTY_TURN }
@@ -1658,6 +1662,7 @@ export class Lobby {
         ? [...this.revoteFrom].filter(([id]) => id === player.id)
         : [...this.revoteFrom]
       this.io.to(sid).emit('votesUpdated', {
+        candidates: this.voteCandidates,
         tally: secret ? {} : this.tally(),
         voted: [...this.votes.keys()],
         votesByTarget: secret ? {} : this.votesByTarget(),
@@ -1697,6 +1702,8 @@ export class Lobby {
     this.turn = { ...this.turn, currentVoterId: null }
 
     const tally = this.tally()
+    const votesByTarget = this.votesByTarget()
+    const cancelledVoters = [...this.cancelledVoters]
     const entries = Object.entries(tally)
 
     const max = entries.length > 0 ? Math.max(...entries.map(([, c]) => c)) : 0
@@ -1710,13 +1717,13 @@ export class Lobby {
     }
 
     if (leaders.length === 0) {
-      this.io.to(this.code).emit('voteResult', { eliminatedId: null, tie: false, tiedIds: [], tally })
+      this.publishVoteResult({ eliminatedId: null, tie: false, tiedIds: [], tally, votesByTarget, cancelledVoters })
       this.nextStep()
       return
     }
 
     if (entries.length > 0 && leaders.length > 1 && this.stage === 'vote1') {
-      this.io.to(this.code).emit('voteResult', { eliminatedId: null, tie: true, tiedIds: leaders, tally })
+      this.publishVoteResult({ eliminatedId: null, tie: true, tiedIds: leaders, tally })
       this.stage = 'vote2'
       this.votes.clear()
       this.revoteFrom.clear()
@@ -1757,13 +1764,18 @@ export class Lobby {
     this.revoteFrom.clear()
     // Карты: одноразовые модификаторы голосования сработали — сбрасываем.
     this.resetRoundVoteModifiers()
-    this.io.to(this.code).emit('voteResult', { eliminatedId, tie: false, tiedIds: [], tally })
+    this.publishVoteResult({ eliminatedId, tie: false, tiedIds: [], tally, votesByTarget, cancelledVoters })
     this.broadcastPlayers()
     this.broadcastCharacters()
     this.broadcastCardHistory()
 
     if (this.checkWinCondition()) return
     this.nextStep()
+  }
+
+  private publishVoteResult(result: VoteResultPayload): void {
+    this.lastVoteResult = result
+    this.io.to(this.code).emit('voteResult', result)
   }
 
   /** Сбрасывает однораундовые эффекты карт (аннуляция/вес/защита). voteBans — постоянные. */
@@ -1941,6 +1953,7 @@ export class Lobby {
       turn: this.turn,
     })
     if (this.isVoting()) this.broadcastVotes()
+    if (this.lastVoteResult) this.io.to(sid).emit('voteResult', this.lastVoteResult)
     if (this.stage === 'end') {
       this.survivalReport ??= calculateSurvival(this.players, this.bunker, this.gameMode())
       this.io.to(sid).emit('gameEnded', {

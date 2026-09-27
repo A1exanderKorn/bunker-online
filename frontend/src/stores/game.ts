@@ -78,6 +78,7 @@ export const useGameStore = defineStore('game', {
 
     voteTally: {} as Record<string, number>,
     votedIds: [] as string[],
+    voteCandidates: null as string[] | null,
     votesByTarget: {} as Record<string, string[]>,
     revoteFrom: {} as Record<string, string>,
     myVote: '' as string,
@@ -269,6 +270,7 @@ export const useGameStore = defineStore('game', {
       })
 
       socket.on('stageChanged', (payload) => {
+        if (payload.stage !== 'vote2') this.voteCandidates = null
         this.stage = payload.stage
         this.timer = payload.timer
         this.isPaused = payload.isPaused
@@ -298,6 +300,7 @@ export const useGameStore = defineStore('game', {
       })
 
       socket.on('votesUpdated', (payload) => {
+        this.voteCandidates = payload.candidates ?? null
         this.voteTally = payload.tally
         this.votedIds = payload.voted
         this.votesByTarget = payload.votesByTarget
