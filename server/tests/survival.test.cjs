@@ -4,6 +4,37 @@ const test = require('node:test')
 const { calculateSurvival } = require('../dist/server/survival.js')
 const { loadBunkerData, challengeFlavor } = require('../dist/server/bunker.js')
 
+test('здоровье и потребность в медицине используют шкалу от -1 до 1', () => {
+  const bunker = { catastrophe: '', years: 1, threats: [], conditions: [] }
+  for (const [coef, delta, status, needs] of [
+    [-1, -14, 'Плохое', 'Частично удовлетворены'],
+    [-0.4, -6, 'Плохое', 'Частично удовлетворены'],
+    [-0.2, -6, 'Удовлетворительное', 'Частично удовлетворены'],
+    [0, 2, 'Удовлетворительное', 'Частично удовлетворены'],
+    [0.3, 2, 'Удовлетворительное', 'Удовлетворены'],
+    [0.4, 2, 'Хорошее', 'Удовлетворены'],
+    [0.5, 6, 'Хорошее', 'Удовлетворены'],
+    [1, 6, 'Хорошее', 'Удовлетворены'],
+  ]) {
+    const player = survivor('health', 'Игрок', 'М', ['food'])
+    player.characteristics[0].coef = coef
+    const report = calculateSurvival([player], bunker)
+    const health = report.factors.find((item) => item.id === 'health')
+    assert.equal(health.delta, delta, `КФ ${coef}`)
+    assert.equal(health.status, status, `КФ ${coef}`)
+    assert.equal(report.factors.find((item) => item.id === 'needs').status, needs)
+  }
+})
+
+test('тяжесть фобии учитывает отрицательные КФ, нейтральная фобия не штрафует', () => {
+  for (const [coef, penalty] of [[-1, 3], [-0.8, 3], [-0.6, 2], [-0.4, 1], [-0.3, 0], [0, 0], [1, 0]]) {
+    const player = survivor('phobia', 'Игрок', 'М', [])
+    player.characteristics.push({ type: 'Фобия', value: 'Фобия', coef, tags: [] })
+    const report = calculateSurvival([player], { catastrophe: '', years: 1, threats: [], conditions: [] })
+    assert.equal(Math.abs(report.factors.find((item) => item.id === 'traits').delta), penalty)
+  }
+})
+
 function survivor(id, name, sex, professionTags, age = 30) {
   return {
     id,
@@ -110,10 +141,10 @@ test('возрастное и явное бесплодие ухудшают р�
 test('низкий коэффициент штрафует фобии, но не багаж и факты', () => {
   const player = survivor('weak', 'Слабый', 'М', [], 30)
   player.characteristics.push({
-    type: 'Багаж', value: 'Бесполезный хлам', coef: 0.1, hint: '', isVisible: true, occ: 0,
+    type: 'Багаж', value: 'Бесполезный хлам', coef: -0.8, hint: '', isVisible: true, occ: 0,
   })
   player.characteristics.push({
-    type: 'Фобия', value: 'Опасная фобия', coef: 0.1, hint: '', isVisible: true, occ: 0,
+    type: 'Фобия', value: 'Опасная фобия', coef: -0.8, hint: '', isVisible: true, occ: 0,
   })
   const report = calculateSurvival([player], { catastrophe: '', years: 1, threats: [], conditions: [] })
   const traits = report.factors.find((item) => item.id === 'traits')

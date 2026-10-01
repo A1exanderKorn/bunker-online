@@ -112,9 +112,6 @@ const survivalColor = computed(() => {
 </script>
 
 <template>
-  <nav v-if="nameEntered && !game.kicked" class="profile-nav">
-    <RouterLink :to="{ name: 'Profile', query: { returnTo: `/lobby/${code}` } }">Профиль и никнейм</RouterLink>
-  </nav>
   <!-- Экран ввода имени -->
   <div v-if="game.kicked" class="main-block">
     <h1>Вы удалены из лобби</h1>
@@ -328,8 +325,6 @@ const survivalColor = computed(() => {
 </template>
 
 <style scoped>
-.profile-nav { padding: 12px 20px; text-align: right; }
-.profile-nav a { color: var(--accent); }
 .kick-player { margin-left: auto; flex-shrink: 0; padding: 4px 8px; border: 1px solid #a95555; border-radius: 6px; background: transparent; color: #c45a5a; cursor: pointer; }
 .main-block {
   display: flex;

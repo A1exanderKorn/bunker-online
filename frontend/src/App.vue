@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import CardPlayedPopup from '@/components/CardPlayedPopup.vue'
 import ThreatPopup from '@/components/ThreatPopup.vue'
 
 const theme = useThemeStore()
+const route = useRoute()
 const icon = computed(() =>
   theme.mode === 'system' ? '🖥' : theme.effective === 'dark' ? '🌙' : '☀️',
 )
@@ -16,10 +17,15 @@ const label = computed(() =>
 
 <template>
   <div class="app-shell">
-    <button class="theme-toggle btn btn--ghost btn--sm" @click="theme.cycle()" :title="'Тема: ' + label">
-      <span class="theme-icon">{{ icon }}</span>
-      <span class="theme-label">{{ label }}</span>
-    </button>
+    <nav class="app-toolbar" aria-label="Профиль и оформление">
+      <RouterLink v-if="route.path.startsWith('/lobby/')" :to="{ name: 'Profile', query: { returnTo: route.path } }" class="toolbar-button btn btn--ghost btn--sm" title="Профиль и никнейм" aria-label="Профиль и никнейм">
+        <span aria-hidden="true">👤</span>
+      </RouterLink>
+      <button class="toolbar-button btn btn--ghost btn--sm" @click="theme.cycle()" :title="'Тема: ' + label" :aria-label="'Тема: ' + label">
+        <span class="theme-icon">{{ icon }}</span>
+        <span class="theme-label">{{ label }}</span>
+      </button>
+    </nav>
     <RouterView />
     <ThreatPopup />
     <CardPlayedPopup />
@@ -31,11 +37,19 @@ const label = computed(() =>
   min-height: 100vh;
   position: relative;
 }
-.theme-toggle {
+.app-toolbar {
   position: fixed;
   top: 12px;
   right: 12px;
   z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toolbar-button {
+  min-width: 36px;
+  min-height: 36px;
+  text-decoration: none;
   backdrop-filter: blur(6px);
   background: color-mix(in srgb, var(--surface) 80%, transparent);
 }

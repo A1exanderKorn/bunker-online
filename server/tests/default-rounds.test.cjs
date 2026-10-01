@@ -7,6 +7,7 @@ test('новые настройки и программа: 3R V 2R V, затем
   assert.equal(DEFAULT_SETTINGS.gameMode, 'new')
   assert.equal(DEFAULT_SETTINGS.voteMode, 'sequential')
   assert.equal(DEFAULT_SETTINGS.actionCardsEnabled, true)
+  assert.equal(DEFAULT_SETTINGS.extraBaggage, true)
   assert.equal(DEFAULT_SETTINGS.cardsPower, 'balanced')
   for (let count = 2; count <= 16; count++) {
     const survivors = Math.ceil(count / 2)

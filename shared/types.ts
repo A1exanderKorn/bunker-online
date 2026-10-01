@@ -240,7 +240,7 @@ export const DEFAULT_SETTINGS: LobbySettings = {
   survivorsCount: 0,
   voteMode: 'sequential',
   sequentialVoteSeconds: 30,
-  extraBaggage: false,
+  extraBaggage: true,
   noPhobias: false,
   threatsEnabled: true,
   actionCardsEnabled: true,

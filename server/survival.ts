@@ -130,20 +130,21 @@ export function calculateSurvival(
   factors.push(factor('age', 'Возраст группы', ageStatus, ageDelta, `Средний возраст: ${averageAge.toFixed(1)}.`))
 
   const health = survivors.map(healthCharacteristic).filter((item) => item != null)
-  const averageHealth = health.length ? health.reduce((sum, item) => sum + item.coef, 0) / health.length : 0.5
+  // КФ характеристик лежит в [-1, 1]; нейтральное здоровье соответствует 0.
+  const averageHealth = health.length ? health.reduce((sum, item) => sum + item.coef, 0) / health.length : 0
   const contagious = health.filter((item) => item.tags?.includes('contagious')).length
   const critical = health.filter((item) => item.tags?.includes('critical')).length
   const hasMedicine = team.tags.has('medical')
   const hasInfectious = team.tags.has('infectious')
-  let healthDelta = averageHealth >= 0.75 ? 6 : averageHealth >= 0.5 ? 2 : averageHealth >= 0.3 ? -6 : -14
+  let healthDelta = averageHealth >= 0.5 ? 6 : averageHealth >= 0 ? 2 : averageHealth >= -0.4 ? -6 : -14
   if (contagious > 0) healthDelta += hasMedicine && hasInfectious ? -3 : -13
   if (critical > 0) healthDelta -= Math.min(18, critical * (hasMedicine ? 2 : 6))
   const healthStatus = contagious && !(hasMedicine && hasInfectious)
-    ? 'Критическое' : averageHealth >= 0.7 && critical === 0 ? 'Хорошее' : averageHealth >= 0.4 ? 'Удовлетворительное' : 'Плохое'
+    ? 'Критическое' : averageHealth >= 0.4 && critical === 0 ? 'Хорошее' : averageHealth >= -0.2 ? 'Удовлетворительное' : 'Плохое'
   factors.push(factor('health', 'Здоровье группы', healthStatus, healthDelta,
     `Средний КФ здоровья: ${averageHealth.toFixed(2)}. Заразных состояний: ${contagious}, критических: ${critical}.`))
 
-  const needMedicine = averageHealth < 0.65 || contagious > 0 || critical > 0
+  const needMedicine = averageHealth < 0.3 || contagious > 0 || critical > 0
   // Вода не входит в общий фактор: подходящих карт мало, а отдельные водные
   // угрозы по-прежнему честно проверяют тег water в своих требованиях.
   const needs = [team.tags.has('food') || team.tags.has('agriculture')]
@@ -176,11 +177,11 @@ export function calculateSurvival(
   // низкий КФ напрямую штрафует итог только у фобий.
   const weakCharacteristics = survivors.flatMap((player) =>
     player.characteristics
-      .filter((item) => item.type === 'Фобия' && item.coef < 0.35)
+      .filter((item) => item.type === 'Фобия' && item.coef < -0.3)
       .map((item) => ({ player, item })),
   )
   const weaknessScore = weakCharacteristics.reduce((sum, { item }) =>
-    sum + (item.coef <= 0.1 ? 3 : item.coef <= 0.2 ? 2 : 1), 0)
+    sum + (item.coef <= -0.8 ? 3 : item.coef <= -0.6 ? 2 : 1), 0)
   const traitsDelta = -Math.min(12, weaknessScore)
   factors.push(factor(
     'traits',
