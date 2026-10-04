@@ -24,6 +24,9 @@
   --danger: #e74c3c;
   --warn: #ffb300;
   --info: #3aa0ff;
+  --on-accent: #fff;
+  --on-success: #fff;
+  --on-danger: #fff;
 
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
@@ -141,18 +144,18 @@ body {
 }
 .btn--primary {
   --btn-bg: var(--accent);
-  --btn-fg: #fff;
+  --btn-fg: var(--on-accent);
 }
 .btn--primary:hover {
   --btn-bg: var(--accent-strong);
 }
 .btn--success {
   --btn-bg: var(--success);
-  --btn-fg: #fff;
+  --btn-fg: var(--on-success);
 }
 .btn--danger {
   --btn-bg: var(--danger);
-  --btn-fg: #fff;
+  --btn-fg: var(--on-danger);
 }
 .btn--ghost {
   --btn-bg: transparent;

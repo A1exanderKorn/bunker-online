@@ -1,0 +1,17 @@
+{
+  "checks": [
+    "Guest nickname and invalid lobby-code validation work",
+    "dark: body, muted, faint and button-label palette contrast >= 4.5:1",
+    "Home dark: no page overflow at 320 / 390 / 768 / 1024 / 1600px",
+    "light: body, muted, faint and button-label palette contrast >= 4.5:1",
+    "Home light: no page overflow at 320 / 390 / 768 / 1024 / 1600px",
+    "Six players join; host settings sync; guest settings stay read-only",
+    "Lobby dark: no page overflow at 320 / 390 / 768 / 1024 / 1600px",
+    "Lobby light: no page overflow at 320 / 390 / 768 / 1024 / 1600px",
+    "Six real reveals, confirmation/cancel, turn advance and pause work",
+    "Game dark: no page overflow at 320 / 390 / 768 / 1024 / 1600px",
+    "Game light: no page overflow at 320 / 390 / 768 / 1024 / 1600px",
+    "Theme persists on reload; reconnect preserves players; system mode tracks OS"
+  ],
+  "errors": []
+}

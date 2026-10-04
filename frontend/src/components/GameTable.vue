@@ -172,6 +172,7 @@ function toggleVoters(id: string) {
       <header class="card-head">
         <div class="head-left">
           <img v-if="p.avatarUrl" :src="p.avatarUrl" alt="" width="28" height="28" style="border-radius: 50%; flex-shrink: 0" />
+          <span v-else class="player-avatar" aria-hidden="true">{{ p.name.slice(0, 1).toUpperCase() }}</span>
           <span class="player-name">{{ p.name }}</span>
           <span v-if="isMe(p)" class="you-badge">вы</span>
           <span v-if="!p.connected" class="offline-badge" title="Игрок отключился">⚠</span>
@@ -202,6 +203,7 @@ function toggleVoters(id: string) {
           v-for="slot in rows"
           :key="slot.type + '#' + slot.occ"
           class="char-row"
+          :data-category="slot.type"
           :class="{
             revealed: isRevealed(p, slot),
             'mine-revealed': isMe(p) && isRevealed(p, slot),

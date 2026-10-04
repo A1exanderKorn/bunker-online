@@ -1,0 +1,569 @@
+/* Shared visual language. Future skins supply tokens, never duplicate layout. */
+:root .app-shell {
+  isolation: isolate;
+  padding-bottom: 32px;
+}
+:root .app-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  filter: var(--scene-filter, none);
+  background:
+    linear-gradient(180deg, var(--scene-wash), var(--scene-bottom)),
+    var(--scene-image) center / cover;
+}
+:root .app-shell::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent 0 3px, var(--paper-grain) 3px 4px);
+}
+:root .app-shell.scene--home::before {
+  background:
+    linear-gradient(90deg, var(--hero-wash) 0%, var(--hero-wash-mid) 40%, var(--hero-wash-end) 75%),
+    var(--scene-image) center / cover;
+}
+:root .app-shell.scene--game::before {
+  background: var(--bg);
+  filter: none;
+  opacity: 1;
+}
+:root .app-shell.scene--game::after {
+  content: none;
+}
+:root .app-shell.scene--game {
+  background: var(--bg);
+  color: var(--text);
+}
+:root .app-shell .site-header {
+  max-width: 1600px;
+  margin: auto;
+  min-height: 88px;
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text);
+}
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 39px;
+  border: 1px solid var(--accent);
+  border-radius: 15px 15px 3px 3px;
+  color: var(--accent);
+  font-size: 20px;
+}
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 27px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.brand-caption {
+  display: block;
+  color: var(--text-muted);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.scene--home .brand {
+  color: var(--hero-ink);
+}
+.scene--home .brand-caption {
+  color: var(--hero-muted);
+}
+:root .scene--home .app-toolbar .toolbar-button {
+  background: var(--hero-glass);
+  color: var(--hero-ink);
+  border-color: var(--hero-border);
+}
+:root .app-shell .app-toolbar {
+  position: static;
+  display: flex;
+  gap: 8px;
+}
+.eyebrow {
+  color: var(--accent);
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.19em;
+  margin: 0 0 12px;
+}
+.section-description {
+  color: var(--text-muted);
+  margin: 10px 0 0;
+  font-size: 14px;
+}
+.tone-amber {
+  --tone: var(--accent);
+}
+.tone-teal {
+  --tone: var(--success);
+}
+.tone-blue {
+  --tone: var(--info);
+}
+.tone-lilac {
+  --tone: var(--special);
+}
+.tone-coral {
+  --tone: var(--danger);
+}
+.surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.surface--tinted {
+  background: color-mix(in srgb, var(--tone, var(--accent)) 7%, var(--surface));
+  border-color: color-mix(in srgb, var(--tone, var(--accent)) 30%, var(--border));
+}
+:root .app-shell .btn {
+  min-height: 42px;
+  border-color: color-mix(in srgb, var(--btn-bg) 70%, var(--border-strong));
+  font-weight: 650;
+}
+:root .app-shell .btn--primary {
+  background: var(--btn-bg);
+  box-shadow: var(--shadow-sm);
+}
+:root .app-shell .btn--ghost {
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  border-color: var(--border-strong);
+}
+:root .app-shell .btn--sm {
+  min-height: 36px;
+}
+.btn--secondary {
+  --btn-bg: var(--surface-2);
+  --btn-fg: var(--text);
+  border-color: var(--border-strong);
+}
+.btn--special {
+  --btn-bg: var(--special);
+  --btn-fg: var(--bg);
+}
+:where(button, a, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 4px;
+}
+button,
+input,
+select {
+  font-family: inherit;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+:root .app-shell .lobby-screen {
+  max-width: 1320px;
+  padding: 26px 32px 40px;
+}
+:root .app-shell .lobby-head {
+  margin-bottom: 26px;
+  align-items: flex-end;
+}
+:root .app-shell .lobby-head h1 {
+  font: 600 clamp(28px, 3vw, 38px) / 1.15 var(--font-display);
+}
+:root .app-shell .code-copy {
+  font-family: var(--font);
+  font-size: 25px;
+  padding: 10px 18px;
+  background: var(--surface);
+}
+:root .app-shell .lobby-body {
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 24px;
+}
+:root .app-shell .players-col {
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+:root .app-shell .players-col h2 {
+  font-size: 18px;
+}
+:root .app-shell .player-list-item {
+  padding: 12px 10px;
+  background: var(--surface-2);
+  min-height: 54px;
+  flex-wrap: wrap;
+}
+.player-avatar {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--player-color, var(--info)) 20%, var(--surface));
+  color: var(--player-color, var(--info));
+  font-size: 13px;
+  font-weight: 700;
+}
+:root .app-shell .kick-player {
+  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+  color: var(--danger);
+  font-size: 11px;
+}
+:root .app-shell .settings-panel {
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+}
+:root .app-shell .settings-head {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+:root .app-shell .settings-head h3 {
+  color: var(--text);
+  font-size: 20px;
+}
+:root .app-shell .settings-grid {
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+:root .app-shell .settings-grid .field:first-child {
+  grid-column: span 2;
+}
+:root .app-shell .switches {
+  gap: 15px 22px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+:root .app-shell .seg-btn.active {
+  color: var(--on-accent);
+}
+:root .app-shell .rounds-title {
+  margin-top: 18px;
+}
+:root .app-shell .game-screen {
+  max-width: 1600px;
+  padding: 12px 32px 32px;
+}
+.game-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 22px;
+  align-items: start;
+}
+.game-board,
+.settings-col {
+  min-width: 0;
+}
+:root .app-shell .game-stage-message {
+  padding: 16px 22px;
+  display: flex;
+  align-items: flex-start;
+  border-width: 1px;
+  margin-bottom: 18px;
+  background: var(--surface);
+}
+:root .app-shell .game-stage-message.my-turn {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  box-shadow: inset 3px 0 var(--accent);
+}
+:root .app-shell .stage-row {
+  width: 100%;
+  justify-content: space-between;
+}
+:root .app-shell .stage-timer {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+:root .app-shell .turn-line {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: left;
+}
+:root .app-shell .players-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.player-card,
+.player-list-item {
+  --player-color: var(--info);
+}
+.player-card:nth-child(6n + 2),
+.player-list-item:nth-child(6n + 2) {
+  --player-color: var(--special);
+}
+.player-card:nth-child(6n + 3),
+.player-list-item:nth-child(6n + 3) {
+  --player-color: var(--success);
+}
+.player-card:nth-child(6n + 4),
+.player-list-item:nth-child(6n + 4) {
+  --player-color: var(--accent-copper);
+}
+.player-card:nth-child(6n + 5),
+.player-list-item:nth-child(6n + 5) {
+  --player-color: var(--accent-sage);
+}
+.player-card:nth-child(6n + 6),
+.player-list-item:nth-child(6n + 6) {
+  --player-color: var(--accent);
+}
+:root .app-shell .player-card {
+  border-width: 1px;
+  padding: 14px;
+  box-shadow: var(--shadow-md);
+  background: var(--surface);
+  border-top: 3px solid color-mix(in srgb, var(--player-color) 55%, var(--border));
+}
+:root .app-shell .player-card.self {
+  border-color: var(--card-self-border);
+  background: var(--card-self);
+}
+:root .app-shell .player-card.current {
+  border-color: var(--warn);
+  box-shadow:
+    0 0 0 2px var(--accent-soft),
+    var(--shadow-md);
+}
+:root .app-shell .card-head {
+  padding: 2px 0 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--player-color) 35%, var(--border));
+  margin-bottom: 3px;
+}
+:root .app-shell .char-row {
+  grid-template-columns: 86px minmax(0, 1fr) 18px;
+  background: color-mix(in srgb, var(--surface-2) 65%, transparent);
+  padding: 7px 6px;
+}
+:root .app-shell .char-row.revealed {
+  background: color-mix(in srgb, var(--success) 10%, var(--surface));
+}
+:root .app-shell .char-row.mine-revealed {
+  border-left: 2px solid var(--success);
+}
+:root .app-shell .char-row.clickable {
+  background: color-mix(in srgb, var(--warn) 10%, var(--surface));
+  outline-color: color-mix(in srgb, var(--warn) 50%, var(--border));
+}
+:root .app-shell .char-row.clickable:hover {
+  background: color-mix(in srgb, var(--warn) 22%, var(--surface));
+}
+:root .app-shell .char-type {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.char-row {
+  --trait-tone: var(--text-muted);
+}
+.char-row[data-category='Профессия'] {
+  --trait-tone: var(--info);
+}
+.char-row[data-category='Здоровье'] {
+  --trait-tone: var(--success);
+}
+.char-row[data-category='Биология'] {
+  --trait-tone: var(--accent-copper);
+}
+.char-row[data-category='Хобби'] {
+  --trait-tone: var(--special);
+}
+.char-row[data-category='Фобия'] {
+  --trait-tone: var(--danger);
+}
+.char-row[data-category='Багаж'] {
+  --trait-tone: var(--accent);
+}
+.char-row[data-category='Факт'] {
+  --trait-tone: var(--accent-sage);
+}
+:root .app-shell .char-type {
+  color: color-mix(in srgb, var(--trait-tone) 70%, var(--text-muted));
+}
+:root .app-shell .char-value {
+  font-size: 15px;
+  line-height: 1.4;
+}
+:root .app-shell .you-badge {
+  background: var(--info);
+  color: var(--bg);
+}
+:root .app-shell .turn-badge {
+  background: var(--warn);
+  color: var(--on-accent);
+}
+:root .app-shell .dead-badge,
+:root .app-shell .vote-count {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+:root .app-shell .char-hint {
+  color: var(--info);
+}
+:root .app-shell .revealed-tick,
+:root .app-shell .voted-mark {
+  color: var(--success);
+}
+:root .app-shell .vote-button {
+  color: var(--on-accent);
+}
+:root .app-shell .vote-button.voted {
+  color: var(--on-success);
+}
+:root .app-shell .host-tag {
+  color: var(--on-accent);
+}
+:root .app-shell .off-tag {
+  color: var(--on-danger);
+}
+:root .app-shell .info-block {
+  border-top: 2px solid var(--tone, var(--info));
+  padding: 16px;
+  background: color-mix(in srgb, var(--tone, var(--info)) 5%, var(--surface));
+}
+:root .app-shell .info-block h4 {
+  color: var(--tone, var(--info));
+}
+:root .app-shell .catastrophe {
+  --tone: var(--accent-copper);
+}
+:root .app-shell .state {
+  --tone: var(--info);
+}
+:root .app-shell .threats {
+  --tone: var(--danger);
+}
+:root .app-shell .conditions {
+  --tone: var(--success);
+}
+:root .app-shell .action-cards {
+  border-top: 2px solid var(--special);
+  background: color-mix(in srgb, var(--special) 7%, var(--surface));
+}
+:root .app-shell .ac-head h4,
+:root .app-shell .ac-play {
+  color: var(--special);
+}
+:root .app-shell .ac-item.playable {
+  border-color: var(--special);
+}
+:root .app-shell .host-controls {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  justify-content: flex-start;
+}
+:root .app-shell .host-controls .btn--block {
+  width: auto;
+}
+:root .app-shell .profile-page {
+  padding-top: 20px;
+}
+:root .app-shell .profile-page .panel {
+  border-color: var(--border);
+  box-shadow: var(--shadow-md);
+}
+:root .app-shell .profile-page .action {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+:root .app-shell .profile-page .error,
+:root .app-shell .profile-page .excluded {
+  color: var(--danger);
+}
+:root .app-shell .profile-page .admitted {
+  color: var(--success);
+}
+@media (max-width: 1200px) {
+  .game-workspace {
+    grid-template-columns: minmax(0, 1fr) 270px;
+    gap: 16px;
+  }
+  :root .app-shell .players-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 850px) {
+  .game-workspace {
+    grid-template-columns: 1fr;
+  }
+  :root .app-shell .lobby-body {
+    grid-template-columns: 1fr;
+  }
+  :root .app-shell .site-header {
+    padding: 16px 20px;
+  }
+  :root .app-shell .lobby-screen,
+  :root .app-shell .game-screen {
+    padding: 16px 20px 30px;
+  }
+}
+@media (max-width: 560px) {
+  :root .app-shell .site-header {
+    min-height: 76px;
+    padding: 14px 16px;
+  }
+  .brand-caption {
+    font-size: 8px;
+  }
+  .brand-name {
+    font-size: 23px;
+  }
+  :root .app-shell .lobby-screen,
+  :root .app-shell .game-screen {
+    padding: 10px 12px 24px;
+  }
+  :root .app-shell .players-grid {
+    grid-template-columns: 1fr;
+  }
+  :root .app-shell .settings-panel,
+  :root .app-shell .players-col {
+    padding: 16px;
+  }
+  :root .app-shell .char-row {
+    grid-template-columns: 86px minmax(0, 1fr) 20px;
+  }
+  :root .app-shell .char-value {
+    font-size: 15px;
+  }
+  :root .app-shell .lobby-head h1 {
+    font-size: 30px;
+  }
+  :root .app-shell .code-copy {
+    font-size: 21px;
+  }
+  :root .app-shell .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  :root .app-shell .game-stage-message {
+    position: sticky;
+    top: 8px;
+    z-index: 15;
+    box-shadow: var(--shadow-md);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

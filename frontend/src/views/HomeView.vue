@@ -1,44 +1,61 @@
 <template>
-  <div class="main-block">
-    <h1 class="title-text">Добро пожаловать!</h1>
-    <p v-if="profile.loading">Загружаем профиль…</p>
-    <div v-else class="profile-entry">
-      <template v-if="profile.user">
-        <img :src="profile.user.avatarUrl" alt="" width="44" height="44" style="border-radius: 50%" />
-        <span>{{ profile.user.nickname }}</span>
-      </template>
-      <a v-else-if="profile.authEnabled" :href="discordLoginUrl">Войти через Discord</a>
-      <RouterLink to="/profile">{{ profile.user ? 'Профиль и история' : 'Профиль и никнейм' }}</RouterLink>
-      <small v-if="!profile.user">Можно играть гостем — без истории игр.</small>
-      <p v-if="profile.error" role="alert">{{ profile.error }}</p>
-    </div>
+  <main class="home-hero" aria-label="Главное меню">
+    <div class="main-block">
+      <p v-if="profile.loading">Загружаем профиль…</p>
+      <div v-else class="profile-entry">
+        <template v-if="profile.user">
+          <img
+            :src="profile.user.avatarUrl"
+            alt=""
+            width="44"
+            height="44"
+            style="border-radius: 50%"
+          />
+          <span>{{ profile.user.nickname }}</span>
+        </template>
+        <a v-else-if="profile.authEnabled" :href="discordLoginUrl">Войти через Discord</a>
+        <RouterLink to="/profile">{{
+          profile.user ? 'Профиль и история' : 'Профиль и никнейм'
+        }}</RouterLink>
+        <p v-if="profile.error" role="alert">{{ profile.error }}</p>
+      </div>
 
-    <div class="buttons-set" v-if="!profile.loading && !nameSet">
-      <input class="name-input" type="text" v-model="name" placeholder="Введите имя" />
-      <LobbyButton @click="confirmName" customClass="confirm-button" text="ОК" />
-    </div>
+      <div class="buttons-set" v-if="!profile.loading && !nameSet">
+        <input
+          class="name-input"
+          type="text"
+          v-model="name"
+          placeholder="Введите имя"
+          aria-label="Ваше имя"
+          autocomplete="nickname"
+          @keyup.enter="confirmName"
+        />
+        <LobbyButton @click="confirmName" customClass="confirm-button" text="ОК" />
+      </div>
 
-    <div class="buttons-set" v-else-if="!profile.loading">
-      <LobbyButton @click="createLobby" customClass="base-button" text="Создать игру" />
-      <LobbyButton
-        @click="joinMode = !joinMode"
-        customClass="base-button"
-        text="Присоединиться к игре"
-      />
+      <div class="buttons-set" v-else-if="!profile.loading">
+        <LobbyButton @click="createLobby" customClass="base-button" text="Создать игру" />
+        <LobbyButton
+          @click="joinMode = !joinMode"
+          customClass="btn--secondary btn--block"
+          text="Присоединиться к игре"
+        />
 
-      <input
-        v-if="joinMode"
-        v-model="code"
-        placeholder="Код лобби (4 буквы)"
-        maxlength="4"
-        class="name-input"
-        @input="code = code.toUpperCase()"
-        @keyup.enter="joinLobby"
-      />
-      <p v-if="joinMode && joinError" class="join-error">{{ joinError }}</p>
-      <LobbyButton v-if="joinMode" @click="joinLobby" customClass="confirm-button" text="Войти" />
+        <input
+          v-if="joinMode"
+          v-model="code"
+          placeholder="Код лобби (4 буквы)"
+          aria-label="Код лобби — четыре латинские буквы"
+          maxlength="4"
+          class="name-input"
+          @input="code = code.toUpperCase()"
+          @keyup.enter="joinLobby"
+        />
+        <p v-if="joinMode && joinError" class="join-error">{{ joinError }}</p>
+        <LobbyButton v-if="joinMode" @click="joinLobby" customClass="confirm-button" text="Войти" />
+      </div>
     </div>
-  </div>
+  </main>
 </template>
 
 <script setup lang="ts">
@@ -101,17 +118,23 @@ function generateLobbyCode() {
 </script>
 
 <style scoped>
+.home-hero {
+  min-height: calc(100dvh - 120px);
+  max-width: 1536px;
+  margin: auto;
+  padding: 7vh 7vw 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 .main-block {
   display: flex;
   flex-direction: column;
-  margin: auto;
-  min-height: 100dvh;
-  justify-content: center;
-  gap: 30px;
-  width: 400px;
+  gap: 18px;
+  width: min(360px, 100%);
   align-items: center;
-  font-size: 24px;
-  color: var(--text);
+  color: var(--hero-ink);
 }
 
 .buttons-set {
@@ -121,27 +144,49 @@ function generateLobbyCode() {
   width: 100%;
   align-items: center;
 }
-.profile-entry { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; font-size: 16px; }
-.profile-entry a { color: var(--accent); }
-.profile-entry small { flex-basis: 100%; text-align: center; }
+.profile-entry {
+  order: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+.profile-entry a {
+  color: var(--hero-accent);
+  text-underline-offset: 4px;
+}
+.buttons-set {
+  max-width: 360px;
+}
+.home-hero :deep(.btn) {
+  min-height: 50px;
+}
+.home-hero :deep(.btn--primary) {
+  --accent: var(--hero-accent);
+  --on-accent: var(--hero-on-accent);
+}
+.home-hero :deep(.btn--secondary) {
+  --btn-bg: color-mix(in srgb, var(--hero-accent) 85%, var(--surface));
+  --btn-fg: var(--hero-on-accent);
+  border-color: var(--hero-accent);
+}
 
 .name-input {
-  border: 2px solid var(--accent);
+  border: 1px solid var(--hero-border);
   border-radius: var(--radius-sm);
   padding: 10px;
-  font-size: 20px;
+  font-size: 16px;
   width: 100%;
   box-sizing: border-box;
-  background: var(--surface);
-  color: var(--text);
+  background: var(--hero-glass);
+  color: var(--hero-ink);
+}
+.name-input::placeholder {
+  color: var(--hero-muted);
 }
 
-.title-text {
-  color: var(--accent);
-  text-align: center;
-  font-size: 32px;
-  font-weight: 800;
-}
 .join-error {
   color: var(--danger);
   font-size: 15px;
@@ -149,9 +194,12 @@ function generateLobbyCode() {
   text-align: center;
 }
 @media (max-width: 480px) {
+  .home-hero {
+    padding: 5vh 24px 20px;
+    background: var(--hero-mobile-wash);
+  }
   .main-block {
-    width: 90%;
-    font-size: 20px;
+    width: 100%;
   }
 }
 </style>

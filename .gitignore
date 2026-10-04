@@ -38,3 +38,10 @@ Thumbs.db
 
 # Локальные отчёты
 /reports/
+
+# Local design concepts and preview screenshots (keep runtime artwork tracked).
+/design/**/*.png
+/design/**/*.jpg
+/design/**/*.jpeg
+/design/**/*.webp
+/design/**/*.webp

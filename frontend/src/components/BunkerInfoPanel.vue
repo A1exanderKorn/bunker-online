@@ -2,32 +2,21 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { STAGE_LABELS } from '@shared/types'
 import ActionCardsPanel from '@/components/ActionCardsPanel.vue'
-import CardHistoryStrip from '@/components/CardHistoryStrip.vue'
 import ChallengeRequirements from '@/components/ChallengeRequirements.vue'
 import ConditionGrants from '@/components/ConditionGrants.vue'
 
 /**
  * Информационное окно: катастрофа, срок в бункере, доп. условия,
- * угрозы и текущее состояние игры.
+ * угрозы и карты действия.
  */
 const game = useGameStore()
-const { publicPlayers, roster, settings, stage, turn, bunker } = storeToRefs(game)
-
-const source = computed(() => (publicPlayers.value.length > 0 ? publicPlayers.value : roster.value))
-const aliveCount = computed(() => source.value.filter((p) => p.isAlive).length)
-const startCount = computed(() => source.value.length)
-const survivorsTarget = computed(() =>
-  settings.value.survivorsCount > 0 ? settings.value.survivorsCount : Math.ceil(startCount.value / 2),
-)
-const stageLabel = computed(() => STAGE_LABELS[stage.value])
+const { settings, bunker } = storeToRefs(game)
 const conditions = computed(() => bunker.value.conditions ?? [])
 </script>
 
 <template>
   <section class="bunker-info fade-in">
-    <CardHistoryStrip class="history" />
     <div class="card info-block conditions" v-if="conditions.length">
       <h4>📜 Доп. условия</h4>
       <ul>
@@ -44,16 +33,6 @@ const conditions = computed(() => bunker.value.conditions ?? [])
       <p class="cat-text">{{ bunker.catastrophe.flavor || '—' }}</p>
       <ChallengeRequirements v-if="bunker.catastrophe.flavor" :requirements="bunker.catastrophe.requirements" />
       <div class="years">🏠 Пребывание в бункере: <b>{{ bunker.years }}</b> {{ bunker.years === 1 ? 'год' : bunker.years < 5 ? 'года' : 'лет' }}</div>
-    </div>
-
-    <div class="card info-block state">
-      <h4>📊 Состояние игры</h4>
-      <ul>
-        <li>Стадия: <b>{{ stageLabel }}</b></li>
-        <li>В игре: <b>{{ aliveCount }}</b> из {{ startCount }}</li>
-        <li>Проходят в бункер: <b>{{ survivorsTarget }}</b></li>
-        <li v-if="turn.round > 0">Раунд вскрытия: <b>{{ turn.round }}</b></li>
-      </ul>
     </div>
 
     <div class="card info-block threats" v-if="settings.threatsEnabled">
@@ -74,8 +53,8 @@ const conditions = computed(() => bunker.value.conditions ?? [])
 <style scoped>
 .bunker-info {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  grid-template-areas: 'history history' 'conditions conditions' 'cat state' 'threats actions';
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  align-items: stretch;
   gap: 12px;
   width: 100%;
 }
@@ -83,24 +62,7 @@ const conditions = computed(() => bunker.value.conditions ?? [])
   padding: 14px 16px;
   color: var(--text);
 }
-.history {
-  grid-area: history;
-  min-width: 0;
-}
-.conditions {
-  grid-area: conditions;
-}
-.catastrophe {
-  grid-area: cat;
-}
-.state {
-  grid-area: state;
-}
-.threats {
-  grid-area: threats;
-}
 .actions {
-  grid-area: actions;
   min-width: 0;
 }
 .info-block h4 {
@@ -173,7 +135,6 @@ const conditions = computed(() => bunker.value.conditions ?? [])
 @media (max-width: 640px) {
   .bunker-info {
     grid-template-columns: 1fr;
-    grid-template-areas: 'history' 'conditions' 'cat' 'state' 'threats' 'actions';
   }
 }
 </style>

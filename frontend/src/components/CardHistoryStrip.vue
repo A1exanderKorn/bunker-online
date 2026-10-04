@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 
 const game = useGameStore()
 const { cardHistory } = storeToRefs(game)
+const chronologicalHistory = computed(() => [...cardHistory.value].sort((a, b) => a.seq - b.seq))
 const open = ref<Record<number, boolean>>({})
+const expanded = ref(true)
 
 function roundLabel(round: number): string {
   return round > 0 ? `Раунд ${round}` : 'До первого раунда вскрытия'
@@ -26,10 +28,22 @@ function toggle(seq: number) {
 </script>
 
 <template>
-  <section v-if="cardHistory.length" class="card history-strip" aria-label="История карт">
-    <h4>История карт</h4>
-    <div class="history-row">
-      <article v-for="entry in cardHistory" :key="entry.seq" class="history-item">
+  <section class="card history-strip" aria-label="История карт">
+    <h4>
+      <button
+        type="button"
+        class="history-toggle"
+        :aria-expanded="expanded"
+        aria-controls="card-history-content"
+        @click="expanded = !expanded"
+      >
+        <span>История карт</span>
+        <span aria-hidden="true">{{ expanded ? '▾' : '▸' }}</span>
+      </button>
+    </h4>
+    <div v-show="expanded" id="card-history-content" class="history-row">
+      <div v-if="!cardHistory.length" class="history-empty">Нет</div>
+      <article v-for="entry in chronologicalHistory" :key="entry.seq" class="history-item">
         <div class="history-card">
           <span class="hc-round">{{ roundLabel(entry.round) }}</span>
           <span class="hc-by">{{ entry.byName }}</span>
@@ -84,31 +98,52 @@ function toggle(seq: number) {
   min-width: 0;
 }
 .history-strip h4 {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 15px;
   color: var(--info);
 }
-.history-row {
+.history-toggle {
   display: flex;
-  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.history-empty {
+  display: grid;
+  place-items: center;
+  min-height: 100px;
+  padding: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+.history-row {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  /* Карточки 148px + место под горизонтальный ползунок, чтобы он не наезжал снизу. */
-  height: 162px;
-  align-items: flex-start;
+  overflow-wrap: anywhere;
 }
 .history-item {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: stretch;
   flex: 0 0 auto;
-  height: 148px;
+  min-width: 0;
 }
 .history-card {
-  flex: 0 0 220px;
-  width: 220px;
-  height: 148px;
+  width: 100%;
+  min-height: 140px;
   box-sizing: border-box;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
@@ -129,7 +164,7 @@ function toggle(seq: number) {
   color: var(--text);
 }
 .hc-title {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--accent);
   font-weight: 700;
   line-height: 1.3;
@@ -155,32 +190,31 @@ function toggle(seq: number) {
 }
 .hc-details-clip {
   display: grid;
-  grid-template-columns: 0fr;
-  transition: grid-template-columns 240ms ease;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 240ms ease;
 }
 .hc-details-clip.open {
-  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
 }
 .hc-details-inner {
   min-width: 0;
+  min-height: 0;
   overflow: hidden;
 }
 .hc-details {
   list-style: none;
   margin: 0;
   box-sizing: border-box;
-  width: max-content;
-  height: 148px;
+  width: 100%;
   padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  flex-wrap: wrap;
   align-content: flex-start;
   column-gap: 14px;
   row-gap: 8px;
   border: 1px solid var(--border-strong);
-  border-left: none;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
   background: var(--surface);
 }
 .hc-details li {
@@ -188,8 +222,7 @@ function toggle(seq: number) {
   flex-direction: column;
   gap: 4px;
   flex: 0 0 auto;
-  width: max-content;
-  max-width: none;
+  min-width: 0;
 }
 .hc-line1,
 .hc-line2 {
@@ -197,7 +230,7 @@ function toggle(seq: number) {
   flex-direction: row;
   align-items: center;
   gap: 8px;
-  white-space: nowrap;
+  flex-wrap: wrap;
 }
 .hc-who {
   font-size: 12px;
@@ -220,7 +253,7 @@ function toggle(seq: number) {
   padding: 5px 10px;
   font-size: 12px;
   line-height: 1.3;
-  white-space: nowrap;
+  white-space: normal;
 }
 .hc-chip.revealed {
   background: color-mix(in srgb, var(--success) 16%, var(--surface));

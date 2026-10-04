@@ -1,4 +1,6 @@
 import './assets/main.css'
+import './assets/themes/last-light.css'
+import './assets/presentation.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

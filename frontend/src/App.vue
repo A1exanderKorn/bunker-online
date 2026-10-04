@@ -1,31 +1,40 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
-import { useThemeStore } from '@/stores/theme'
 import CardPlayedPopup from '@/components/CardPlayedPopup.vue'
 import ThreatPopup from '@/components/ThreatPopup.vue'
+import { useGameStore } from '@/stores/game'
 
-const theme = useThemeStore()
 const route = useRoute()
-const icon = computed(() =>
-  theme.mode === 'system' ? '🖥' : theme.effective === 'dark' ? '🌙' : '☀️',
-)
-const label = computed(() =>
-  theme.mode === 'system' ? 'Системная' : theme.mode === 'dark' ? 'Тёмная' : 'Светлая',
+const game = useGameStore()
+const scene = computed(() =>
+  route.path === '/'
+    ? 'scene--home'
+    : route.path.startsWith('/lobby/') && game.started
+      ? 'scene--game'
+      : 'scene--inner',
 )
 </script>
 
 <template>
-  <div class="app-shell">
-    <nav class="app-toolbar" aria-label="Профиль и оформление">
-      <RouterLink v-if="route.path.startsWith('/lobby/')" :to="{ name: 'Profile', query: { returnTo: route.path } }" class="toolbar-button btn btn--ghost btn--sm" title="Профиль и никнейм" aria-label="Профиль и никнейм">
-        <span aria-hidden="true">👤</span>
+  <div class="app-shell" :class="scene">
+    <header class="site-header">
+      <RouterLink to="/" class="brand" aria-label="Бункер — главная">
+        <span class="brand-mark" aria-hidden="true">Б</span>
+        <span class="brand-name">Бункер онлайн</span>
       </RouterLink>
-      <button class="toolbar-button btn btn--ghost btn--sm" @click="theme.cycle()" :title="'Тема: ' + label" :aria-label="'Тема: ' + label">
-        <span class="theme-icon">{{ icon }}</span>
-        <span class="theme-label">{{ label }}</span>
-      </button>
-    </nav>
+      <nav class="app-toolbar" aria-label="Профиль">
+        <RouterLink
+          v-if="route.path.startsWith('/lobby/')"
+          :to="{ name: 'Profile', query: { returnTo: route.path } }"
+          class="toolbar-button btn btn--ghost btn--sm"
+          title="Профиль и никнейм"
+          aria-label="Профиль и никнейм"
+        >
+          <span aria-hidden="true">👤</span>
+        </RouterLink>
+      </nav>
+    </header>
     <RouterView />
     <ThreatPopup />
     <CardPlayedPopup />
@@ -52,13 +61,5 @@ const label = computed(() =>
   text-decoration: none;
   backdrop-filter: blur(6px);
   background: color-mix(in srgb, var(--surface) 80%, transparent);
-}
-.theme-icon {
-  font-size: 15px;
-}
-@media (max-width: 480px) {
-  .theme-label {
-    display: none;
-  }
 }
 </style>

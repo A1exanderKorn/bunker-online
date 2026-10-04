@@ -10,6 +10,7 @@ import GameTable from '@/components/GameTable.vue'
 import GameStageMessage from '@/components/GameStageMessage.vue'
 import LobbySettingsPanel from '@/components/LobbySettingsPanel.vue'
 import BunkerInfoPanel from '@/components/BunkerInfoPanel.vue'
+import CardHistoryStrip from '@/components/CardHistoryStrip.vue'
 import CardAdminPanel from '@/components/CardAdminPanel.vue'
 import RoundProgress from '@/components/RoundProgress.vue'
 import { useProfileStore } from '@/stores/profile'
@@ -200,6 +201,7 @@ const survivalColor = computed(() => {
 
   <!-- Игровой экран -->
   <div v-else-if="started" class="game-screen">
+    <BunkerInfoPanel class="info-mb" />
     <GameStageMessage :stage="stage" :timer="timer" :isPaused="isPaused" />
 
     <!-- П.1: стадия ознакомления -->
@@ -211,7 +213,8 @@ const survivalColor = computed(() => {
       <span v-else class="hint">Ждём хоста…</span>
     </div>
 
-    <BunkerInfoPanel class="info-mb" />
+    <div class="game-workspace">
+    <div class="game-board">
     <RoundProgress v-if="!isReview" />
     <p v-if="error" class="error game-error">{{ error }}</p>
 
@@ -277,11 +280,15 @@ const survivalColor = computed(() => {
         <span>Раскрытие предыдущих характеристик</span>
       </label>
     </div>
+    </div>
+    <CardHistoryStrip />
+    </div>
   </div>
 
   <!-- Экран лобби (до старта) -->
   <div v-else class="lobby-screen">
     <div class="lobby-head">
+      <div>
       <h1>
         Лобби:
         <button
@@ -292,6 +299,7 @@ const survivalColor = computed(() => {
           {{ code }} <span class="copy-ic">{{ copied ? '✓' : '📋' }}</span>
         </button>
       </h1>
+      </div>
     </div>
     <p v-if="error" class="error">{{ error }}</p>
 
@@ -301,6 +309,7 @@ const survivalColor = computed(() => {
         <ul class="player-list">
           <li v-for="(p, i) in roster" :key="p.id" class="player-list-item">
             <img v-if="p.avatarUrl" :src="p.avatarUrl" alt="" width="28" height="28" style="border-radius: 50%" />
+            <span v-else class="player-avatar" aria-hidden="true">{{ p.name.slice(0, 1).toUpperCase() }}</span>
             <span class="pl-name">{{ p.name }}</span>
             <span v-if="i === 0" class="host-tag">хост</span>
             <span v-if="!p.connected" class="off-tag">оффлайн</span>
