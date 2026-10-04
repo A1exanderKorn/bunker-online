@@ -21,24 +21,6 @@
       ]
     },
     {
-      "name": "Выращивание растений",
-      "coef": 0.9,
-      "hint": "",
-      "tags": [
-        "agriculture",
-        "food"
-      ]
-    },
-    {
-      "name": "Разведение животных",
-      "coef": 0.9,
-      "hint": "",
-      "tags": [
-        "animals",
-        "food"
-      ]
-    },
-    {
       "name": "Ремонт генераторов",
       "coef": 0.9,
       "hint": "",
@@ -53,7 +35,8 @@
       "hint": "",
       "tags": [
         "medical",
-        "rescue"
+        "rescue",
+        "ppe"
       ]
     },
     {
@@ -63,16 +46,8 @@
       "tags": [
         "engineering",
         "repair",
-        "power"
-      ]
-    },
-    {
-      "name": "Гидропоника дома",
-      "coef": 0.85,
-      "hint": "",
-      "tags": [
-        "agriculture",
-        "food"
+        "power",
+        "computing"
       ]
     },
     {
@@ -85,12 +60,59 @@
       ]
     },
     {
+      "name": "Разведение животных",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "animals",
+        "food"
+      ]
+    },
+    {
+      "name": "Гидропоника дома",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food"
+      ]
+    },
+    {
+      "name": "Выращивание растений",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food"
+      ]
+    },
+    {
       "name": "Садоводство",
       "coef": 0.75,
       "hint": "",
       "tags": [
         "agriculture",
         "food"
+      ]
+    },
+    {
+      "name": "Кузнечное дело",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "tools",
+        "repair",
+        "fire"
+      ]
+    },
+    {
+      "name": "Программирование микроконтроллеров",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "computing",
+        "engineering",
+        "communication"
       ]
     },
     {
@@ -125,15 +147,6 @@
       "hint": "",
       "tags": [
         "navigation"
-      ]
-    },
-    {
-      "name": "Кузнечное дело",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "tools",
-        "repair"
       ]
     },
     {
@@ -189,15 +202,6 @@
       ]
     },
     {
-      "name": "Программирование микроконтроллеров",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "computing",
-        "engineering"
-      ]
-    },
-    {
       "name": "Радиосвязь на КВ",
       "coef": 0.65,
       "hint": "",
@@ -220,6 +224,16 @@
       "hint": "",
       "tags": [
         "weapon"
+      ]
+    },
+    {
+      "name": "Ферментация продуктов",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "food",
+        "chemistry",
+        "biology"
       ]
     },
     {
@@ -314,12 +328,21 @@
       ]
     },
     {
-      "name": "Ферментация продуктов",
+      "name": "Волонтёрская дрессировка собак",
       "coef": 0.6,
       "hint": "",
       "tags": [
-        "food",
-        "chemistry"
+        "animals",
+        "security"
+      ]
+    },
+    {
+      "name": "Любительская сварка",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "repair",
+        "construction"
       ]
     },
     {
@@ -380,6 +403,33 @@
       ]
     },
     {
+      "name": "Сеть датчиков радиационного фона своими руками",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "radiation",
+        "computing"
+      ]
+    },
+    {
+      "name": "Зимние походы с ночёвкой",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "cold",
+        "survival"
+      ]
+    },
+    {
+      "name": "Химический анализ воды в домашней лаборатории",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "chemistry",
+        "water"
+      ]
+    },
+    {
       "name": "3D-печать",
       "coef": 0.5,
       "hint": "",
@@ -395,14 +445,6 @@
       "hint": "",
       "tags": [
         "food"
-      ]
-    },
-    {
-      "name": "Волонтёрская дрессировка собак",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "animals"
       ]
     },
     {
@@ -429,14 +471,6 @@
       "hint": "",
       "tags": [
         "water"
-      ]
-    },
-    {
-      "name": "Любительская сварка",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "repair"
       ]
     },
     {
@@ -468,6 +502,15 @@
       ]
     },
     {
+      "name": "Иностранные языки",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "culture",
+        "diplomacy"
+      ]
+    },
+    {
       "name": "Альпинизм",
       "coef": 0.45,
       "hint": "",
@@ -483,14 +526,6 @@
       "hint": "",
       "tags": [
         "tools"
-      ]
-    },
-    {
-      "name": "Иностранные языки",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "culture"
       ]
     },
     {
@@ -554,6 +589,14 @@
       ]
     },
     {
+      "name": "Волонтёрство на телефоне доверия",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "psychology"
+      ]
+    },
+    {
       "name": "Дайвинг",
       "coef": 0.4,
       "hint": "",
@@ -592,6 +635,22 @@
       "hint": "",
       "tags": [
         "survival"
+      ]
+    },
+    {
+      "name": "Полевая минералогия",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "geology"
+      ]
+    },
+    {
+      "name": "Силовое троеборье",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "strength"
       ]
     },
     {
@@ -639,6 +698,23 @@
       "hint": "",
       "tags": [
         "weapon"
+      ]
+    },
+    {
+      "name": "Плавание",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "strength"
+      ]
+    },
+    {
+      "name": "Аквариумистика",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "animals",
+        "biology"
       ]
     },
     {
@@ -723,20 +799,6 @@
       "coef": 0.25,
       "hint": "",
       "tags": []
-    },
-    {
-      "name": "Плавание",
-      "coef": 0.25,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Аквариумистика",
-      "coef": 0.2,
-      "hint": "",
-      "tags": [
-        "animals"
-      ]
     },
     {
       "name": "Массаж",

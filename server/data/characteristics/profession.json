@@ -12,6 +12,17 @@
       ]
     },
     {
+      "name": "Космонавт-биолог",
+      "coef": 1,
+      "hint": "",
+      "tags": [
+        "biology",
+        "science",
+        "aviation",
+        "navigation"
+      ]
+    },
+    {
       "name": "Военный врач",
       "coef": 0.95,
       "hint": "",
@@ -97,11 +108,22 @@
     },
     {
       "name": "Полевой врач-инфекционист",
-      "coef": 0.85,
+      "coef": 0.9,
       "hint": "",
       "tags": [
         "infectious",
-        "medical"
+        "medical",
+        "ppe"
+      ]
+    },
+    {
+      "name": "Ветеринар",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "medical",
+        "animals",
+        "biology"
       ]
     },
     {
@@ -110,17 +132,7 @@
       "hint": "",
       "tags": [
         "biology",
-        "science",
-        "engineering"
-      ]
-    },
-    {
-      "name": "Ветеринар",
-      "coef": 0.8,
-      "hint": "",
-      "tags": [
-        "medical",
-        "animals"
+        "science"
       ]
     },
     {
@@ -129,17 +141,6 @@
       "hint": "",
       "tags": [
         "medical"
-      ]
-    },
-    {
-      "name": "Космонавт-биолог",
-      "coef": 1.0,
-      "hint": "",
-      "tags": [
-        "biology",
-        "science",
-        "aviation",
-        "navigation"
       ]
     },
     {
@@ -200,6 +201,15 @@
       "tags": [
         "agriculture",
         "food"
+      ]
+    },
+    {
+      "name": "Инженер радиационного контроля",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "radiation",
+        "nuclear"
       ]
     },
     {
@@ -287,12 +297,32 @@
     },
     {
       "name": "Военный лётчик",
-      "coef": 0.65,
+      "coef": 0.7,
       "hint": "",
       "tags": [
         "aviation",
         "navigation",
-        "security"
+        "security",
+        "communication"
+      ]
+    },
+    {
+      "name": "Спасатель-водолаз",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "rescue",
+        "protection",
+        "strength"
+      ]
+    },
+    {
+      "name": "Инженер сетевой безопасности",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "computing",
+        "communication"
       ]
     },
     {
@@ -361,15 +391,6 @@
       ]
     },
     {
-      "name": "Спасатель-водолаз",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "rescue",
-        "protection"
-      ]
-    },
-    {
       "name": "Химик",
       "coef": 0.65,
       "hint": "",
@@ -392,6 +413,25 @@
       "hint": "",
       "tags": [
         "power",
+        "repair"
+      ]
+    },
+    {
+      "name": "Лесник",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "survival",
+        "navigation",
+        "fire"
+      ]
+    },
+    {
+      "name": "Мастер холодильных установок",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "cold",
         "repair"
       ]
     },
@@ -484,7 +524,45 @@
       "hint": "",
       "tags": [
         "biology",
+        "science"
+      ]
+    },
+    {
+      "name": "Сварщик-аргонщик",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "repair",
+        "tools",
+        "construction"
+      ]
+    },
+    {
+      "name": "Бурильщик скважин",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "water",
+        "geology"
+      ]
+    },
+    {
+      "name": "Дезинфектор",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "infectious",
+        "ppe",
+        "chemistry"
+      ]
+    },
+    {
+      "name": "Лаборант",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
         "science",
+        "biology",
         "chemistry"
       ]
     },
@@ -503,16 +581,6 @@
       "tags": [
         "geology",
         "navigation"
-      ]
-    },
-    {
-      "name": "Лесник",
-      "coef": 0.55,
-      "hint": "",
-      "tags": [
-        "survival",
-        "navigation",
-        "food"
       ]
     },
     {
@@ -540,15 +608,6 @@
       "tags": [
         "repair",
         "construction",
-        "tools"
-      ]
-    },
-    {
-      "name": "Сварщик-аргонщик",
-      "coef": 0.55,
-      "hint": "",
-      "tags": [
-        "repair",
         "tools"
       ]
     },
@@ -594,14 +653,6 @@
       ]
     },
     {
-      "name": "Бурильщик скважин",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "water"
-      ]
-    },
-    {
       "name": "Глава транснациональной корпорации",
       "coef": 0.5,
       "hint": "",
@@ -611,30 +662,12 @@
       ]
     },
     {
-      "name": "Дезинфектор",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "infectious",
-        "ppe"
-      ]
-    },
-    {
       "name": "Кинолог",
       "coef": 0.5,
       "hint": "",
       "tags": [
         "animals",
         "security"
-      ]
-    },
-    {
-      "name": "Лаборант",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "science",
-        "biology"
       ]
     },
     {
@@ -688,6 +721,24 @@
       "tags": [
         "biology",
         "science"
+      ]
+    },
+    {
+      "name": "Кабельщик",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "power",
+        "communication"
+      ]
+    },
+    {
+      "name": "Медиатор трудовых конфликтов",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "psychology",
+        "diplomacy"
       ]
     },
     {
@@ -757,14 +808,6 @@
       "hint": "",
       "tags": [
         "medical"
-      ]
-    },
-    {
-      "name": "Кабельщик",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "power"
       ]
     },
     {
