@@ -276,36 +276,20 @@ export function dealActionCards(
 
   let instanceCounter = 1
   const count = (category: string) => [...result.values()].filter(c => c.category === category).length
-  const available = (category?: string, replacing?: string) => defs.filter(d =>
-    (!category || d.category === category) &&
-    (!d.unique || ![...result.entries()].some(([id, c]) => id !== replacing && c.cardId === d.cardId)),
+  const available = () => defs.filter(d =>
+    (!d.unique || ![...result.values()].some(c => c.cardId === d.cardId)),
   )
   const choose = (pool: CardDef[]) => pool[Math.floor(random() * pool.length)]
 
   for (const player of players) {
     const coef = averageCoef(player, mode)
-    // Лимит S и уникальность действуют до ролла, включая нулевые веса и фолбэк.
-    const pool = available().filter(d => d.category !== 'S' || count('S') < 2)
+    // Не больше двух S и двух A; ограничения действуют и при нулевых весах/фолбэке.
+    const pool = available().filter(d => !['S', 'A'].includes(d.category) || count(d.category) < 2)
     if (!pool.length) continue
     const category = rollCategory(pool, coef, power, random)
     const def = choose(pool.filter(d => d.category === category))
     const instanceId = `ci_${String(instanceCounter++).padStart(3, '0')}`
     result.set(player.id, toActionCard(def, instanceId))
-  }
-
-  // Одна стартовая карта на игрока. Сначала гарантируем S, затем A другому игроку.
-  for (const category of ['S', 'A']) {
-    if (count(category) > 0) continue
-    const recipients = [...result.keys()].filter(id => {
-      const current = result.get(id)!
-      if (category === 'A' && current.category === 'S' && count('S') <= 1) return false
-      if (category === 'S' && current.category === 'A' && count('A') <= 1 && result.size > 1) return false
-      return available(category, id).length > 0
-    })
-    if (!recipients.length) continue
-    const id = recipients[Math.floor(random() * recipients.length)]
-    const def = choose(available(category, id))
-    result.set(id, toActionCard(def, `ci_${String(instanceCounter++).padStart(3, '0')}`))
   }
 
   return result

@@ -78,7 +78,7 @@ for(const def of loadCards())test(`полный каталог: ${def.cardId} �
   }finally{l.dispose()}
 })
 
-test('раздача: 1–2 S, минимум A, одна карта игроку, уникальные экземпляры не повторяются',()=>{
+test('раздача: максимум две S и две A, одна карта игроку, уникальность',()=>{
   const {l}=fixture()
   const originalWarn=console.warn
   try{
@@ -90,13 +90,30 @@ test('раздача: 1–2 S, минимум A, одна карта игрок�
       const result=[...dealActionCards(players,power,'new',random).values()]
       assert.equal(result.length,n)
       const s=result.filter(c=>c.category==='S').length
-      assert.ok(s>=1&&s<=2,`${n}/${coef}/${power}: ${s} S`)
-      assert.ok(result.some(c=>c.category==='A'))
+      assert.ok(s<=2,`${n}/${coef}/${power}: ${s} S`)
+      assert.ok(result.filter(c=>c.category==='A').length<=2)
       const unique=result.filter(c=>loadCards().find(d=>d.cardId===c.cardId).unique)
       assert.equal(new Set(unique.map(c=>c.cardId)).size,unique.length)
       assert.equal(new Set(result.map(c=>c.instanceId)).size,n)
     }
   }finally{console.warn=originalWarn;l.dispose()}
+})
+
+test('раздача не добавляет гарантированные S/A и исключает обе категории после лимита',()=>{
+  const {l}=fixture()
+  const originalWarn=console.warn
+  try {
+    console.warn=()=>{}
+    const players=Array.from({length:10},(_,i)=>({...l.players[0],id:'d'+i,biology:null,
+      characteristics:[{...l.players[0].characteristics[0],coef:1}]}))
+    const weak=[...dealActionCards(players,'balanced','new',()=>.999999).values()]
+    assert.equal(weak.length,10)
+    assert.ok(weak.every(c=>c.category!=='S'&&c.category!=='A'))
+    players.forEach(p=>p.characteristics[0].coef=-1)
+    const strong=[...dealActionCards(players,'balanced','new',()=>0).values()]
+    assert.deepEqual(strong.slice(0,4).map(c=>c.category),['S','S','A','A'])
+    assert.ok(strong.slice(4).every(c=>c.category!=='S'&&c.category!=='A'))
+  } finally {console.warn=originalWarn;l.dispose()}
 })
 
 test('75%: выбор на ходе, приватность, запрет другого слота, один обычный reveal',()=>{
