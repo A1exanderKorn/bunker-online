@@ -5,6 +5,12 @@ export const MAX_BIOLOGY_AGE = 90
 const ages = Array.from({ length: 72 }, (_, i) => i + MIN_BIOLOGY_AGE)
 const clamp = (n: number) => Math.max(-1, Math.min(1, n))
 
+export function isBiologyInfertile(bio: Biology): boolean {
+  return bio.infertile || (!bio.fertilityRestored && (
+    ((bio.sex === 'Ж' || bio.sex === 'Гермафродит') && bio.age > 50) ||
+    (bio.sex === 'М' && bio.age > 60)))
+}
+
 export function experienceModifier(age: number, experience: number): number {
   const progress = Math.max(0, Math.min(1, (experience - 1) / Math.max(1, age - 17)))
   return -0.01 + 0.02 * progress

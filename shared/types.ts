@@ -98,6 +98,8 @@ export interface Biology {
   experience: number
   coef: number
   infertile: boolean
+  /** Карта лечения отменяет возрастное бесплодие до нового изменения биологии. */
+  fertilityRestored?: boolean
   isVisible: boolean
   hint?: string
 }
@@ -346,6 +348,8 @@ export type CardPickKind = 'player' | 'characteristic' | 'threat' | 'catCategory
 
 /** Описание одного требуемого выбора при активации карты. */
 export interface CardPickSpec {
+  /** Выбор всей категории, без раздельных слотов багажа. */
+  wholeCategory?: boolean
   kind: CardPickKind
   /** Подсказка для UI, что выбирать. */
   label: string
@@ -636,6 +640,7 @@ export interface ServerToClientEvents {
   /** Каталог карт (админ-панель). */
   cardCatalog: (payload: { cards: CatalogCard[] }) => void
   yourCharacteristics: (payload: YourCharacteristicsPayload) => void
+  forcedRevealChanged: (payload: { slot: { category: string; occ: number } | null }) => void
   charactersUpdated: (payload: { players: PublicPlayer[] }) => void
   stageChanged: (payload: StageChangedPayload) => void
   turnChanged: (payload: TurnChangedPayload) => void

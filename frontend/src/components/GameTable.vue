@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import InlineConfirm from '@/components/InlineConfirm.vue'
@@ -33,6 +33,13 @@ function isMe(p: PublicPlayer) {
 }
 function isCurrent(p: PublicPlayer) {
   return turn.value.currentPlayerId === p.id
+}
+
+function isForced(p: PublicPlayer): boolean {
+  return isMe(p) && p.isAlive && game.isMyTurn && game.revealsLeftThisTurn > 0 && !!game.forcedReveal
+}
+function isForcedSlot(p: PublicPlayer, slot: CharSlot): boolean {
+  return isForced(p) && game.forcedReveal?.category === slot.type && game.forcedReveal?.occ === slot.occ
 }
 
 function findSlotChar(p: PublicPlayer, slot: CharSlot) {
@@ -104,11 +111,13 @@ function canReveal(p: PublicPlayer, slot: CharSlot): boolean {
     isMe(p) &&
     !isRevealed(p, slot) &&
     game.isMyTurn &&
+    (!game.forcedReveal || isForcedSlot(p, slot)) &&
     game.revealsLeftThisTurn > 0
   )
 }
 
 const pendingReveal = ref<string | null>(null)
+watch(() => game.forcedReveal, () => { pendingReveal.value = null })
 function revealKey(p: PublicPlayer, slot: CharSlot): string {
   return `${p.id}:${slot.type}#${slot.occ}`
 }
@@ -167,8 +176,13 @@ function toggleVoters(id: string) {
         dead: !p.isAlive,
         current: isCurrent(p) || isVoterTurn(p),
         offline: !p.connected,
+        'random-turn': isForced(p),
       }"
     >
+      <div v-if="isForced(p)" class="random-sparks" aria-hidden="true">
+        <span v-for="n in 8" :key="n" :style="{ '--n': n }">?</span>
+      </div>
+      <p v-if="isForced(p)" class="random-hint" role="status">Случайный выбор: вскройте белую характеристику</p>
       <header class="card-head">
         <div class="head-left">
           <img v-if="p.avatarUrl" :src="p.avatarUrl" alt="" width="28" height="28" style="border-radius: 50%; flex-shrink: 0" />
@@ -211,6 +225,7 @@ function toggleVoters(id: string) {
             locked: isMe(p) && !isRevealed(p, slot) && !canReveal(p, slot),
             'spectator-hidden': !amAlive && !isRevealed(p, slot),
             'final-danger': isFinalDanger(p, slot),
+            'forced-slot': isForcedSlot(p, slot),
             confirming: pendingReveal === revealKey(p, slot),
           }"
           @click="tryReveal(p, slot)"
@@ -273,6 +288,7 @@ function toggleVoters(id: string) {
   width: 100%;
 }
 .player-card {
+  position: relative;
   background: var(--surface);
   border: 2px solid var(--border);
   border-radius: var(--radius-lg);
@@ -297,6 +313,46 @@ function toggleVoters(id: string) {
 }
 .player-card.offline {
   border-style: dashed;
+}
+
+.player-card.random-turn {
+  animation: rainbow-turn 4s linear infinite;
+}
+.random-hint { font-size: 12px; color: var(--text); margin: 0; }
+.random-sparks { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.random-sparks span {
+  position: absolute;
+  left: 0;
+  top: calc(var(--n) * 11%);
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 0 6px #bc75ff;
+  animation: question-drift 2.8s ease-out infinite;
+  animation-delay: calc(var(--n) * -0.35s);
+  --dx: -26px;
+}
+.random-sparks span:nth-child(odd) { left: 100%; --dx: 26px; }
+.char-row.forced-slot { animation: forced-white 2s ease-in-out infinite; outline: 2px solid #fff; }
+@keyframes rainbow-turn {
+  0%, 100% { border-color: #ff668c; box-shadow: 0 0 12px #ff668c99; }
+  20% { border-color: #ffc85e; box-shadow: 0 0 12px #ffc85e99; }
+  40% { border-color: #69efae; box-shadow: 0 0 12px #69efae99; }
+  60% { border-color: #65cfff; box-shadow: 0 0 12px #65cfff99; }
+  80% { border-color: #bb83ff; box-shadow: 0 0 12px #bb83ff99; }
+}
+@keyframes question-drift {
+  0% { opacity: 0; transform: translate(0, 8px) scale(.6); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), -30px) rotate(20deg); }
+}
+@keyframes forced-white {
+  0%, 100% { background: #ffffff24; box-shadow: 0 0 3px #ffffff55; }
+  50% { background: #ffffff66; box-shadow: 0 0 16px #ffffffcc; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-card.random-turn, .char-row.forced-slot { animation: none; border-color: #bc75ff; }
+  .random-sparks { display: none; }
 }
 
 .card-head {

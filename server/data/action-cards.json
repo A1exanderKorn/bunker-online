@@ -11,12 +11,11 @@
       "picks": 0,
       "stage": "reveal",
       "unique": false,
-      "note": "",
-      "probs": [1, 0.85, 0.5, 0.35, 0.25, 0.15, 0.05]
+      "note": ""
     },
     {
       "id": "ac_002",
-      "category": "A",
+      "category": "B",
       "title": "Обменяться открытой характеристикой на выбор с другим игроком",
       "code": "swap_Any_Fixed_RevealStage",
       "action": "swap",
@@ -25,8 +24,7 @@
       "picks": 2,
       "stage": "reveal",
       "unique": false,
-      "note": "сначала выбрать игрока, затем свою отдаваемую и его получаемую характеристику одной категории",
-      "probs": [1, 0.85, 0.5, 0.35, 0.25, 0.15, 0.05]
+      "note": "сначала выбрать игрока, затем свою отдаваемую и его получаемую характеристику одной категории"
     },
     {
       "id": "ac_003",
@@ -39,8 +37,7 @@
       "picks": 0,
       "stage": "reveal",
       "unique": false,
-      "note": "",
-      "probs": [1, 0.85, 0.5, 0.35, 0.25, 0.15, 0.05]
+      "note": ""
     },
     {
       "id": "ac_004",
@@ -53,12 +50,11 @@
       "picks": 0,
       "stage": "reveal",
       "unique": false,
-      "note": "",
-      "probs": [1, 0.85, 0.5, 0.35, 0.25, 0.15, 0.05]
+      "note": ""
     },
     {
       "id": "ac_005",
-      "category": "A",
+      "category": "S",
       "title": "Выбрать характеристику и пересдать её всем игрокам",
       "code": "change_Any_All_RevealStage",
       "action": "change",
@@ -67,8 +63,7 @@
       "picks": 1,
       "stage": "reveal",
       "unique": false,
-      "note": "выбрать категорию характеристики",
-      "probs": [1, 0.85, 0.5, 0.35, 0.25, 0.15, 0.05]
+      "note": "выбрать категорию характеристики"
     },
     {
       "id": "ac_006",
@@ -81,8 +76,7 @@
       "picks": 2,
       "stage": "reveal",
       "unique": false,
-      "note": "игрок + 2 характеристики",
-      "probs": [1, 0.85, 0.5, 0.35, 0.25, 0.15, 0.05]
+      "note": "игрок + 2 характеристики"
     },
     {
       "id": "ac_007",
@@ -95,8 +89,7 @@
       "picks": 2,
       "stage": "reveal",
       "unique": false,
-      "note": "игрок + характеристика",
-      "probs": [0, 0.15, 0.3, 0.45, 0.3, 0.2, 0.1]
+      "note": "игрок + характеристика"
     },
     {
       "id": "ac_008",
@@ -109,12 +102,11 @@
       "picks": 2,
       "stage": "reveal",
       "unique": false,
-      "note": "игрок + характеристика",
-      "probs": [0, 0.15, 0.3, 0.45, 0.3, 0.2, 0.1]
+      "note": "игрок + характеристика"
     },
     {
       "id": "ac_009",
-      "category": "B",
+      "category": "C",
       "title": "Обменяться открытой картой багажа с другим игроком",
       "code": "swap_Item_Fixed_RevealStage",
       "action": "swap",
@@ -123,8 +115,7 @@
       "picks": 1,
       "stage": "reveal",
       "unique": false,
-      "note": "сначала выбрать игрока, затем свой отдаваемый и его получаемый слот багажа",
-      "probs": [0, 0.15, 0.3, 0.45, 0.3, 0.2, 0.1]
+      "note": "сначала выбрать игрока, затем свой отдаваемый и его получаемый слот багажа"
     },
     {
       "id": "ac_010",
@@ -137,8 +128,7 @@
       "picks": 1,
       "stage": "reveal",
       "unique": false,
-      "note": "",
-      "probs": [0, 0.15, 0.3, 0.45, 0.3, 0.2, 0.1]
+      "note": ""
     },
     {
       "id": "ac_011",
@@ -151,8 +141,7 @@
       "picks": 1,
       "stage": "any",
       "unique": true,
-      "note": "",
-      "probs": [0, 0.15, 0.3, 0.45, 0.3, 0.2, 0.1]
+      "note": ""
     },
     {
       "id": "ac_012",
@@ -165,8 +154,7 @@
       "picks": 0,
       "stage": "any",
       "unique": true,
-      "note": "копия добавляется в руку и разыгрывается отдельно от вашего лица",
-      "probs": [0, 0.15, 0.3, 0.45, 0.3, 0.2, 0.1]
+      "note": "копия добавляется в руку и разыгрывается отдельно от вашего лица"
     },
     {
       "id": "ac_013",
@@ -179,8 +167,7 @@
       "picks": 1,
       "stage": "reveal",
       "unique": false,
-      "note": "выбрать игрока (не себя)",
-      "probs": [0, 0.15, 0.3, 0.45, 0.3, 0.2, 0.1]
+      "note": "выбрать игрока (не себя)"
     },
     {
       "id": "ac_014",
@@ -193,8 +180,7 @@
       "picks": 0,
       "stage": "any",
       "unique": false,
-      "note": "",
-      "probs": [0, 0, 0, 0.1, 0.3, 0.45, 0.75]
+      "note": ""
     },
     {
       "id": "ac_015",
@@ -207,8 +193,7 @@
       "picks": 0,
       "stage": "any",
       "unique": false,
-      "note": "",
-      "probs": [0, 0, 0, 0.1, 0.3, 0.45, 0.75]
+      "note": ""
     },
     {
       "id": "ac_016",
@@ -221,8 +206,7 @@
       "picks": 0,
       "stage": "any",
       "unique": true,
-      "note": "",
-      "probs": [0, 0, 0, 0.1, 0.3, 0.45, 0.75]
+      "note": ""
     },
     {
       "id": "ac_017",
@@ -235,8 +219,7 @@
       "picks": 0,
       "stage": "any",
       "unique": false,
-      "note": "",
-      "probs": [0, 0, 0, 0.1, 0.3, 0.45, 0.75]
+      "note": ""
     },
     {
       "id": "ac_018",
@@ -249,8 +232,7 @@
       "picks": 0,
       "stage": "any",
       "unique": true,
-      "note": "",
-      "probs": [0, 0, 0, 0.1, 0.3, 0.45, 0.75]
+      "note": ""
     },
     {
       "id": "ac_019",
@@ -263,8 +245,7 @@
       "picks": 0,
       "stage": "any",
       "unique": true,
-      "note": "",
-      "probs": [0, 0, 0, 0.1, 0.3, 0.45, 0.75]
+      "note": ""
     },
     {
       "id": "ac_020",
@@ -277,8 +258,7 @@
       "picks": 0,
       "stage": "any",
       "unique": true,
-      "note": "",
-      "probs": [0, 0, 0, 0.1, 0.3, 0.45, 0.75]
+      "note": ""
     },
     {
       "id": "ac_021",
@@ -291,22 +271,7 @@
       "picks": 1,
       "stage": "any",
       "unique": true,
-      "note": "выбрать угрозу",
-      "probs": [0, 0, 0, 0.1, 0.3, 0.45, 0.75]
-    },
-    {
-      "id": "ac_022",
-      "category": "C",
-      "title": "Убрать одну карту угрозы на выбор",
-      "code": "removeThreat_AnyStage",
-      "action": "removeThreat",
-      "target": "threat",
-      "scope": "global",
-      "picks": 1,
-      "stage": "any",
-      "unique": true,
-      "note": "выбрать угрозу",
-      "probs": [0, 0, 0, 0.1, 0.3, 0.45, 0.75]
+      "note": "выбрать угрозу"
     },
     {
       "id": "ac_023",
@@ -319,8 +284,7 @@
       "picks": 2,
       "stage": "vote",
       "unique": true,
-      "note": "выбрать 2 игроков",
-      "probs": [0, 0, 0.2, 0.1, 0.15, 0.2, 0.1]
+      "note": "выбрать 2 игроков"
     },
     {
       "id": "ac_024",
@@ -333,8 +297,7 @@
       "picks": 2,
       "stage": "vote",
       "unique": true,
-      "note": "выбрать 2 игроков",
-      "probs": [0, 0, 0.2, 0.1, 0.15, 0.2, 0.1]
+      "note": "выбрать 2 игроков"
     },
     {
       "id": "ac_025",
@@ -347,8 +310,7 @@
       "picks": 2,
       "stage": "vote",
       "unique": true,
-      "note": "выбрать 2 игроков",
-      "probs": [0, 0, 0.2, 0.1, 0.15, 0.2, 0.1]
+      "note": "выбрать 2 игроков"
     },
     {
       "id": "ac_026",
@@ -361,8 +323,7 @@
       "picks": 0,
       "stage": "vote",
       "unique": true,
-      "note": "",
-      "probs": [0, 0, 0.2, 0.1, 0.15, 0.2, 0.1]
+      "note": ""
     },
     {
       "id": "ac_027",
@@ -375,8 +336,7 @@
       "picks": 1,
       "stage": "any",
       "unique": true,
-      "note": "выбрать игрока",
-      "probs": [0, 0, 0.2, 0.1, 0.15, 0.2, 0.1]
+      "note": "выбрать игрока"
     },
     {
       "id": "ac_028",
@@ -389,8 +349,7 @@
       "picks": 0,
       "stage": "vote",
       "unique": true,
-      "note": "",
-      "probs": [0, 0, 0.2, 0.1, 0.15, 0.2, 0.1]
+      "note": ""
     },
     {
       "id": "ac_029",
@@ -403,8 +362,7 @@
       "picks": 0,
       "stage": "vote",
       "unique": true,
-      "note": "",
-      "probs": [0, 0, 0.2, 0.1, 0.15, 0.2, 0.1]
+      "note": ""
     },
     {
       "id": "ac_030",
@@ -417,8 +375,7 @@
       "picks": 0,
       "stage": "vote",
       "unique": true,
-      "note": "",
-      "probs": [0, 0, 0.2, 0.1, 0.15, 0.2, 0.1]
+      "note": ""
     },
     {
       "id": "ac_031",
@@ -431,8 +388,63 @@
       "picks": 0,
       "stage": "vote",
       "unique": true,
-      "note": "",
-      "probs": [0, 0, 0.2, 0.1, 0.15, 0.2, 0.1]
+      "note": ""
+    },
+    {
+      "id": "ac_032", "category": "S",
+      "title": "В этом раунде каждый игрок с шансом 75% вскрывает случайную характеристику",
+      "code": "randomReveal_All_RevealStage", "action": "randomReveal", "target": "any", "scope": "all",
+      "picks": 0, "stage": "reveal", "unique": true,
+      "note": "В начале каждого оставшегося хода — шанс 75%: случайно выбранную скрытую характеристику нужно вскрыть вместо обычного выбора. Текущий игрок тоже участвует, если ещё не вскрыл характеристику. Выбранный слот подсвечивается только ему. Уже завершённые ходы не затрагиваются."
+    },
+    {
+      "id": "ac_033", "category": "A",
+      "title": "Добавить случайную угрозу, которую решает одна из ваших характеристик",
+      "code": "addMatchingThreat_RevealStage", "action": "addMatchingThreat", "target": "threat", "scope": "global",
+      "picks": 0, "stage": "reveal", "unique": true,
+      "note": "Одна ваша характеристика, включая скрытую или биологию, должна закрывать все группы угрозы. Если подходящих новых угроз нет, карта остаётся в руке."
+    },
+    {
+      "id": "ac_034", "category": "A",
+      "title": "Перемешать открытые характеристики выбранной категории",
+      "code": "shuffleRevealed_Category_RevealStage", "action": "shuffleRevealed", "target": "any", "scope": "all",
+      "picks": 1, "stage": "reveal", "unique": true,
+      "note": "Скрытые карты не меняются. Все открытые слоты багажа участвуют вместе. КФ, теги и стадии здоровья передаются с картой."
+    },
+    {
+      "id": "ac_035", "category": "S",
+      "title": "Случайно пересдать все характеристики игроков",
+      "code": "rerollAll_RevealStage", "action": "rerollAll", "target": "any", "scope": "all",
+      "picks": 0, "stage": "reveal", "unique": true,
+      "note": "Все характеристики и биология невыбывших игроков. Открытые слоты остаются открытыми; карты действия не меняются."
+    },
+    {
+      "id": "ac_036", "category": "A",
+      "title": "Омолодить выбранного игрока до 25 лет",
+      "code": "rejuvenate_Fixed_RevealStage", "action": "rejuvenate", "target": "biology", "scope": "fixed",
+      "picks": 1, "stage": "reveal", "unique": true,
+      "note": "Возраст становится 25, стаж ограничивается 9 годами. Бесплодие сохраняется, КФ пересчитывается."
+    },
+    {
+      "id": "ac_037", "category": "S",
+      "title": "Пересдать категорию: улучшить себе и ухудшить остальным",
+      "code": "biasedReroll_Category_RevealStage", "action": "biasedReroll", "target": "any", "scope": "all",
+      "picks": 1, "stage": "reveal", "unique": true,
+      "note": "Выбранный слот у вас получает больший КФ, у остальных — меньший. Если подходящей замены нет, характеристика остаётся."
+    },
+    {
+      "id": "ac_038", "category": "S",
+      "title": "Пересдать категорию: улучшить себе и ухудшить остальным",
+      "code": "biasedReroll_Category_RevealStage", "action": "biasedReroll", "target": "any", "scope": "all",
+      "picks": 1, "stage": "reveal", "unique": true,
+      "note": "Выбранный слот у вас получает больший КФ, у остальных — меньший. Если подходящей замены нет, характеристика остаётся."
+    },
+    {
+      "id": "ac_039", "category": "S",
+      "title": "Добавить бесплодие выбранному игроку",
+      "code": "makeInfertile_Fixed_RevealStage", "action": "makeInfertile", "target": "biology", "scope": "fixed",
+      "picks": 1, "stage": "reveal", "unique": true,
+      "note": "КФ биологии пересчитывается. Андроид невосприимчив; на уже бесплодного игрока карта не расходуется."
     }
   ]
 }

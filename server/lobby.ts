@@ -51,10 +51,12 @@ import {
   threatQueue,
   challengeTitle,
   toPublicBunker,
+  loadBunkerData,
   type StoredBunkerCondition,
   type StoredBunkerState,
 } from './bunker'
 import { dealActionCards, makeCardByCatalogId, loadCards } from './cards'
+import { biologyTags, improvedOrWorseBiology, improvedOrWorseCharacteristic } from './cardEffects'
 import { calculateSurvival } from './survival'
 import { filterCardHistory } from './cardHistory'
 import { MatchRecorder, enqueueMatch } from './matchHistory'
@@ -120,6 +122,9 @@ export class Lobby {
 
   // ── Состояние ходов ──
   private turn: TurnState = { ...EMPTY_TURN }
+  private randomRevealStep = -1
+  private randomRevealRolled = new Set<string>()
+  private forcedReveal: { category: string; occ: number } | null = null
   private turnOrder: string[] = []
   private turnIndex = 0
   private turnGraceGiven = false
@@ -825,7 +830,7 @@ export class Lobby {
 
   /** Админ-тест: выдаёт игроку конкретную карту по cardId. */
   adminGiveCard(playerId: string, cardId: string): void {
-    if (!this.started) return
+    if (!this.started || !this.isHost(playerId)) return
     const card = makeCardByCatalogId(cardId, `ci_${this.cardInstanceCounter++}`)
     if (!card) return
     const arr = this.cards.get(playerId) ?? []
@@ -844,6 +849,9 @@ export class Lobby {
       this.emitError(playerId, 'Эту карту нельзя сыграть сейчас')
       return
     }
+
+    const targetError = this.validateCardTargets(playerId, card, targets)
+    if (targetError) { this.emitError(playerId, targetError); return }
 
     const effect = this.applyCardEffect(playerId, card, targets)
     if (!effect.ok) {
@@ -897,6 +905,42 @@ export class Lobby {
       }
     }
     if (this.isVoting()) this.broadcastVotes()
+  }
+
+  /** Проверяем весь выбор до применения эффекта, чтобы ошибка не меняла состояние. */
+  private validateCardTargets(playerId: string, card: ActionCard, targets: CardTargets): string | null {
+    if (!targets || typeof targets !== 'object') return 'Неверные цели карты'
+    const fields = { player: 'players', characteristic: 'characteristics', catCategory: 'categories', threat: 'threats' } as const
+    for (const [kind, field] of Object.entries(fields)) {
+      const values = targets[field as keyof CardTargets] ?? []
+      if (!Array.isArray(values) || values.length !== card.pickSpecs.filter(s => s.kind === kind).length) return 'Неверное количество целей'
+    }
+    const players = targets.players ?? []
+    if (new Set(players).size !== players.length || players.some(id => !this.alive().some(p => p.id === id))) return 'Выберите разных невыбывших игроков'
+    const playerSpecs = card.pickSpecs.filter(s => s.kind === 'player')
+    if (players.some((id, i) => playerSpecs[i].excludeSelf && id === playerId)) return 'Выберите другого игрока'
+    const chars = targets.characteristics ?? []
+    if (new Set(chars.map(c => `${c?.playerId}/${c?.category}/${c?.occ ?? 0}`)).size !== chars.length) return 'Характеристики не должны повторяться'
+    const specs = card.pickSpecs.filter(s => s.kind === 'characteristic')
+    for (const [i, c] of chars.entries()) {
+      if (!c) return 'Не выбрана характеристика'
+      const spec = specs[i]
+      const ownerId = spec.characteristicOwner === 'self' ? playerId : (players[players.length - 1] ?? playerId)
+      const owner = this.players.find(p => p.id === ownerId)
+      const occ = c.occ ?? 0
+      if (c.playerId !== ownerId || !owner || !Number.isInteger(occ) || occ < 0) return 'Неверный владелец или слот'
+      if (c.category === BIOLOGY_CATEGORY ? (!owner.biology || occ !== 0) : !findChar(owner.characteristics, c.category, occ)) return 'Характеристика отсутствует'
+      if (spec.categories && !spec.categories.includes(c.category)) return 'Недопустимая категория'
+      if (spec.revealedOnly && !this.slotVisible(owner, c.category, occ)) return 'Выберите открытую характеристику'
+      if (spec.matchPreviousCategory && chars[i - 1]?.category !== c.category) return 'Выберите одинаковые категории'
+    }
+    for (const pick of targets.categories ?? []) {
+      const category = typeof pick === 'string' ? pick : pick?.category
+      const occ = typeof pick === 'string' ? 0 : (pick?.occ ?? 0)
+      if (!category || !Number.isInteger(occ) || occ < 0 || !this.alive().some(p => category === BIOLOGY_CATEGORY ? p.biology && occ === 0 : findChar(p.characteristics, category, occ))) return 'Неверная категория или слот'
+    }
+    if ((targets.threats ?? []).some(i => !Number.isInteger(i) || i < 0 || i >= this.bunker.threats.length)) return 'Выберите существующую угрозу'
+    return null
   }
 
   /** Имена игроков по id (для текста эффекта). */
@@ -966,6 +1010,118 @@ export class Lobby {
     if (!self) return fail('Игрок не найден')
 
     switch (card.action) {
+      case 'randomReveal': {
+        if (this.randomRevealStep === this.stepIndex) return fail('Эффект уже действует в этом раунде')
+        this.randomRevealStep = this.stepIndex
+        this.randomRevealRolled.clear()
+        this.prepareForcedReveal()
+        return ok('До конца текущего раунда в начале каждого хода — шанс 75% на обязательное случайное вскрытие вместо обычного выбора')
+      }
+      case 'addMatchingThreat': {
+        const sources = [...self.characteristics.map(c => new Set(c.tags ?? [])), new Set(biologyTags(self.biology))]
+        const choices = loadBunkerData(this.gameMode()).challenges.filter(c => c.kind === 'threat' &&
+          c.requirements.length > 0 && !this.bunker.threats.includes(c.text) &&
+          sources.some(tags => c.requirements.every(group => group.some(tag => tags.has(tag)))))
+        if (!choices.length) return fail('Нет новой угрозы, которую полностью решает одна ваша характеристика')
+        const choice = choices[Math.floor(Math.random() * choices.length)]
+        this.bunker.threats.push(choice.text)
+        // Если она ожидалась позже по программе, исключаем повторное появление.
+        this.pendingThreats = this.pendingThreats.filter(text => text !== choice.text)
+        this.pushPublicChange(charChanges, 'Угроза', 'не было', choice.title)
+        return ok(`Добавлена угроза: ${choice.title}`)
+      }
+      case 'shuffleRevealed': {
+        const pick = t.categories?.[0]
+        const category = typeof pick === 'string' ? pick : pick?.category
+        if (!category) return fail('Выберите категорию')
+        const slots = this.alive().flatMap(player => category === BIOLOGY_CATEGORY
+          ? (player.biology?.isVisible ? [{ player, occ: 0 }] : [])
+          : player.characteristics.filter(c => c.type === category && c.isVisible)
+            .map(c => ({ player, occ: c.occ ?? 0 })))
+        if (slots.length < 2) return fail('Нужно хотя бы две открытые характеристики этой категории')
+        const contents = shuffleArray(slots.map(({ player, occ }) => category === BIOLOGY_CATEGORY
+          ? { ...player.biology! } : { ...findChar(player.characteristics, category, occ)! }))
+        slots.forEach(({ player, occ }, i) => {
+          const old = this.slotDisplay(player, category, occ)
+          if (category === BIOLOGY_CATEGORY) player.biology = { ...contents[i] as Biology, isVisible: true }
+          else Object.assign(findChar(player.characteristics, category, occ)!, contents[i], { type: category, occ, isVisible: true })
+          this.pushChange(charChanges, player, category, occ, 'swap', old, this.slotDisplay(player, category, occ), true)
+        })
+        return ok(`Перемешаны открытые характеристики: ${category}`)
+      }
+      case 'rerollAll': {
+        const planned = this.alive().map(player => ({ player, characteristics: player.characteristics.map(c => ({ ...c })), biology: player.biology }))
+        const categories = new Set(planned.flatMap(p => p.characteristics.map(c => c.type)))
+        for (const category of categories) {
+          const slots = planned.flatMap(p => p.characteristics.filter(c => c.type === category))
+          const replacements = drawUniqueCharacteristics(category, slots.length, [], this.gameMode())
+          if (replacements.length !== slots.length) return fail(`Не хватает карт категории ${category}`)
+          slots.forEach((slot, i) => Object.assign(slot, replacements[i], { occ: slot.occ, isVisible: slot.isVisible }))
+        }
+        const bios: Biology[] = []
+        for (const plan of planned) {
+          const bio = this.rollBiology(bios)
+          bio.isVisible = plan.player.biology?.isVisible ?? false
+          plan.biology = bio
+          bios.push(bio)
+        }
+        for (const plan of planned) {
+          const slots = [...plan.player.characteristics.map(c => ({ category: c.type, occ: c.occ ?? 0 })), { category: BIOLOGY_CATEGORY, occ: 0 }]
+          const old = slots.map(s => ({ ...s, value: this.slotDisplay(plan.player, s.category, s.occ), visible: this.slotVisible(plan.player, s.category, s.occ) }))
+          plan.player.characteristics = plan.characteristics
+          plan.player.biology = plan.biology
+          for (const s of old) this.pushChange(charChanges, plan.player, s.category, s.occ, 'replace', s.value, this.slotDisplay(plan.player, s.category, s.occ), s.visible)
+        }
+        return ok('Все характеристики и биология невыбывших игроков пересданы')
+      }
+      case 'biasedReroll': {
+        const pick = t.categories?.[0]
+        const category = typeof pick === 'string' ? pick : pick?.category
+        const occ = typeof pick === 'string' ? 0 : (pick?.occ ?? 0)
+        if (!category || !Number.isInteger(occ) || occ < 0) return fail('Выберите категорию и слот')
+        const players = this.alive()
+        // Владелец получает первый выбор; остальные — в случайном порядке.
+        const ordered = [self, ...shuffleArray(players.filter(p => p.id !== self.id))].filter(p => p.isAlive)
+        for (const player of ordered) {
+          const old = this.slotDisplay(player, category, occ)
+          const visible = this.slotVisible(player, category, occ)
+          if (category === BIOLOGY_CATEGORY) {
+            if (!player.biology || occ !== 0) continue
+            const replacement = improvedOrWorseBiology(player.biology, player.id === self.id)
+            if (!replacement) continue
+            player.biology = replacement
+          } else {
+            const current = findChar(player.characteristics, category, occ)
+            if (!current) continue
+            const excluded = new Set(players.flatMap(p => p.characteristics.filter(c => c !== current && c.type === category).map(c => c.value)))
+            const replacement = improvedOrWorseCharacteristic(current, player.id === self.id, excluded)
+            if (!replacement) continue
+            Object.assign(current, replacement)
+          }
+          this.pushChange(charChanges, player, category, occ, 'replace', old, this.slotDisplay(player, category, occ), visible)
+        }
+        if (!charChanges.length) return fail('Нет доступных улучшений или ухудшений для выбранного слота')
+        return ok(`Категория ${this.slotLabel(category, occ, self)}: владельцу лучше, остальным хуже; изменено ${charChanges.length}`)
+      }
+      case 'rejuvenate':
+      case 'makeInfertile': {
+        const player = this.alive().find(p => p.id === t.players?.[0])
+        if (!player?.biology) return fail('Выберите невыбывшего игрока с биологией')
+        const bio = player.biology
+        if (card.action === 'makeInfertile' && (bio.sex === 'Андроид' || bio.infertile)) return fail('Игрок уже бесплоден или является андроидом')
+        if (card.action === 'rejuvenate' && bio.age <= 25) return fail('Игроку уже 25 лет или меньше')
+        const old = this.slotDisplay(player, BIOLOGY_CATEGORY, 0)
+        if (card.action === 'rejuvenate') {
+          bio.age = 25
+          bio.experience = Math.min(bio.experience, 9)
+        } else {
+          bio.infertile = true
+          bio.fertilityRestored = false
+        }
+        bio.coef = biologyCoefficient(bio)
+        this.pushChange(charChanges, player, BIOLOGY_CATEGORY, 0, 'replace', old, this.slotDisplay(player, BIOLOGY_CATEGORY, 0), bio.isVisible)
+        return ok(card.action === 'rejuvenate' ? `${player.name}: возраст 25 лет` : `${player.name}: добавлено бесплодие`)
+      }
       case 'change': {
         if (card.scope === 'all') {
           if (card.target === 'biology') {
@@ -1120,10 +1276,12 @@ export class Lobby {
       case 'healFertile': {
         const targetId = t.players?.[0] ?? playerId
         const healPl = this.players.find((p) => p.id === targetId)
+        if (!healPl?.biology || healPl.biology.sex === 'Андроид') return fail('Нет биологии для лечения')
         if (healPl?.biology) {
           const oldValue = this.slotDisplay(healPl, BIOLOGY_CATEGORY, 0)
           const wasVisible = healPl.biology.isVisible
           healPl.biology.infertile = false
+          healPl.biology.fertilityRestored = true
           healPl.biology.coef = biologyCoefficient(healPl.biology)
           this.pushChange(
             charChanges,
@@ -1230,7 +1388,7 @@ export class Lobby {
         )
       }
       default:
-        return ok(card.title)
+        return fail('Эффект этой карты не реализован')
     }
   }
 
@@ -1294,6 +1452,9 @@ export class Lobby {
   }
 
   private beginRevealStep(step: RoundStep): void {
+    this.randomRevealStep = -1
+    this.randomRevealRolled.clear()
+    this.clearForcedReveal()
     this.stage = 'reveal'
     this.turnOrder = this.rotatedAliveOrder('reveal')
     this.turnIndex = 0
@@ -1319,10 +1480,12 @@ export class Lobby {
   }
 
   private startTurn(index: number): void {
+    this.clearForcedReveal()
     this.turnIndex = index
     const playerId = this.turnOrder[index]
     this.turnGraceGiven = false
     this.turn = { ...this.turn, currentPlayerId: playerId, revealedThisTurn: 0 }
+    this.prepareForcedReveal()
     this.startTimer(this.settings.turnSeconds, () => this.onTurnTimeout())
     this.io.to(this.code).emit('turnChanged', {
       turn: this.turn,
@@ -1361,6 +1524,11 @@ export class Lobby {
   }
 
   private revealRandomFor(playerId: string): boolean {
+    if (this.forcedReveal && this.turn.currentPlayerId === playerId) {
+      const before = this.turn.revealedThisTurn
+      this.reveal(playerId, this.forcedReveal.category, this.forcedReveal.occ)
+      return this.turn.revealedThisTurn > before
+    }
     const player = this.players.find((p) => p.id === playerId)
     if (!player) return false
     const hidden = player.characteristics.filter((c) => !c.isVisible)
@@ -1384,6 +1552,7 @@ export class Lobby {
 
   private advanceTurn(): void {
     if (this.stage !== 'reveal') return
+    this.clearForcedReveal()
     const next = this.turnIndex + 1
     if (next >= this.turnOrder.length) {
       this.stopTimer()
@@ -1403,7 +1572,10 @@ export class Lobby {
     if (this.turn.revealedThisTurn < 1 && isHostOverride) {
       if (this.revealRandomFor(currentPlayerId)) this.broadcastCharacters()
     }
-    if (this.turn.revealedThisTurn < 1) {
+    const currentPlayer = this.players.find(p => p.id === currentPlayerId)
+    const hasHidden = currentPlayer?.characteristics.some(c => !c.isVisible) ||
+      (currentPlayer?.biology && !currentPlayer.biology.isVisible)
+    if (this.turn.revealedThisTurn < 1 && hasHidden) {
       this.emitError(playerId, 'Нужно вскрыть хотя бы одну характеристику, прежде чем завершить ход')
       return
     }
@@ -1416,6 +1588,7 @@ export class Lobby {
     if (this.stage !== 'reveal') return
     if (this.turn.currentPlayerId !== playerId) return
     if (this.turn.revealedThisTurn >= this.turn.revealsThisTurn) return
+    if (this.forcedReveal && (type !== this.forcedReveal.category || occ !== this.forcedReveal.occ)) return
 
     const player = this.players.find((p) => p.id === playerId)
     if (!player) return
@@ -1438,6 +1611,7 @@ export class Lobby {
     if (!ok) return
 
     this.turn.revealedThisTurn += 1
+    this.clearForcedReveal()
     this.broadcastCharacters()
     this.pushCharacteristicsTo(playerId)
     this.broadcastCardHistory()
@@ -1460,6 +1634,31 @@ export class Lobby {
       characteristics: player.characteristics,
       biology: player.biology,
     })
+  }
+
+  private sendForcedReveal(playerId: string): void {
+    const sid = this.sockets.get(playerId)
+    if (sid) this.io.to(sid).emit('forcedRevealChanged', {
+      slot: this.stage === 'reveal' && this.turn.currentPlayerId === playerId ? this.forcedReveal : null,
+    })
+  }
+
+  private clearForcedReveal(): void {
+    this.forcedReveal = null
+    if (this.turn.currentPlayerId) this.sendForcedReveal(this.turn.currentPlayerId)
+  }
+
+  private prepareForcedReveal(): void {
+    const id = this.turn.currentPlayerId
+    if (this.stage !== 'reveal' || this.randomRevealStep !== this.stepIndex || !id ||
+      this.turn.revealedThisTurn > 0 || this.randomRevealRolled.has(id)) return
+    this.randomRevealRolled.add(id)
+    const player = this.alive().find(p => p.id === id)
+    if (!player) return
+    const hidden = player.characteristics.filter(c => !c.isVisible).map(c => ({ category: c.type, occ: c.occ ?? 0 }))
+    if (player.biology && !player.biology.isVisible) hidden.push({ category: BIOLOGY_CATEGORY, occ: 0 })
+    if (hidden.length && Math.random() < 0.75) this.forcedReveal = hidden[Math.floor(Math.random() * hidden.length)]
+    this.sendForcedReveal(id)
   }
 
   // ─── Голосование ──────────────────────────────────────────────────────────
@@ -1935,6 +2134,7 @@ export class Lobby {
       })
     }
     this.io.to(sid).emit('yourCards', { cards: this.cards.get(playerId) ?? [] })
+    this.sendForcedReveal(playerId)
     this.io.to(sid).emit('gameStarted', {
       players: this.publicPlayers(playerId),
       stage: this.stage,

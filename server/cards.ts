@@ -43,7 +43,6 @@ interface CardFile {
     stage: string
     unique: boolean
     note?: string
-    probs: number[]
   }[]
 }
 
@@ -52,22 +51,34 @@ let cache: CardDef[] | null = null
 export function loadCards(): CardDef[] {
   if (cache) return cache
   const cards = readJson<CardFile>('action-cards.json').cards ?? []
+  const probabilities = readJson<Record<string, number[]>>('action-card-probabilities.json')
+  for (const [category, weights] of Object.entries(probabilities)) {
+    if (!Array.isArray(weights) || weights.length !== 7 ||
+      weights.some((weight) => !Number.isFinite(weight) || weight < 0)) {
+      throw new Error(`Категория ${category}: нужны 7 конечных неотрицательных весов карт`)
+    }
+  }
   cache = cards
     .filter((r) => r.id && r.code)
-    .map((r) => ({
-      cardId: r.id,
-      category: r.category,
-      title: r.title,
-      code: r.code,
-      action: r.action,
-      target: r.target,
-      scope: r.scope,
-      picks: Number(r.picks) || 0,
-      stage: (r.stage as CardStage) ?? 'any',
-      unique: !!r.unique,
-      note: r.note ?? '',
-      probs: (r.probs ?? []).map((value) => Number(value) || 0),
-    }))
+    .map((r) => {
+      if (!probabilities[r.category]) {
+        throw new Error(`Для категории ${r.category} отсутствуют веса карт`)
+      }
+      return {
+        cardId: r.id,
+        category: r.category,
+        title: r.title,
+        code: r.code,
+        action: r.action,
+        target: r.target,
+        scope: r.scope,
+        picks: Number(r.picks) || 0,
+        stage: (r.stage as CardStage) ?? 'any',
+        unique: !!r.unique,
+        note: r.note ?? '',
+        probs: [...probabilities[r.category]],
+      }
+    })
   return cache
 }
 
@@ -82,11 +93,11 @@ function coefBucket(coef: number): number {
   return 6
 }
 
-/** Уникальные категории каталога (в порядке появления). */
+/** Только непустые категории каталога; S сильнее A, старый порядок сохранён. */
 function categories(defs: CardDef[]): string[] {
   const seen: string[] = []
   for (const d of defs) if (!seen.includes(d.category)) seen.push(d.category)
-  const rank = new Map(['A', 'B', 'D', 'C'].map((category, index) => [category, index]))
+  const rank = new Map(['S', 'A', 'B', 'D', 'C'].map((category, index) => [category, index]))
   return seen.sort(
     (a, b) => (rank.get(a) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b) ?? Number.MAX_SAFE_INTEGER),
   )
@@ -94,7 +105,7 @@ function categories(defs: CardDef[]): string[] {
 
 /**
  * Вес категории для данной корзины КФ с учётом влияния карт.
- * Меньшие корзины смещены к сильной категории A, большие — к слабым.
+ * Меньшие корзины смещены к сильным категориям S/A, большие — к слабым.
  */
 function bucketWithPower(bucket: number, power: CardsPower): number {
   if (power === 'strong') return Math.max(0, bucket - 2)
@@ -102,7 +113,10 @@ function bucketWithPower(bucket: number, power: CardsPower): number {
   return bucket
 }
 
-/** Ролл категории A → B → D → C по весам K–Q из первой карты каждой категории. */
+/** Один бросок [0, 1): категория определяется интервалом накопленной вероятности.
+ * Порядок интервалов S/A/B/D/C не означает отдельные попытки выдать каждую категорию.
+ * Веса доступных категорий нормализуются, в том числе после достижения лимита S.
+ */
 export function rollCategory(
   defs: CardDef[],
   coef: number,
@@ -120,12 +134,18 @@ export function rollCategory(
     console.warn(`Для корзины КФ ${bucket} не заданы вероятности категорий карт`)
     return cats[0] ?? ''
   }
-  let rnd = random() * total
+  const roll = random()
+  let cumulativeWeight = 0
   for (let i = 0; i < cats.length; i++) {
-    if (rnd < weights[i]) return cats[i]
-    rnd -= weights[i]
+    cumulativeWeight += weights[i]
+    // Полуоткрытые интервалы: например S [0, 0.15), A [0.15, 0.4).
+    if (weights[i] > 0 && roll < cumulativeWeight / total) return cats[i]
   }
-  return cats[cats.length - 1]
+  // Защита от погрешностей: нулевой вес никогда не должен дать карту.
+  for (let i = cats.length - 1; i >= 0; i--) {
+    if (weights[i] > 0) return cats[i]
+  }
+  return ''
 }
 
 /** Спецификации выборов для UI по коду/параметрам карты. */
@@ -159,8 +179,10 @@ export function pickSpecsFor(def: CardDef): CardPickSpec[] {
     return specs
   }
 
-  if (def.action === 'change' && def.target === 'any' && def.scope === 'all') {
-    specs.push({ kind: 'catCategory', label: 'Выберите категорию характеристики' })
+  if ((def.action === 'change' && def.target === 'any' && def.scope === 'all') ||
+    def.action === 'shuffleRevealed' || def.action === 'biasedReroll') {
+    specs.push({ kind: 'catCategory', label: 'Выберите категорию характеристики',
+      wholeCategory: def.action === 'shuffleRevealed' })
     return specs
   }
 
@@ -246,36 +268,44 @@ export function dealActionCards(
   players: Player[],
   power: CardsPower,
   mode: GameMode = 'classic',
+  random: () => number = Math.random,
 ): Map<string, ActionCard> {
   const defs = loadCards()
   const result = new Map<string, ActionCard>()
   if (defs.length === 0) return result
 
-  const usedUnique = new Set<string>()
   let instanceCounter = 1
+  const count = (category: string) => [...result.values()].filter(c => c.category === category).length
+  const available = (category?: string, replacing?: string) => defs.filter(d =>
+    (!category || d.category === category) &&
+    (!d.unique || ![...result.entries()].some(([id, c]) => id !== replacing && c.cardId === d.cardId)),
+  )
+  const choose = (pool: CardDef[]) => pool[Math.floor(random() * pool.length)]
 
   for (const player of players) {
     const coef = averageCoef(player, mode)
-    let def: CardDef | undefined
-
-    // Несколько попыток подобрать категорию/карту без коллизии уникальности.
-    for (let attempt = 0; attempt < 12 && !def; attempt++) {
-      const cat = rollCategory(defs, coef, power)
-      let pool = defs.filter((d) => d.category === cat)
-      // Убираем уже занятые уникальные карты.
-      pool = pool.filter((d) => !(d.unique && usedUnique.has(d.cardId)))
-      if (pool.length === 0) continue
-      def = pool[Math.floor(Math.random() * pool.length)]
-    }
-    // Фолбэк: любая доступная карта.
-    if (!def) {
-      const pool = defs.filter((d) => !(d.unique && usedUnique.has(d.cardId)))
-      def = pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : defs[0]
-    }
-
-    if (def.unique) usedUnique.add(def.cardId)
+    // Лимит S и уникальность действуют до ролла, включая нулевые веса и фолбэк.
+    const pool = available().filter(d => d.category !== 'S' || count('S') < 2)
+    if (!pool.length) continue
+    const category = rollCategory(pool, coef, power, random)
+    const def = choose(pool.filter(d => d.category === category))
     const instanceId = `ci_${String(instanceCounter++).padStart(3, '0')}`
     result.set(player.id, toActionCard(def, instanceId))
+  }
+
+  // Одна стартовая карта на игрока. Сначала гарантируем S, затем A другому игроку.
+  for (const category of ['S', 'A']) {
+    if (count(category) > 0) continue
+    const recipients = [...result.keys()].filter(id => {
+      const current = result.get(id)!
+      if (category === 'A' && current.category === 'S' && count('S') <= 1) return false
+      if (category === 'S' && current.category === 'A' && count('A') <= 1 && result.size > 1) return false
+      return available(category, id).length > 0
+    })
+    if (!recipients.length) continue
+    const id = recipients[Math.floor(random() * recipients.length)]
+    const def = choose(available(category, id))
+    result.set(id, toActionCard(def, `ci_${String(instanceCounter++).padStart(3, '0')}`))
   }
 
   return result

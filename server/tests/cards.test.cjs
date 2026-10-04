@@ -21,7 +21,7 @@ function def(category, weight) {
   }
 }
 
-test('категории карт обходятся в порядке A -> B -> D -> C', () => {
+test('интервалы категорий расположены A -> B -> D -> C', () => {
   const defs = [def('C', 1), def('D', 1), def('B', 1), def('A', 1)]
   assert.equal(rollCategory(defs, 0.5, 'balanced', () => 0.00), 'A')
   assert.equal(rollCategory(defs, 0.5, 'balanced', () => 0.26), 'B')
@@ -29,25 +29,62 @@ test('категории карт обходятся в порядке A -> B ->
   assert.equal(rollCategory(defs, 0.5, 'balanced', () => 0.76), 'C')
 })
 
-test('вероятности категорий в каждой корзине дают 100%', () => {
+test('один бросок выбирает накопленный интервал, включая точные границы', () => {
+  const defs = [def('S', .15), def('A', .25), def('B', .2), def('D', .1), def('C', .3)]
+  for (const [roll, expected] of [[0,'S'], [.149999,'S'], [.15,'A'], [.399999,'A'], [.4,'B'], [.599999,'B'], [.600001,'D'], [.699999,'D'], [.700001,'C'], [.999999,'C']]) {
+    let calls = 0
+    assert.equal(rollCategory(defs, .5, 'balanced', () => { calls++; return roll }), expected)
+    assert.equal(calls, 1, 'ровно один бросок на выбор категории')
+  }
+  const counts = { S:0, A:0, B:0, D:0, C:0 }
+  for (let i = 0; i < 10000; i++) counts[rollCategory(defs, .5, 'balanced', () => (i + .5) / 10000)]++
+  assert.deepEqual(counts, { S:1500, A:2500, B:2000, D:1000, C:3000 })
+})
+
+test('недоступная S перераспределяет интервалы, нулевые веса не выпадают', () => {
+  const defs = [def('A', .25), def('B', .75), def('C', 0)]
+  assert.equal(rollCategory(defs, .5, 'balanced', () => .249999), 'A')
+  assert.equal(rollCategory(defs, .5, 'balanced', () => .25), 'B')
+  assert.equal(rollCategory(defs, .5, 'balanced', () => .999999), 'B')
+  assert.equal(rollCategory([def('A', 2), def('B', 3)], .5, 'balanced', () => .4), 'B')
+})
+
+test('категория S сильнее A и участвует в ролле на общих основаниях', () => {
+  const defs = [def('C', 1), def('A', 1), def('S', 1), def('D', 1), def('B', 1)]
+  assert.equal(rollCategory(defs, 0.5, 'balanced', () => 0), 'S')
+  assert.equal(rollCategory(defs, 0.5, 'balanced', () => 0.21), 'A')
+  assert.equal(rollCategory(defs, 0.5, 'balanced', () => 0.41), 'B')
+  assert.equal(rollCategory(defs, 0.5, 'balanced', () => 0.61), 'D')
+  assert.equal(rollCategory(defs, 0.5, 'balanced', () => 0.81), 'C')
+})
+
+test('пустая категория S отсутствует в ролле, нулевой вес не даёт ей выпадать', () => {
+  const defs = [def('A', 1), def('B', 1)]
+  assert.equal(rollCategory(defs, 0.5, 'balanced', () => 0), 'A')
+  assert.equal(rollCategory([...defs, def('S', 0)], 0.5, 'balanced', () => 0), 'A')
+})
+
+test('веса карт берутся из единого файла, в каждой корзине есть доступные карты', () => {
+  const configured = require('../data/action-card-probabilities.json')
   const firstByCategory = new Map()
   for (const card of loadCards()) {
+    assert.deepEqual(card.probs, configured[card.category])
     if (!firstByCategory.has(card.category)) firstByCategory.set(card.category, card)
   }
 
   for (let bucket = 0; bucket < 7; bucket++) {
     const total = [...firstByCategory.values()]
       .reduce((sum, card) => sum + card.probs[bucket], 0)
-    assert.ok(Math.abs(total - 1) < 1e-9, `корзина ${bucket}: сумма ${total}`)
+    assert.ok(Number.isFinite(total) && total > 0, `корзина ${bucket}: сумма ${total}`)
   }
 
-  assert.equal(firstByCategory.get('C').probs[6], 0.75)
 })
 
 test('все активные карты имеют поддерживаемое действие и корректные шаги выбора', () => {
   const supported = new Set([
     'change', 'swap', 'healFertile', 'replayLast', 'changeCatastrophe', 'revealCondition',
     'removeThreat', 'cancelVotes', 'doubleVote', 'selfProtection', 'selfDefence', 'revote',
+    'randomReveal', 'addMatchingThreat', 'shuffleRevealed', 'rerollAll', 'rejuvenate', 'biasedReroll', 'makeInfertile',
   ])
   for (const card of loadCards()) {
     assert.ok(supported.has(card.action), `${card.cardId}: неизвестное действие ${card.action}`)

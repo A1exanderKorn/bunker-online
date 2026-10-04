@@ -93,7 +93,8 @@ const tiedNames = computed(() => (lastResult.value?.tiedIds ?? [])
   .map(id => roster.value.find(p => p.id === id)?.name ?? id).join(', '))
 
 // I.3: кнопка активна, только если в этот ход уже что-то вскрыто.
-const canEndTurn = computed(() => game.turn.revealedThisTurn >= 1)
+const canEndTurn = computed(() => game.turn.revealedThisTurn >= 1 ||
+  (!game.myCharacteristics.some(c => !c.isVisible) && (!game.myBiology || game.myBiology.isVisible)))
 
 const survivorNames = computed(() =>
   survivorIds.value

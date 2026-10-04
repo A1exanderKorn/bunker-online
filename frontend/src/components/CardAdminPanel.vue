@@ -35,7 +35,7 @@ const filtered = computed(() => {
 
     <div v-if="open" class="admin-panel card fade-in">
       <div class="admin-head">
-        <input class="input" v-model="filter" placeholder="Фильтр: название / код / категория (A/B/C/D)" />
+        <input class="input" v-model="filter" placeholder="Фильтр: название / код / категория (S/A/B/D/C)" />
         <button class="btn btn--ghost btn--sm" @click="game.requestCatalog()">↻</button>
       </div>
       <div class="admin-list">

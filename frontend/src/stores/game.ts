@@ -75,6 +75,7 @@ export const useGameStore = defineStore('game', {
 
     myCharacteristics: [] as Characteristic[],
     myBiology: null as Biology | null,
+    forcedReveal: null as { category: string; occ: number } | null,
 
     voteTally: {} as Record<string, number>,
     votedIds: [] as string[],
@@ -243,6 +244,7 @@ export const useGameStore = defineStore('game', {
         this.myCharacteristics = payload.characteristics
         this.myBiology = payload.biology
       })
+      socket.on('forcedRevealChanged', ({ slot }) => { this.forcedReveal = slot })
 
       socket.on('charactersUpdated', (payload) => {
         this.publicPlayers = payload.players

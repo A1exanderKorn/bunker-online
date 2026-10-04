@@ -5,6 +5,7 @@ import type {
   SurvivalFactor,
   SurvivalReport,
 } from '../shared/types'
+import { isBiologyInfertile } from './biology'
 import {
   challengeByText,
   challengeFlavor,
@@ -39,11 +40,7 @@ function buildTeamTags(players: Player[], bunker: StoredBunkerState, mode: GameM
       add('engineering', `${player.name}: андроид`)
       add('bunker_assistance_big', `${player.name}: андроид`)
     }
-    if (
-      biology.infertile ||
-      ((biology.sex === 'Ж' || biology.sex === 'Гермафродит') && biology.age > 50) ||
-      (biology.sex === 'М' && biology.age > 60)
-    ) {
+    if (isBiologyInfertile(biology)) {
       add('reproductive_edge', player.name)
     }
   }
@@ -101,9 +98,7 @@ function healthCharacteristic(player: Player) {
 function isEffectivelyInfertile(player: Player): boolean {
   const biology = player.biology
   if (!biology || biology.sex === 'Андроид') return true
-  return biology.infertile ||
-    ((biology.sex === 'Ж' || biology.sex === 'Гермафродит') && biology.age > 50) ||
-    (biology.sex === 'М' && biology.age > 60)
+  return isBiologyInfertile(biology)
 }
 
 function factor(

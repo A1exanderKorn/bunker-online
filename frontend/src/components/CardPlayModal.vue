@@ -79,6 +79,10 @@ const availableSlots = computed<CharSlot[]>(() => {
   const spec = current.value
   if (!spec) return []
   let slots = layout.value
+  if (spec.wholeCategory) {
+    slots = slots.filter((s, i, all) => all.findIndex(x => x.type === s.type) === i)
+      .map(s => ({ ...s, occ: 0, label: s.type }))
+  }
   if (spec.kind === 'characteristic' && spec.categories?.length) {
     slots = slots.filter((s) => spec.categories!.includes(s.type))
   }
