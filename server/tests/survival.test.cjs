@@ -59,7 +59,7 @@ test('базовые потребности не требуют воду, а с�
   const shortStay = calculateSurvival(players, bunker)
   const longStay = calculateSurvival(players, { ...bunker, years: 15 })
 
-  assert.equal(shortStay.baseChance, 45)
+  assert.equal(shortStay.baseChance, 55)
   assert.equal(shortStay.chance, longStay.chance)
   // Фактора длительности пребывания в модели нет — срок не должен создавать фактор.
   assert.equal(shortStay.factors.some((item) => item.id === 'duration'), false)

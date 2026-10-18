@@ -11,7 +11,7 @@ import GameStageMessage from '@/components/GameStageMessage.vue'
 import LobbySettingsPanel from '@/components/LobbySettingsPanel.vue'
 import BunkerInfoPanel from '@/components/BunkerInfoPanel.vue'
 import CardHistoryStrip from '@/components/CardHistoryStrip.vue'
-import CardAdminPanel from '@/components/CardAdminPanel.vue'
+// import CardAdminPanel from '@/components/CardAdminPanel.vue'
 import RoundProgress from '@/components/RoundProgress.vue'
 import { useProfileStore } from '@/stores/profile'
 
@@ -257,7 +257,7 @@ const survivalColor = computed(() => {
     </div>
 
     <!-- Мини-админка теста карт (только хост) -->
-    <CardAdminPanel v-if="isHost" />
+    <!-- <CardAdminPanel v-if="isHost" /> -->
 
     <!-- Управление хоста -->
     <div v-if="isHost" class="host-controls">

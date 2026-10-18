@@ -1166,13 +1166,15 @@ export class Lobby {
         const player = this.alive().find(p => p.id === t.players?.[0])
         if (!player?.biology) return fail('Выберите невыбывшего игрока с биологией')
         const bio = player.biology
-        if (bio.age <= 25) return fail('Игроку уже 25 лет или меньше')
+        if (bio.age <= 25 && !bio.infertile) return fail('Игроку уже 25 лет или меньше и он не бесплоден')
         const old = this.slotDisplay(player, BIOLOGY_CATEGORY, 0)
-        bio.age = 25
+        bio.age = Math.min(bio.age, 25)
         bio.experience = Math.min(bio.experience, 9)
+        bio.infertile = false
+        bio.fertilityRestored = true
         bio.coef = biologyCoefficient(bio)
         this.pushChange(charChanges, player, BIOLOGY_CATEGORY, 0, 'replace', old, this.slotDisplay(player, BIOLOGY_CATEGORY, 0), bio.isVisible)
-        return ok(`${player.name}: возраст 25 лет`)
+        return ok(`${player.name}: возраст ${bio.age} лет, бесплодие снято`)
       }
       case 'change': {
         if (card.scope === 'all') {

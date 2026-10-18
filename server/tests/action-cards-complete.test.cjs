@@ -372,7 +372,15 @@ test('возраст и лечение согласованы с финальн�
     bio.infertile=true;bio.fertilityRestored=false
     assert.equal(isBiologyInfertile(bio),true)
     play('ac_036',{players:['p1']})
-    assert.equal(bio.age,25);assert.equal(bio.infertile,true);assert.ok(bio.coef<=0)
+    assert.equal(bio.age,25);assert.equal(bio.infertile,false);assert.ok(bio.coef>=.5)
+    assert.equal(isBiologyInfertile(bio),false)
+    assert.equal(bio.coef,biologyCoefficient(bio))
+    assert.ok(!biologyTags(bio).includes('reproductive_edge'))
+    assert.equal(play('ac_036',{players:['p1']}).used,false)
+    bio.age=22;bio.infertile=true
+    assert.equal(play('ac_036',{players:['p1']}).used,true)
+    assert.equal(bio.age,22);assert.equal(bio.infertile,false)
+    assert.equal(bio.coef,biologyCoefficient(bio))
   }finally{l.dispose()}
 })
 
