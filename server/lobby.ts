@@ -56,9 +56,11 @@ import {
   type StoredBunkerState,
 } from './bunker'
 import { dealActionCards, makeCardByCatalogId, loadCards } from './cards'
-import { biologyTags, improvedOrWorseBiology, improvedOrWorseCharacteristic } from './cardEffects'
+import { improvedOrWorseBiology, improvedOrWorseCharacteristic } from './cardEffects'
+import { characteristicCapabilities, biologyCapabilities, capabilityCoverage, teamDivisor, loadCapabilityMatrix } from './capabilityMatrix'
 import { calculateSurvival } from './survival'
 import { filterCardHistory } from './cardHistory'
+import { rerollAnimationFor } from './rerollAnimation'
 import { MatchRecorder, enqueueMatch } from './matchHistory'
 import type { Profile } from '../shared/profile'
 
@@ -458,7 +460,7 @@ export class Lobby {
     this.pendingThreats = threatQueue(threatSteps, this.gameMode())
     this.bunker = {
       catastrophe: pickCatastrophe(this.gameMode()),
-      years: 1 + Math.floor(Math.random() * 15),
+      years: 0,
       threats: [],
       conditions: [],
     }
@@ -884,12 +886,23 @@ export class Lobby {
       summary,
       charChanges: effect.charChanges,
     })
-    this.io.to(this.code).emit('cardPlayed', {
+    const played = {
+      seq: this.cardHistory[0].seq,
       byPlayerId: playerId,
       byName,
       title: card.title,
       effectText: summary,
-    })
+    }
+    const animate = ['rerollThird', 'change', 'biasedReroll', 'shuffleRevealed', 'spoilRandom'].includes(card.action)
+    if (animate) {
+      for (const viewer of this.players) {
+        const sid = this.sockets.get(viewer.id)
+        if (sid) this.io.to(sid).emit('cardPlayed', {
+          ...played, reroll: rerollAnimationFor(effect.charChanges, viewer.id, !viewer.isAlive, played.seq),
+          bloodPlayerIds: card.action === 'spoilRandom' ? effect.charChanges.filter(c => c.wasVisible).map(c => c.playerId) : [],
+        })
+      }
+    } else this.io.to(this.code).emit('cardPlayed', played)
     this.broadcastCardHistory()
     // Обновляем публичное состояние и бункер.
     this.broadcastCharacters()
@@ -934,9 +947,12 @@ export class Lobby {
       if (spec.revealedOnly && !this.slotVisible(owner, c.category, occ)) return 'Выберите открытую характеристику'
       if (spec.matchPreviousCategory && chars[i - 1]?.category !== c.category) return 'Выберите одинаковые категории'
     }
-    for (const pick of targets.categories ?? []) {
+    for (const [i, pick] of (targets.categories ?? []).entries()) {
       const category = typeof pick === 'string' ? pick : pick?.category
       const occ = typeof pick === 'string' ? 0 : (pick?.occ ?? 0)
+      const spec = card.pickSpecs.filter(s => s.kind === 'catCategory')[i]
+      if (spec.categories && !spec.categories.includes(category)) return 'Недопустимая категория'
+      if (spec.wholeCategory && occ !== 0) return 'Неверный слот категории'
       if (!category || !Number.isInteger(occ) || occ < 0 || !this.alive().some(p => category === BIOLOGY_CATEGORY ? p.biology && occ === 0 : findChar(p.characteristics, category, occ))) return 'Неверная категория или слот'
     }
     if ((targets.threats ?? []).some(i => !Number.isInteger(i) || i < 0 || i >= this.bunker.threats.length)) return 'Выберите существующую угрозу'
@@ -1018,10 +1034,15 @@ export class Lobby {
         return ok('До конца текущего раунда в начале каждого хода — шанс 75% на обязательное случайное вскрытие вместо обычного выбора')
       }
       case 'addMatchingThreat': {
-        const sources = [...self.characteristics.map(c => new Set(c.tags ?? [])), new Set(biologyTags(self.biology))]
+        // Карта подбирается под будущий размер бункера, а не всех ещё не исключённых.
+        const finalCount = Math.min(this.alive().length, this.survivorsTarget(this.startCount || this.players.length))
+        const sources = [...self.characteristics.map(characteristicCapabilities), biologyCapabilities(self.biology)]
+          .map(vector => Object.fromEntries(Object.entries(vector).map(([tag, value])=>[
+            tag, value / (loadCapabilityMatrix().dimensions[tag].unique ? 1 : teamDivisor(finalCount)),
+          ])))
         const choices = loadBunkerData(this.gameMode()).challenges.filter(c => c.kind === 'threat' &&
-          c.requirements.length > 0 && !this.bunker.threats.includes(c.text) &&
-          sources.some(tags => c.requirements.every(group => group.some(tag => tags.has(tag)))))
+          Object.keys(c.capabilityRequirements).length > 0 && !this.bunker.threats.includes(c.text) &&
+          sources.some(vector => capabilityCoverage(c.capabilityRequirements, vector).every(row=>row.missing === 0)))
         if (!choices.length) return fail('Нет новой угрозы, которую полностью решает одна ваша характеристика')
         const choice = choices[Math.floor(Math.random() * choices.length)]
         this.bunker.threats.push(choice.text)
@@ -1049,30 +1070,41 @@ export class Lobby {
         })
         return ok(`Перемешаны открытые характеристики: ${category}`)
       }
-      case 'rerollAll': {
-        const planned = this.alive().map(player => ({ player, characteristics: player.characteristics.map(c => ({ ...c })), biology: player.biology }))
+      case 'rerollThird': {
+        const key = (category: string, occ: number) => `${category}#${occ}`
+        const planned = this.alive().map(player => {
+          const slots = [...player.characteristics.map(c=>({category:c.type,occ:c.occ??0})),
+            ...(player.biology ? [{category:BIOLOGY_CATEGORY,occ:0}] : [])]
+          const selected = shuffleArray(slots).slice(0, Math.max(1, Math.round(slots.length / 3)))
+          return {player, selected, keys:new Set(selected.map(s=>key(s.category,s.occ))),
+            characteristics:player.characteristics.map(c=>({...c})),biology:player.biology}
+        })
         const categories = new Set(planned.flatMap(p => p.characteristics.map(c => c.type)))
         for (const category of categories) {
-          const slots = planned.flatMap(p => p.characteristics.filter(c => c.type === category))
-          const replacements = drawUniqueCharacteristics(category, slots.length, [], this.gameMode())
+          const slots = planned.flatMap(p => p.characteristics.filter(c => c.type === category && p.keys.has(key(c.type,c.occ??0))))
+          if (!slots.length) continue
+          // Keep untouched slots unique too; exclude old selected values so a reroll really changes them.
+          const excluded = this.alive().flatMap(p=>p.characteristics.filter(c=>c.type===category).map(c=>c.value))
+          const replacements = drawUniqueCharacteristics(category, slots.length, excluded, this.gameMode())
           if (replacements.length !== slots.length) return fail(`Не хватает карт категории ${category}`)
           slots.forEach((slot, i) => Object.assign(slot, replacements[i], { occ: slot.occ, isVisible: slot.isVisible }))
         }
-        const bios: Biology[] = []
+        const selectedBioIds = new Set(planned.filter(p=>p.keys.has(key(BIOLOGY_CATEGORY,0))).map(p=>p.player.id))
+        const bios: Biology[] = this.players.filter(p=>!selectedBioIds.has(p.id)&&p.biology).map(p=>p.biology!)
         for (const plan of planned) {
+          if (!selectedBioIds.has(plan.player.id)) continue
           const bio = this.rollBiology(bios)
           bio.isVisible = plan.player.biology?.isVisible ?? false
           plan.biology = bio
           bios.push(bio)
         }
         for (const plan of planned) {
-          const slots = [...plan.player.characteristics.map(c => ({ category: c.type, occ: c.occ ?? 0 })), { category: BIOLOGY_CATEGORY, occ: 0 }]
-          const old = slots.map(s => ({ ...s, value: this.slotDisplay(plan.player, s.category, s.occ), visible: this.slotVisible(plan.player, s.category, s.occ) }))
+          const old = plan.selected.map(s => ({ ...s, value: this.slotDisplay(plan.player, s.category, s.occ), visible: this.slotVisible(plan.player, s.category, s.occ) }))
           plan.player.characteristics = plan.characteristics
           plan.player.biology = plan.biology
           for (const s of old) this.pushChange(charChanges, plan.player, s.category, s.occ, 'replace', s.value, this.slotDisplay(plan.player, s.category, s.occ), s.visible)
         }
-        return ok('Все характеристики и биология невыбывших игроков пересданы')
+        return ok('У каждого невыбывшего игрока пересдана случайная треть слотов (с округлением); открытость сохранена')
       }
       case 'biasedReroll': {
         const pick = t.categories?.[0]
@@ -1103,24 +1135,44 @@ export class Lobby {
         if (!charChanges.length) return fail('Нет доступных улучшений или ухудшений для выбранного слота')
         return ok(`Категория ${this.slotLabel(category, occ, self)}: владельцу лучше, остальным хуже; изменено ${charChanges.length}`)
       }
-      case 'rejuvenate':
-      case 'makeInfertile': {
+      case 'spoilRandom': {
+        const pick = t.categories?.[0]
+        const category = typeof pick === 'string' ? pick : pick?.category
+        if (!category || !['Биология', 'Здоровье', 'Факт'].includes(category)) return fail('Выберите биологию, здоровье или факт')
+        const candidates = this.alive().filter(p => p.id !== self.id)
+        if (!candidates.length) return fail('Нет живых соперников')
+        const player = candidates[Math.floor(Math.random() * candidates.length)]
+        const old = this.slotDisplay(player, category, 0)
+        const visible = this.slotVisible(player, category, 0)
+        if (category === BIOLOGY_CATEGORY) {
+          if (!player.biology) return fail('У игрока нет биологии')
+          player.biology = { ...player.biology, sex: Math.random() < 0.5 ? 'М' : 'Ж', age: 95, infertile: true, fertilityRestored: false, hint: undefined }
+          player.biology.coef = biologyCoefficient(player.biology)
+        } else {
+          const current = findChar(player.characteristics, category, 0)
+          if (!current) return fail('У игрока нет выбранной характеристики')
+          const facts = ['Педофил', 'Серийно убивал и не раскаивается', 'Маньяк', 'Планирует нападение на жильцов', 'Психопат без эмпатии, готовит зачистку']
+          const rows = rowsByCategory(category, this.gameMode())
+          const pool = category === 'Факт' ? rows.filter(r => facts.includes(r.name)) : [...rows].sort((a, b) => a.coef - b.coef).slice(0, 10)
+          if (!pool.length) return fail('Нет подходящих характеристик')
+          const variants = expandForDeal(pool[Math.floor(Math.random() * pool.length)])
+          const r = variants[Math.floor(Math.random() * variants.length)]
+          Object.assign(current, { value: r.row.name, coef: r.coef, hint: r.hint, tags: [...r.row.tags], stageLabel: r.stageLabel, stageIndex: r.stageIndex, incurable: r.incurable })
+        }
+        this.pushChange(charChanges, player, category, 0, 'replace', old, this.slotDisplay(player, category, 0), visible)
+        return ok(`${player.name}: испорчена характеристика «${category}»`)
+      }
+      case 'rejuvenate': {
         const player = this.alive().find(p => p.id === t.players?.[0])
         if (!player?.biology) return fail('Выберите невыбывшего игрока с биологией')
         const bio = player.biology
-        if (card.action === 'makeInfertile' && (bio.sex === 'Андроид' || bio.infertile)) return fail('Игрок уже бесплоден или является андроидом')
-        if (card.action === 'rejuvenate' && bio.age <= 25) return fail('Игроку уже 25 лет или меньше')
+        if (bio.age <= 25) return fail('Игроку уже 25 лет или меньше')
         const old = this.slotDisplay(player, BIOLOGY_CATEGORY, 0)
-        if (card.action === 'rejuvenate') {
-          bio.age = 25
-          bio.experience = Math.min(bio.experience, 9)
-        } else {
-          bio.infertile = true
-          bio.fertilityRestored = false
-        }
+        bio.age = 25
+        bio.experience = Math.min(bio.experience, 9)
         bio.coef = biologyCoefficient(bio)
         this.pushChange(charChanges, player, BIOLOGY_CATEGORY, 0, 'replace', old, this.slotDisplay(player, BIOLOGY_CATEGORY, 0), bio.isVisible)
-        return ok(card.action === 'rejuvenate' ? `${player.name}: возраст 25 лет` : `${player.name}: добавлено бесплодие`)
+        return ok(`${player.name}: возраст 25 лет`)
       }
       case 'change': {
         if (card.scope === 'all') {

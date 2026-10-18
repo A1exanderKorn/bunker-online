@@ -84,7 +84,7 @@ test('все активные карты имеют поддерживаемое
   const supported = new Set([
     'change', 'swap', 'healFertile', 'replayLast', 'changeCatastrophe', 'revealCondition',
     'removeThreat', 'cancelVotes', 'doubleVote', 'selfProtection', 'selfDefence', 'revote',
-    'randomReveal', 'addMatchingThreat', 'shuffleRevealed', 'rerollAll', 'rejuvenate', 'biasedReroll', 'makeInfertile',
+    'randomReveal', 'addMatchingThreat', 'shuffleRevealed', 'rerollThird', 'rejuvenate', 'biasedReroll', 'spoilRandom',
   ])
   for (const card of loadCards()) {
     assert.ok(supported.has(card.action), `${card.cardId}: неизвестное действие ${card.action}`)
@@ -94,6 +94,17 @@ test('все активные карты имеют поддерживаемое
       assert.ok(specs.length > 0, `${card.cardId}: отсутствует выбор цели`)
     }
   }
+})
+
+test('обновлённая колода: три случайных вскрытия A, омоложение S, одна направленная перераздача', () => {
+  const cards = loadCards()
+  const random = cards.filter(c=>c.action==='randomReveal')
+  assert.deepEqual(random.map(c=>c.cardId), ['ac_032','ac_040','ac_041'])
+  assert.ok(random.every(c=>c.category==='A'&&c.unique&&c.title.includes('75%')))
+  assert.equal(cards.find(c=>c.cardId==='ac_036').category,'S')
+  assert.equal(cards.filter(c=>c.action==='biasedReroll').length,1)
+  assert.equal(cards.find(c=>c.cardId==='ac_038'),undefined)
+  assert.equal(cards.find(c=>c.cardId==='ac_035').action,'rerollThird')
 })
 
 function harness() {

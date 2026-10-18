@@ -8,18 +8,9 @@
       "tags": [
         "engineering",
         "ventilation",
-        "power"
-      ]
-    },
-    {
-      "name": "Космонавт-биолог",
-      "coef": 1,
-      "hint": "",
-      "tags": [
-        "biology",
-        "science",
-        "aviation",
-        "navigation"
+        "power",
+        "water",
+        "repair"
       ]
     },
     {
@@ -29,35 +20,52 @@
       "tags": [
         "medical",
         "rescue",
+        "ppe",
+        "infectious",
         "weapon",
         "strength"
       ]
     },
     {
-      "name": "Инженер по вентиляции",
+      "name": "Инфекционист",
       "coef": 0.95,
       "hint": "",
       "tags": [
-        "engineering",
-        "ventilation"
+        "medical",
+        "infectious",
+        "biology",
+        "ppe"
+      ]
+    },
+    {
+      "name": "Полевой врач-инфекционист",
+      "coef": 0.95,
+      "hint": "",
+      "tags": [
+        "medical",
+        "infectious",
+        "ppe",
+        "rescue"
       ]
     },
     {
       "name": "Инженер-энергетик",
-      "coef": 0.95,
+      "coef": 0.9,
       "hint": "",
       "tags": [
-        "engineering",
         "power",
+        "engineering",
         "repair"
       ]
     },
     {
       "name": "Хирург-травматолог",
-      "coef": 0.95,
+      "coef": 0.9,
       "hint": "",
       "tags": [
-        "medical"
+        "medical",
+        "rescue",
+        "ppe"
       ]
     },
     {
@@ -66,15 +74,9 @@
       "hint": "",
       "tags": [
         "agriculture",
-        "food"
-      ]
-    },
-    {
-      "name": "Анестезиолог-реаниматолог",
-      "coef": 0.9,
-      "hint": "",
-      "tags": [
-        "medical"
+        "food",
+        "biology",
+        "geology"
       ]
     },
     {
@@ -84,36 +86,73 @@
       "tags": [
         "water",
         "engineering",
+        "construction",
         "plumbing"
       ]
     },
     {
-      "name": "Инфекционист",
+      "name": "Врач общей практики",
+      "coef": 0.9,
+      "hint": "",
+      "tags": [
+        "medical",
+        "infectious",
+        "ppe",
+        "psychology"
+      ]
+    },
+    {
+      "name": "Эпидемиолог",
       "coef": 0.9,
       "hint": "",
       "tags": [
         "infectious",
-        "biology",
         "medical",
-        "ppe"
+        "biology",
+        "ppe",
+        "logistics"
+      ]
+    },
+    {
+      "name": "Космонавт-биолог",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "biology",
+        "science",
+        "navigation",
+        "survival",
+        "aviation"
+      ]
+    },
+    {
+      "name": "Инженер по вентиляции",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "ventilation",
+        "engineering",
+        "repair"
+      ]
+    },
+    {
+      "name": "Анестезиолог-реаниматолог",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "medical",
+        "ppe",
+        "science"
       ]
     },
     {
       "name": "Хирург",
-      "coef": 0.9,
+      "coef": 0.85,
       "hint": "",
       "tags": [
-        "medical"
-      ]
-    },
-    {
-      "name": "Полевой врач-инфекционист",
-      "coef": 0.9,
-      "hint": "",
-      "tags": [
-        "infectious",
         "medical",
-        "ppe"
+        "ppe",
+        "infectious"
       ]
     },
     {
@@ -121,36 +160,184 @@
       "coef": 0.85,
       "hint": "",
       "tags": [
-        "medical",
         "animals",
-        "biology"
-      ]
-    },
-    {
-      "name": "Биоинженер",
-      "coef": 0.8,
-      "hint": "",
-      "tags": [
+        "medical",
         "biology",
-        "science"
+        "infectious"
       ]
     },
     {
-      "name": "Врач общей практики",
-      "coef": 0.8,
+      "name": "Пожарный",
+      "coef": 0.85,
       "hint": "",
       "tags": [
+        "fire",
+        "rescue",
+        "protection",
+        "strength",
+        "ppe",
+        "survival"
+      ]
+    },
+    {
+      "name": "Фермер",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "agriculture",
+        "food",
+        "animals",
+        "repair"
+      ]
+    },
+    {
+      "name": "Спасатель МЧС",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "rescue",
+        "survival",
+        "protection",
+        "fire",
         "medical"
       ]
     },
     {
-      "name": "Эпидемиолог",
+      "name": "Оператор очистных сооружений",
+      "coef": 0.85,
+      "hint": "",
+      "tags": [
+        "water",
+        "repair",
+        "chemistry",
+        "ppe",
+        "plumbing"
+      ]
+    },
+    {
+      "name": "Радиоинженер",
       "coef": 0.8,
       "hint": "",
       "tags": [
-        "infectious",
-        "biology",
+        "communication",
+        "engineering",
+        "repair"
+      ]
+    },
+    {
+      "name": "Токсиколог",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "medical",
+        "chemistry",
         "ppe"
+      ]
+    },
+    {
+      "name": "Инженер радиационного контроля",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "radiation",
+        "nuclear",
+        "ppe"
+      ]
+    },
+    {
+      "name": "Микробиолог",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "biology",
+        "infectious",
+        "science",
+        "medical"
+      ]
+    },
+    {
+      "name": "Технолог пищевого производства",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "food",
+        "chemistry",
+        "logistics",
+        "biology"
+      ]
+    },
+    {
+      "name": "Травматолог",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "medical",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Фельдшер",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "medical",
+        "rescue",
+        "infectious",
+        "ppe"
+      ]
+    },
+    {
+      "name": "Физик-ядерщик",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "nuclear",
+        "radiation",
+        "science",
+        "power"
+      ]
+    },
+    {
+      "name": "Инструктор гражданской обороны",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "survival",
+        "protection",
+        "ppe",
+        "rescue",
+        "fire"
+      ]
+    },
+    {
+      "name": "Механик",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "repair",
+        "tools",
+        "engineering",
+        "ventilation"
+      ]
+    },
+    {
+      "name": "Электрик",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "power",
+        "repair",
+        "tools"
+      ]
+    },
+    {
+      "name": "Биоинженер",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "biology",
+        "science",
+        "engineering"
       ]
     },
     {
@@ -159,151 +346,147 @@
       "hint": "",
       "tags": [
         "security",
-        "weapon",
         "leadership",
-        "protection"
+        "protection",
+        "weapon",
+        "diplomacy"
       ]
     },
     {
-      "name": "Пожарный",
-      "coef": 0.75,
-      "hint": "",
-      "tags": [
-        "rescue",
-        "survival",
-        "fire",
-        "protection"
-      ]
-    },
-    {
-      "name": "Радиоинженер",
+      "name": "Инженер",
       "coef": 0.75,
       "hint": "",
       "tags": [
         "engineering",
         "repair",
-        "communication"
-      ]
-    },
-    {
-      "name": "Токсиколог",
-      "coef": 0.75,
-      "hint": "",
-      "tags": [
-        "chemistry",
-        "medical"
-      ]
-    },
-    {
-      "name": "Фермер",
-      "coef": 0.75,
-      "hint": "",
-      "tags": [
-        "agriculture",
-        "food"
-      ]
-    },
-    {
-      "name": "Инженер радиационного контроля",
-      "coef": 0.75,
-      "hint": "",
-      "tags": [
-        "radiation",
-        "nuclear"
-      ]
-    },
-    {
-      "name": "Инженер",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "engineering"
-      ]
-    },
-    {
-      "name": "Микробиолог",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "infectious",
-        "biology",
-        "science"
+        "science",
+        "ventilation"
       ]
     },
     {
       "name": "Начальник отделения психиатрической клиники",
-      "coef": 0.7,
+      "coef": 0.75,
       "hint": "",
       "tags": [
-        "leadership",
-        "psychology"
+        "psychology",
+        "medical",
+        "leadership"
       ]
     },
     {
       "name": "Психотерапевт",
-      "coef": 0.7,
+      "coef": 0.75,
       "hint": "",
       "tags": [
         "psychology",
+        "medical",
         "diplomacy"
       ]
     },
     {
-      "name": "Спасатель МЧС",
-      "coef": 0.7,
+      "name": "Робототехник",
+      "coef": 0.75,
       "hint": "",
       "tags": [
-        "rescue",
-        "survival",
-        "fire",
-        "protection"
+        "engineering",
+        "computing",
+        "repair"
       ]
     },
     {
-      "name": "Технолог пищевого производства",
-      "coef": 0.7,
+      "name": "Сантехник",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "water",
+        "repair",
+        "tools",
+        "plumbing"
+      ]
+    },
+    {
+      "name": "Шеф-повар",
+      "coef": 0.75,
       "hint": "",
       "tags": [
         "food",
         "logistics",
-        "chemistry"
+        "infectious"
       ]
     },
     {
-      "name": "Травматолог",
-      "coef": 0.7,
+      "name": "Лесник",
+      "coef": 0.75,
       "hint": "",
       "tags": [
-        "medical"
-      ]
-    },
-    {
-      "name": "Фельдшер",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "medical"
-      ]
-    },
-    {
-      "name": "Физик-ядерщик",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "radiation",
-        "nuclear",
-        "science"
-      ]
-    },
-    {
-      "name": "Военный лётчик",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "aviation",
+        "survival",
         "navigation",
-        "security",
-        "communication"
+        "fire",
+        "animals",
+        "biology"
+      ]
+    },
+    {
+      "name": "Мастер холодильных установок",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "cold",
+        "repair",
+        "engineering"
+      ]
+    },
+    {
+      "name": "Печник",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "cold",
+        "construction",
+        "ventilation",
+        "fire"
+      ]
+    },
+    {
+      "name": "Бурильщик скважин",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "water",
+        "geology",
+        "tools"
+      ]
+    },
+    {
+      "name": "Наладчик станков",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "repair",
+        "engineering",
+        "tools"
+      ]
+    },
+    {
+      "name": "Строитель",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "construction",
+        "tools",
+        "repair",
+        "protection",
+        "strength"
+      ]
+    },
+    {
+      "name": "Мастер по насосам",
+      "coef": 0.75,
+      "hint": "",
+      "tags": [
+        "water",
+        "repair",
+        "tools"
       ]
     },
     {
@@ -313,53 +496,83 @@
       "tags": [
         "rescue",
         "protection",
-        "strength"
-      ]
-    },
-    {
-      "name": "Инженер сетевой безопасности",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "computing",
-        "communication"
-      ]
-    },
-    {
-      "name": "Инструктор гражданской обороны",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
+        "strength",
         "survival",
-        "protection",
-        "ppe"
+        "navigation"
       ]
     },
     {
       "name": "Медсестра",
-      "coef": 0.65,
+      "coef": 0.7,
       "hint": "",
       "tags": [
-        "medical"
+        "medical",
+        "infectious",
+        "ppe",
+        "psychology"
       ]
     },
     {
-      "name": "Механик",
-      "coef": 0.65,
+      "name": "Военный",
+      "coef": 0.7,
       "hint": "",
       "tags": [
-        "repair",
-        "tools"
+        "weapon",
+        "security",
+        "protection",
+        "strength",
+        "survival"
       ]
     },
     {
-      "name": "Оператор очистных сооружений",
-      "coef": 0.65,
+      "name": "Гидролог",
+      "coef": 0.7,
       "hint": "",
       "tags": [
         "water",
-        "plumbing",
-        "repair"
+        "geology",
+        "science"
+      ]
+    },
+    {
+      "name": "Сварщик-аргонщик",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "repair",
+        "tools",
+        "construction"
+      ]
+    },
+    {
+      "name": "Дезинфектор",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "infectious",
+        "ppe",
+        "chemistry"
+      ]
+    },
+    {
+      "name": "Военный лётчик",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "navigation",
+        "communication",
+        "security",
+        "survival",
+        "aviation"
+      ]
+    },
+    {
+      "name": "Инженер сетевой безопасности",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "computing",
+        "communication"
       ]
     },
     {
@@ -372,25 +585,6 @@
       ]
     },
     {
-      "name": "Робототехник",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "engineering",
-        "computing"
-      ]
-    },
-    {
-      "name": "Сантехник",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "water",
-        "plumbing",
-        "repair"
-      ]
-    },
-    {
       "name": "Химик",
       "coef": 0.65,
       "hint": "",
@@ -400,68 +594,133 @@
       ]
     },
     {
-      "name": "Шеф-повар",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "food"
-      ]
-    },
-    {
-      "name": "Электрик",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "power",
-        "repair"
-      ]
-    },
-    {
-      "name": "Лесник",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "survival",
-        "navigation",
-        "fire"
-      ]
-    },
-    {
-      "name": "Мастер холодильных установок",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "cold",
-        "repair"
-      ]
-    },
-    {
-      "name": "Военный",
-      "coef": 0.6,
-      "hint": "",
-      "tags": [
-        "security",
-        "weapon",
-        "strength",
-        "protection"
-      ]
-    },
-    {
       "name": "Геолог",
-      "coef": 0.6,
+      "coef": 0.65,
       "hint": "",
       "tags": [
         "geology",
+        "navigation",
+        "science"
+      ]
+    },
+    {
+      "name": "Оружейник",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "weapon",
+        "repair",
+        "tools"
+      ]
+    },
+    {
+      "name": "Фармацевт",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "medical",
+        "chemistry",
+        "infectious"
+      ]
+    },
+    {
+      "name": "Эколог",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "biology",
+        "science",
+        "water",
+        "chemistry"
+      ]
+    },
+    {
+      "name": "Акушер",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "medical",
+        "ppe",
+        "psychology"
+      ]
+    },
+    {
+      "name": "Сварщик",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "repair",
+        "construction",
+        "tools"
+      ]
+    },
+    {
+      "name": "Шахтер",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "geology",
+        "tools",
+        "strength",
+        "ventilation",
+        "construction"
+      ]
+    },
+    {
+      "name": "Архитектор",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "construction",
+        "engineering",
+        "geology"
+      ]
+    },
+    {
+      "name": "Логист",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "logistics",
         "navigation"
       ]
     },
     {
-      "name": "Гидролог",
-      "coef": 0.6,
+      "name": "Кабельщик",
+      "coef": 0.65,
       "hint": "",
       "tags": [
-        "water",
+        "power",
+        "communication"
+      ]
+    },
+    {
+      "name": "Медиатор трудовых конфликтов",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "diplomacy",
+        "psychology"
+      ]
+    },
+    {
+      "name": "Зоолог",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "animals",
+        "biology",
         "science"
+      ]
+    },
+    {
+      "name": "Плотник",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "construction",
+        "tools",
+        "repair"
       ]
     },
     {
@@ -469,36 +728,8 @@
       "coef": 0.6,
       "hint": "",
       "tags": [
-        "radiation"
-      ]
-    },
-    {
-      "name": "Оружейник",
-      "coef": 0.6,
-      "hint": "",
-      "tags": [
-        "weapon",
-        "repair",
-        "tools"
-      ]
-    },
-    {
-      "name": "Печник",
-      "coef": 0.6,
-      "hint": "",
-      "tags": [
-        "construction",
-        "fire",
-        "cold",
-        "ventilation"
-      ]
-    },
-    {
-      "name": "Программист",
-      "coef": 0.6,
-      "hint": "",
-      "tags": [
-        "computing"
+        "radiation",
+        "ppe"
       ]
     },
     {
@@ -506,150 +737,146 @@
       "coef": 0.6,
       "hint": "",
       "tags": [
-        "computing"
-      ]
-    },
-    {
-      "name": "Фармацевт",
-      "coef": 0.6,
-      "hint": "",
-      "tags": [
-        "medical",
-        "chemistry"
-      ]
-    },
-    {
-      "name": "Эколог",
-      "coef": 0.6,
-      "hint": "",
-      "tags": [
-        "biology",
-        "science"
-      ]
-    },
-    {
-      "name": "Сварщик-аргонщик",
-      "coef": 0.6,
-      "hint": "",
-      "tags": [
-        "repair",
-        "tools",
-        "construction"
-      ]
-    },
-    {
-      "name": "Бурильщик скважин",
-      "coef": 0.6,
-      "hint": "",
-      "tags": [
-        "water",
-        "geology"
-      ]
-    },
-    {
-      "name": "Дезинфектор",
-      "coef": 0.6,
-      "hint": "",
-      "tags": [
-        "infectious",
-        "ppe",
-        "chemistry"
-      ]
-    },
-    {
-      "name": "Лаборант",
-      "coef": 0.6,
-      "hint": "",
-      "tags": [
-        "science",
-        "biology",
-        "chemistry"
-      ]
-    },
-    {
-      "name": "Акушер",
-      "coef": 0.55,
-      "hint": "",
-      "tags": [
-        "medical"
-      ]
-    },
-    {
-      "name": "Геодезист",
-      "coef": 0.55,
-      "hint": "",
-      "tags": [
-        "geology",
-        "navigation"
-      ]
-    },
-    {
-      "name": "Наладчик станков",
-      "coef": 0.55,
-      "hint": "",
-      "tags": [
-        "engineering",
+        "computing",
+        "communication",
         "repair"
       ]
     },
     {
-      "name": "Пчеловод",
-      "coef": 0.55,
+      "name": "Геодезист",
+      "coef": 0.6,
       "hint": "",
       "tags": [
-        "animals",
-        "food"
+        "geology",
+        "navigation",
+        "construction"
       ]
     },
     {
-      "name": "Сварщик",
-      "coef": 0.55,
+      "name": "Пчеловод",
+      "coef": 0.6,
       "hint": "",
       "tags": [
-        "repair",
-        "construction",
-        "tools"
+        "animals",
+        "agriculture",
+        "food",
+        "biology"
       ]
     },
     {
       "name": "Сотрудник полиции",
-      "coef": 0.55,
+      "coef": 0.6,
       "hint": "",
       "tags": [
         "security",
         "weapon",
-        "protection"
+        "protection",
+        "diplomacy"
       ]
     },
     {
-      "name": "Строитель",
+      "name": "Президент",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "leadership",
+        "diplomacy",
+        "logistics"
+      ]
+    },
+    {
+      "name": "Консервщик",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "food",
+        "infectious"
+      ]
+    },
+    {
+      "name": "Программист",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "computing",
+        "science"
+      ]
+    },
+    {
+      "name": "Кинолог",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "animals",
+        "security"
+      ]
+    },
+    {
+      "name": "Учитель биологии",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "biology",
+        "science",
+        "agriculture"
+      ]
+    },
+    {
+      "name": "Ветеринарный фельдшер",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "animals",
+        "medical",
+        "biology"
+      ]
+    },
+    {
+      "name": "Портной",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "cold",
+        "tools",
+        "tailoring"
+      ]
+    },
+    {
+      "name": "Кровельщик",
       "coef": 0.55,
       "hint": "",
       "tags": [
         "construction",
-        "repair",
         "tools",
         "protection"
       ]
     },
     {
-      "name": "Шахтер",
+      "name": "Садовник",
       "coef": 0.55,
       "hint": "",
       "tags": [
-        "geology",
-        "construction",
-        "tools",
-        "ventilation"
+        "agriculture",
+        "biology"
       ]
     },
     {
-      "name": "Архитектор",
+      "name": "Пекарь",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Лаборант",
       "coef": 0.5,
       "hint": "",
       "tags": [
-        "engineering",
-        "construction"
+        "science",
+        "biology",
+        "chemistry",
+        "ppe"
       ]
     },
     {
@@ -658,33 +885,8 @@
       "hint": "",
       "tags": [
         "leadership",
-        "logistics"
-      ]
-    },
-    {
-      "name": "Кинолог",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "animals",
-        "security"
-      ]
-    },
-    {
-      "name": "Логист",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "logistics"
-      ]
-    },
-    {
-      "name": "Мастер по насосам",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "water",
-        "repair"
+        "logistics",
+        "diplomacy"
       ]
     },
     {
@@ -697,48 +899,41 @@
       ]
     },
     {
+      "name": "Боец ММА",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "strength",
+        "protection"
+      ]
+    },
+    {
+      "name": "Мельник",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "food",
+        "repair"
+      ]
+    },
+    {
+      "name": "Дальнобойщик",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "logistics",
+        "navigation",
+        "repair",
+        "survival"
+      ]
+    },
+    {
       "name": "Переводчик",
-      "coef": 0.5,
+      "coef": 0.45,
       "hint": "",
       "tags": [
-        "culture",
-        "diplomacy"
-      ]
-    },
-    {
-      "name": "Президент",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "leadership",
-        "diplomacy"
-      ]
-    },
-    {
-      "name": "Учитель биологии",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "biology",
-        "science"
-      ]
-    },
-    {
-      "name": "Кабельщик",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "power",
-        "communication"
-      ]
-    },
-    {
-      "name": "Медиатор трудовых конфликтов",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "psychology",
-        "diplomacy"
+        "diplomacy",
+        "culture"
       ]
     },
     {
@@ -746,43 +941,46 @@
       "coef": 0.45,
       "hint": "",
       "tags": [
-        "diplomacy"
-      ]
-    },
-    {
-      "name": "Боец ММА",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "strength",
-        "protection"
-      ]
-    },
-    {
-      "name": "Ветеринарный фельдшер",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "animals",
-        "medical"
-      ]
-    },
-    {
-      "name": "Портной",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "tailoring",
-        "cold"
+        "diplomacy",
+        "culture"
       ]
     },
     {
       "name": "Археолог",
-      "coef": 0.4,
+      "coef": 0.45,
       "hint": "",
       "tags": [
         "geology",
-        "culture"
+        "culture",
+        "navigation"
+      ]
+    },
+    {
+      "name": "Фитнес-тренер",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "strength",
+        "medical"
+      ]
+    },
+    {
+      "name": "Кладовщик",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "logistics",
+        "food"
+      ]
+    },
+    {
+      "name": "Гид",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "navigation",
+        "culture",
+        "survival"
       ]
     },
     {
@@ -790,45 +988,53 @@
       "coef": 0.4,
       "hint": "",
       "tags": [
-        "psychology"
-      ]
-    },
-    {
-      "name": "Зоолог",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "biology",
-        "science"
-      ]
-    },
-    {
-      "name": "Зубной техник",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
+        "psychology",
+        "culture",
         "medical"
       ]
     },
     {
-      "name": "Консервщик",
+      "name": "Ассистент психиатра",
       "coef": 0.4,
       "hint": "",
       "tags": [
-        "food"
+        "psychology",
+        "medical"
       ]
     },
     {
-      "name": "Кровельщик",
+      "name": "Водитель автобуса",
       "coef": 0.4,
       "hint": "",
       "tags": [
-        "construction"
+        "logistics",
+        "navigation",
+        "repair"
+      ]
+    },
+    {
+      "name": "Диетолог",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "food",
+        "medical"
+      ]
+    },
+    {
+      "name": "Оператор дрона",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "navigation",
+        "computing",
+        "communication",
+        "aviation"
       ]
     },
     {
       "name": "Охранник ТЦ",
-      "coef": 0.4,
+      "coef": 0.35,
       "hint": "",
       "tags": [
         "security",
@@ -836,76 +1042,40 @@
       ]
     },
     {
-      "name": "Плотник",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "construction",
-        "tools"
-      ]
-    },
-    {
-      "name": "Садовник",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "agriculture"
-      ]
-    },
-    {
       "name": "Учитель истории",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "culture"
-      ]
-    },
-    {
-      "name": "Фитнес-тренер",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "strength"
-      ]
-    },
-    {
-      "name": "Актер",
       "coef": 0.35,
       "hint": "",
       "tags": [
-        "culture"
+        "culture",
+        "diplomacy"
       ]
     },
     {
-      "name": "Мельник",
+      "name": "Библиотекарь",
       "coef": 0.35,
       "hint": "",
       "tags": [
-        "food"
-      ]
-    },
-    {
-      "name": "Ассистент психиатра",
-      "coef": 0.3,
-      "hint": "",
-      "tags": [
-        "psychology"
-      ]
-    },
-    {
-      "name": "Водитель автобуса",
-      "coef": 0.3,
-      "hint": "",
-      "tags": [
+        "culture",
         "logistics"
       ]
     },
     {
-      "name": "Диетолог",
+      "name": "Зубной техник",
       "coef": 0.3,
       "hint": "",
       "tags": [
-        "food"
+        "medical",
+        "tools",
+        "repair"
+      ]
+    },
+    {
+      "name": "Актер",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "culture",
+        "diplomacy"
       ]
     },
     {
@@ -913,84 +1083,27 @@
       "coef": 0.3,
       "hint": "",
       "tags": [
-        "culture"
-      ]
-    },
-    {
-      "name": "Кладовщик",
-      "coef": 0.3,
-      "hint": "",
-      "tags": [
-        "logistics"
-      ]
-    },
-    {
-      "name": "Массажист",
-      "coef": 0.3,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Пекарь",
-      "coef": 0.3,
-      "hint": "",
-      "tags": [
-        "food"
+        "culture",
+        "diplomacy"
       ]
     },
     {
       "name": "Junior-аналитик",
-      "coef": 0.3,
-      "hint": "",
-      "tags": [
-        "computing"
-      ]
-    },
-    {
-      "name": "Библиотекарь",
       "coef": 0.25,
       "hint": "",
       "tags": [
-        "culture"
+        "computing",
+        "science"
       ]
-    },
-    {
-      "name": "Киллер",
-      "coef": 0.25,
-      "hint": "",
-      "tags": [
-        "weapon",
-        "strength",
-        "criminal",
-        "dangerous"
-      ]
-    },
-    {
-      "name": "Оператор дрона",
-      "coef": 0.25,
-      "hint": "",
-      "tags": [
-        "aviation",
-        "navigation"
-      ]
-    },
-    {
-      "name": "Официант",
-      "coef": 0.25,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Парикмахер",
-      "coef": 0.25,
-      "hint": "",
-      "tags": []
     },
     {
       "name": "Секретарь",
       "coef": 0.25,
       "hint": "",
-      "tags": []
+      "tags": [
+        "logistics",
+        "computing"
+      ]
     },
     {
       "name": "Художник",
@@ -1001,68 +1114,49 @@
       ]
     },
     {
-      "name": "Гид",
-      "coef": 0.2,
+      "name": "Почтальон",
+      "coef": 0.25,
       "hint": "",
       "tags": [
-        "navigation"
-      ]
-    },
-    {
-      "name": "Дальнобойщик",
-      "coef": 0.2,
-      "hint": "",
-      "tags": [
+        "navigation",
         "logistics"
       ]
     },
     {
-      "name": "Дворник",
-      "coef": 0.2,
+      "name": "Финансовый менеджер",
+      "coef": 0.25,
       "hint": "",
-      "tags": []
+      "tags": [
+        "logistics",
+        "computing"
+      ]
     },
     {
-      "name": "Дизайнер",
-      "coef": 0.2,
+      "name": "Курьер",
+      "coef": 0.25,
       "hint": "",
-      "tags": []
+      "tags": [
+        "logistics",
+        "navigation"
+      ]
     },
     {
-      "name": "Кассир",
-      "coef": 0.2,
+      "name": "Уборщик",
+      "coef": 0.25,
       "hint": "",
-      "tags": []
+      "tags": [
+        "ppe",
+        "infectious"
+      ]
     },
     {
-      "name": "Киберспортсмен",
+      "name": "Массажист",
       "coef": 0.2,
       "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Маркетолог",
-      "coef": 0.2,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Почтальон",
-      "coef": 0.2,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Продавец-консультант",
-      "coef": 0.2,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Сомелье",
-      "coef": 0.2,
-      "hint": "",
-      "tags": []
+      "tags": [
+        "medical",
+        "psychology"
+      ]
     },
     {
       "name": "Сторож",
@@ -1073,82 +1167,161 @@
       ]
     },
     {
-      "name": "Финансовый менеджер",
-      "coef": 0.2,
+      "name": "Официант",
+      "coef": 0.15,
       "hint": "",
-      "tags": []
+      "tags": [
+        "food",
+        "logistics"
+      ]
+    },
+    {
+      "name": "Дворник",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "tools",
+        "logistics"
+      ]
+    },
+    {
+      "name": "Дизайнер",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "culture",
+        "computing"
+      ]
+    },
+    {
+      "name": "Маркетолог",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "diplomacy",
+        "culture"
+      ]
+    },
+    {
+      "name": "Сомелье",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "food",
+        "culture"
+      ]
+    },
+    {
+      "name": "Ведущий подкаста",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "culture",
+        "diplomacy"
+      ]
+    },
+    {
+      "name": "Парикмахер",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [
+        "tools",
+        "culture"
+      ]
+    },
+    {
+      "name": "Киберспортсмен",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [
+        "computing"
+      ]
     },
     {
       "name": "Экоактивист",
-      "coef": 0.2,
+      "coef": 0.1,
       "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Курьер",
-      "coef": 0.15,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Уборщик",
-      "coef": 0.15,
-      "hint": "",
-      "tags": []
+      "tags": [
+        "biology",
+        "agriculture"
+      ]
     },
     {
       "name": "Блогер",
       "coef": 0.1,
       "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Ведущий подкаста",
-      "coef": 0.1,
-      "hint": "",
-      "tags": []
+      "tags": [
+        "culture"
+      ]
     },
     {
       "name": "Стажер во «Вкусно и точка»",
       "coef": 0.1,
       "hint": "",
-      "tags": []
+      "tags": [
+        "food"
+      ]
     },
     {
       "name": "Стилист",
       "coef": 0.1,
       "hint": "",
+      "tags": [
+        "culture",
+        "cold"
+      ]
+    },
+    {
+      "name": "Кассир",
+      "coef": 0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Продавец-консультант",
+      "coef": 0.05,
+      "hint": "",
       "tags": []
     },
     {
       "name": "Тиктокер",
-      "coef": 0.1,
+      "coef": 0.05,
       "hint": "",
-      "tags": []
+      "tags": [
+        "culture"
+      ]
     },
     {
       "name": "Актёр массовки",
       "coef": 0.05,
       "hint": "",
-      "tags": []
+      "tags": [
+        "culture"
+      ]
     },
     {
       "name": "Коуч",
       "coef": 0.05,
       "hint": "",
-      "tags": []
+      "tags": [
+        "diplomacy"
+      ]
     },
     {
       "name": "Нутрициолог-блогер",
       "coef": 0.05,
       "hint": "",
-      "tags": []
+      "tags": [
+        "food"
+      ]
     },
     {
       "name": "Реалити-звезда",
       "coef": 0.05,
       "hint": "",
-      "tags": []
+      "tags": [
+        "culture"
+      ]
     },
     {
       "name": "Безработный",
@@ -1205,8 +1378,30 @@
       "tags": []
     },
     {
+      "name": "Киллер",
+      "coef": -0.2,
+      "hint": "",
+      "tags": [
+        "weapon",
+        "criminal",
+        "security",
+        "strength",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Нарколабораторщик",
+      "coef": -0.25,
+      "hint": "",
+      "tags": [
+        "chemistry",
+        "criminal",
+        "dangerous"
+      ]
+    },
+    {
       "name": "Продавец БАДов вместо лекарств",
-      "coef": -0.1,
+      "coef": -0.3,
       "hint": "",
       "tags": [
         "light_danger"
@@ -1214,7 +1409,7 @@
     },
     {
       "name": "Провокатор",
-      "coef": -0.25,
+      "coef": -0.35,
       "hint": "",
       "tags": [
         "conflict",
@@ -1223,15 +1418,7 @@
     },
     {
       "name": "Шарлатан-целитель",
-      "coef": -0.25,
-      "hint": "",
-      "tags": [
-        "light_danger"
-      ]
-    },
-    {
-      "name": "Агитатор паники",
-      "coef": -0.3,
+      "coef": -0.35,
       "hint": "",
       "tags": [
         "light_danger"
@@ -1239,25 +1426,26 @@
     },
     {
       "name": "Мародёр",
-      "coef": -0.3,
+      "coef": -0.35,
       "hint": "",
       "tags": [
         "criminal",
+        "survival",
+        "logistics",
         "light_danger"
       ]
     },
     {
-      "name": "Нарколабораторщик",
-      "coef": -0.3,
+      "name": "Агитатор паники",
+      "coef": -0.45,
       "hint": "",
       "tags": [
-        "criminal",
-        "dangerous"
+        "light_danger"
       ]
     },
     {
       "name": "Вербовщик принудительного культа",
-      "coef": -0.35,
+      "coef": -0.6,
       "hint": "",
       "tags": [
         "conflict",
@@ -1266,52 +1454,58 @@
     },
     {
       "name": "Каратель",
-      "coef": -0.35,
+      "coef": -0.65,
       "hint": "",
       "tags": [
-        "dangerous"
-      ]
-    },
-    {
-      "name": "Саботажник",
-      "coef": -0.4,
-      "hint": "",
-      "tags": [
+        "weapon",
         "dangerous"
       ]
     },
     {
       "name": "Контрабандист рабов",
-      "coef": -0.45,
+      "coef": -0.65,
       "hint": "",
       "tags": [
         "criminal",
-        "dangerous"
-      ]
-    },
-    {
-      "name": "Пироман",
-      "coef": -0.45,
-      "hint": "",
-      "tags": [
-        "dangerous"
-      ]
-    },
-    {
-      "name": "Торговец органами",
-      "coef": -0.5,
-      "hint": "",
-      "tags": [
-        "criminal",
+        "logistics",
         "dangerous"
       ]
     },
     {
       "name": "Работорговец",
-      "coef": -0.55,
+      "coef": -0.65,
       "hint": "",
       "tags": [
         "criminal",
+        "logistics",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Саботажник",
+      "coef": -0.7,
+      "hint": "",
+      "tags": [
+        "repair",
+        "security",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Торговец органами",
+      "coef": -0.7,
+      "hint": "",
+      "tags": [
+        "criminal",
+        "medical",
+        "dangerous"
+      ]
+    },
+    {
+      "name": "Пироман",
+      "coef": -0.75,
+      "hint": "",
+      "tags": [
         "dangerous"
       ]
     }

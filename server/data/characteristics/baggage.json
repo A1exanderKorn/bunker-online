@@ -3,19 +3,10 @@
   "items": [
     {
       "name": "Грудной ребёнок",
-      "coef": 1.15,
+      "coef": 1,
       "hint": "Идет в комплекте со всем необходимым + детскими лекарствами и питанием на срок пребывания в бункере",
       "tags": [
         "bunker_assistance_big"
-      ]
-    },
-    {
-      "name": "АК-74М и набор рожков",
-      "coef": 1,
-      "hint": "",
-      "tags": [
-        "weapon",
-        "security"
       ]
     },
     {
@@ -35,35 +26,20 @@
       ]
     },
     {
-      "name": "Портативный фильтр для воды",
-      "coef": 0.95,
+      "name": "АК-74М и набор рожков",
+      "coef": 0.85,
       "hint": "",
       "tags": [
-        "water"
+        "weapon",
+        "security"
       ]
     },
     {
       "name": "Солнечная панель",
-      "coef": 0.95,
-      "hint": "",
-      "tags": [
-        "power"
-      ]
-    },
-    {
-      "name": "Аптечка",
-      "coef": 0.9,
-      "hint": "",
-      "tags": [
-        "medical"
-      ]
-    },
-    {
-      "name": "Канистра питьевой воды на 20 литров",
       "coef": 0.85,
       "hint": "",
       "tags": [
-        "water"
+        "power"
       ]
     },
     {
@@ -72,74 +48,59 @@
       "hint": "",
       "tags": [
         "tools",
-        "repair",
-        "construction"
-      ]
-    },
-    {
-      "name": "Запас антибиотиков",
-      "coef": 0.8,
-      "hint": "",
-      "tags": [
-        "medical"
-      ]
-    },
-    {
-      "name": "Пистолет + 10 обойм к нему",
-      "coef": 0.8,
-      "hint": "",
-      "tags": [
-        "weapon",
-        "security"
-      ]
-    },
-    {
-      "name": "Полевой набор хирурга",
-      "coef": 0.8,
-      "hint": "",
-      "tags": [
-        "medical"
+        "construction",
+        "repair"
       ]
     },
     {
       "name": "Разборная теплица",
-      "coef": 0.8,
+      "coef": 0.85,
       "hint": "",
       "tags": [
         "agriculture"
       ]
     },
     {
-      "name": "Таблетки для обеззараживания воды",
+      "name": "Комплект СИЗ-3",
       "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "ppe",
+        "protection"
+      ]
+    },
+    {
+      "name": "Фильтры HEPA (коробка)",
+      "coef": 0.8,
+      "hint": "",
+      "tags": [
+        "ventilation",
+        "ppe"
+      ]
+    },
+    {
+      "name": "Портативный фильтр для воды",
+      "coef": 0.75,
       "hint": "",
       "tags": [
         "water"
       ]
     },
     {
-      "name": "Антидоты широкого спектра",
+      "name": "Комплект раций",
       "coef": 0.75,
       "hint": "",
       "tags": [
-        "medical"
+        "communication"
       ]
     },
     {
-      "name": "Дозиметр",
-      "coef": 0.75,
+      "name": "Запас антибиотиков",
+      "coef": 0.7,
       "hint": "",
       "tags": [
-        "radiation"
-      ]
-    },
-    {
-      "name": "Мешок картошки",
-      "coef": 0.75,
-      "hint": "",
-      "tags": [
-        "food",
-        "agriculture"
+        "medical",
+        "infectious"
       ]
     },
     {
@@ -152,68 +113,86 @@
       ]
     },
     {
-      "name": "ИБП с аккумулятором",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "power"
-      ]
-    },
-    {
-      "name": "Обезболивающее",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "medical"
-      ]
-    },
-    {
-      "name": "Ручной динамо-генератор",
-      "coef": 0.7,
-      "hint": "",
-      "tags": [
-        "power"
-      ]
-    },
-    {
       "name": "Сварочный аппарат",
       "coef": 0.7,
       "hint": "",
       "tags": [
         "tools",
-        "repair"
+        "repair",
+        "construction"
       ]
     },
     {
-      "name": "Солнечная зарядка USB-C",
+      "name": "Огнетушитель",
       "coef": 0.7,
       "hint": "",
       "tags": [
-        "power"
+        "fire"
       ]
     },
     {
-      "name": "Справочник по неотложной медицине",
+      "name": "Кот",
       "coef": 0.7,
       "hint": "",
       "tags": [
-        "medical"
+        "animals",
+        "psychology",
+        "bunker_assistance_small"
       ]
     },
     {
-      "name": "Комплект раций",
-      "coef": 0.65,
+      "name": "Бензопила с запасом топлива",
+      "coef": 0.7,
       "hint": "",
       "tags": [
-        "communication"
+        "tools",
+        "construction"
       ]
     },
     {
-      "name": "Комплект СИЗ-3",
+      "name": "Набор ключей трубных",
+      "coef": 0.7,
+      "hint": "",
+      "tags": [
+        "tools",
+        "water",
+        "repair",
+        "plumbing"
+      ]
+    },
+    {
+      "name": "Пистолет + 10 обойм к нему",
       "coef": 0.65,
       "hint": "",
       "tags": [
-        "ppe"
+        "weapon",
+        "security"
+      ]
+    },
+    {
+      "name": "Антидоты широкого спектра",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "medical",
+        "chemistry"
+      ]
+    },
+    {
+      "name": "Дозиметр",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "radiation"
+      ]
+    },
+    {
+      "name": "Мешок картошки",
+      "coef": 0.65,
+      "hint": "",
+      "tags": [
+        "food",
+        "agriculture"
       ]
     },
     {
@@ -233,77 +212,11 @@
       ]
     },
     {
-      "name": "Портативный дефибриллятор",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "medical"
-      ]
-    },
-    {
-      "name": "Противогаз",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "ppe"
-      ]
-    },
-    {
-      "name": "Семена гороха (мешок)",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "agriculture"
-      ]
-    },
-    {
-      "name": "Семена капусты",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "agriculture"
-      ]
-    },
-    {
       "name": "Семена картофеля",
       "coef": 0.65,
       "hint": "",
       "tags": [
         "agriculture"
-      ]
-    },
-    {
-      "name": "Семена моркови",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "agriculture"
-      ]
-    },
-    {
-      "name": "Семена свёклы",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "agriculture"
-      ]
-    },
-    {
-      "name": "Фильтры HEPA (коробка)",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "ppe",
-        "ventilation"
-      ]
-    },
-    {
-      "name": "Бензопила с запасом топлива",
-      "coef": 0.65,
-      "hint": "",
-      "tags": [
-        "tools",
-        "construction"
       ]
     },
     {
@@ -317,18 +230,54 @@
     },
     {
       "name": "Инкубатор для куриных яиц",
-      "coef": 0.6,
+      "coef": 0.65,
       "hint": "",
       "tags": [
-        "animals"
+        "animals",
+        "food"
       ]
     },
     {
-      "name": "Канистра спирта медицинского",
+      "name": "Надувная лодка",
+      "coef": 0.65,
+      "hint": "Нужна для спасательных операций",
+      "tags": [
+        "rescue",
+        "navigation"
+      ]
+    },
+    {
+      "name": "Полевой набор хирурга",
       "coef": 0.6,
       "hint": "",
       "tags": [
-        "medical"
+        "medical",
+        "tools"
+      ]
+    },
+    {
+      "name": "Таблетки для обеззараживания воды",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "water",
+        "infectious"
+      ]
+    },
+    {
+      "name": "ИБП с аккумулятором",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "power"
+      ]
+    },
+    {
+      "name": "Семена гороха (мешок)",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "agriculture"
       ]
     },
     {
@@ -349,8 +298,75 @@
       ]
     },
     {
-      "name": "Насос ручной",
+      "name": "Противопожарное покрывало",
       "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "fire",
+        "protection"
+      ]
+    },
+    {
+      "name": "Комплект термобелья на группу",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "cold"
+      ]
+    },
+    {
+      "name": "Мультиметр",
+      "coef": 0.6,
+      "hint": "",
+      "tags": [
+        "tools",
+        "repair",
+        "power"
+      ]
+    },
+    {
+      "name": "Аптечка",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
+      "name": "Противогаз",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "ppe"
+      ]
+    },
+    {
+      "name": "Семена капусты",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "agriculture"
+      ]
+    },
+    {
+      "name": "Семена моркови",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "agriculture"
+      ]
+    },
+    {
+      "name": "Семена свёклы",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "agriculture"
+      ]
+    },
+    {
+      "name": "Насос ручной",
+      "coef": 0.55,
       "hint": "",
       "tags": [
         "water"
@@ -362,30 +378,6 @@
       "hint": "",
       "tags": [
         "protection"
-      ]
-    },
-    {
-      "name": "Запас йодного антисептика",
-      "coef": 0.55,
-      "hint": "",
-      "tags": [
-        "medical"
-      ]
-    },
-    {
-      "name": "Запас соли крупной",
-      "coef": 0.55,
-      "hint": "",
-      "tags": [
-        "food"
-      ]
-    },
-    {
-      "name": "Огнетушитель",
-      "coef": 0.55,
-      "hint": "",
-      "tags": [
-        "fire"
       ]
     },
     {
@@ -415,23 +407,6 @@
       ]
     },
     {
-      "name": "Термоодеяло (пачка)",
-      "coef": 0.55,
-      "hint": "",
-      "tags": [
-        "cold"
-      ]
-    },
-    {
-      "name": "Учебный комплект оператора реактора",
-      "coef": 0.55,
-      "hint": "",
-      "tags": [
-        "nuclear",
-        "radiation"
-      ]
-    },
-    {
       "name": "Ящик консервов",
       "coef": 0.55,
       "hint": "",
@@ -456,22 +431,6 @@
       ]
     },
     {
-      "name": "Противопожарное покрывало",
-      "coef": 0.55,
-      "hint": "",
-      "tags": [
-        "fire"
-      ]
-    },
-    {
-      "name": "Комплект термобелья на группу",
-      "coef": 0.55,
-      "hint": "",
-      "tags": [
-        "cold"
-      ]
-    },
-    {
       "name": "Комплект автономных датчиков открытия дверей",
       "coef": 0.55,
       "hint": "",
@@ -480,144 +439,22 @@
       ]
     },
     {
-      "name": "Атлас пород и устойчивых грунтов",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "geology"
-      ]
-    },
-    {
       "name": "Газовая горелка",
-      "coef": 0.5,
+      "coef": 0.55,
       "hint": "Сойдет для приготовления пищи",
       "tags": [
-        "food"
-      ]
-    },
-    {
-      "name": "Датчики CO₂",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "ventilation"
-      ]
-    },
-    {
-      "name": "Запас активированного угля",
-      "coef": 0.5,
-      "hint": "Нужен для фильтрации воды",
-      "tags": [
-        "water"
-      ]
-    },
-    {
-      "name": "Канистра керосина",
-      "coef": 0.5,
-      "hint": "Топливо для оборудования",
-      "tags": [
-        "power"
-      ]
-    },
-    {
-      "name": "Лук и стрелы",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "weapon",
-        "security"
-      ]
-    },
-    {
-      "name": "Мешок сахара",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "food"
-      ]
-    },
-    {
-      "name": "Мешок соли",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "food"
-      ]
-    },
-    {
-      "name": "Мультиварка",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "food"
-      ]
-    },
-    {
-      "name": "Мультиметр",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "tools",
-        "repair"
-      ]
-    },
-    {
-      "name": "Набор для рыбалки",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "food"
-      ]
-    },
-    {
-      "name": "Набор ключей трубных",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "plumbing",
-        "tools"
-      ]
-    },
-    {
-      "name": "Набор медицинских шин и гипсовых бинтов",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "medical"
-      ]
-    },
-    {
-      "name": "Надувная лодка",
-      "coef": 0.5,
-      "hint": "Нужна для спасательных операций",
-      "tags": [
-        "rescue"
-      ]
-    },
-    {
-      "name": "Топор-колун",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "tools"
-      ]
-    },
-    {
-      "name": "Швейная машинка",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "tailoring",
+        "food",
         "cold"
       ]
     },
     {
-      "name": "Швейцарский нож",
-      "coef": 0.5,
+      "name": "Швейная машинка",
+      "coef": 0.55,
       "hint": "",
       "tags": [
-        "tools",
-        "survival"
+        "cold",
+        "repair",
+        "tailoring"
       ]
     },
     {
@@ -631,10 +468,105 @@
     },
     {
       "name": "Электронная книга с библиотекой из 10 000 книг",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "culture",
+        "science"
+      ]
+    },
+    {
+      "name": "Коптильня походная",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Рыболовная сеть",
+      "coef": 0.55,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Ручной динамо-генератор",
       "coef": 0.5,
       "hint": "",
       "tags": [
-        "culture"
+        "power"
+      ]
+    },
+    {
+      "name": "Портативный дефибриллятор",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
+      "name": "Термоодеяло (пачка)",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "cold",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Датчики CO₂",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "ventilation"
+      ]
+    },
+    {
+      "name": "Канистра керосина",
+      "coef": 0.5,
+      "hint": "Топливо для оборудования",
+      "tags": [
+        "power",
+        "cold"
+      ]
+    },
+    {
+      "name": "Лук и стрелы",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "weapon",
+        "food"
+      ]
+    },
+    {
+      "name": "Набор для рыбалки",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Топор-колун",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "tools",
+        "construction",
+        "cold"
+      ]
+    },
+    {
+      "name": "Швейцарский нож",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "tools",
+        "survival"
       ]
     },
     {
@@ -646,19 +578,75 @@
       ]
     },
     {
-      "name": "Аптечка стоматологическая",
-      "coef": 0.45,
+      "name": "Компас",
+      "coef": 0.5,
       "hint": "",
       "tags": [
-        "medical"
+        "navigation"
       ]
     },
     {
-      "name": "Аудиоплеер с музыкой",
+      "name": "Лом",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "tools",
+        "rescue",
+        "construction"
+      ]
+    },
+    {
+      "name": "Лопата",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "tools",
+        "construction",
+        "agriculture"
+      ]
+    },
+    {
+      "name": "Ноутбук",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "computing"
+      ]
+    },
+    {
+      "name": "Топор",
+      "coef": 0.5,
+      "hint": "",
+      "tags": [
+        "tools",
+        "construction"
+      ]
+    },
+    {
+      "name": "Канистра спирта медицинского",
       "coef": 0.45,
       "hint": "",
       "tags": [
-        "culture"
+        "medical",
+        "infectious",
+        "ppe"
+      ]
+    },
+    {
+      "name": "Учебный комплект оператора реактора",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "nuclear",
+        "radiation"
+      ]
+    },
+    {
+      "name": "Запас активированного угля",
+      "coef": 0.45,
+      "hint": "Нужен для фильтрации воды",
+      "tags": [
+        "water"
       ]
     },
     {
@@ -674,7 +662,8 @@
       "coef": 0.45,
       "hint": "",
       "tags": [
-        "ppe"
+        "ppe",
+        "infectious"
       ]
     },
     {
@@ -686,35 +675,11 @@
       ]
     },
     {
-      "name": "Комплект прокладок",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "plumbing"
-      ]
-    },
-    {
-      "name": "Коптильня походная",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "food"
-      ]
-    },
-    {
       "name": "Набор батареек и аккумуляторов",
       "coef": 0.45,
       "hint": "",
       "tags": [
         "power"
-      ]
-    },
-    {
-      "name": "Набор для шитья",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "tailoring"
       ]
     },
     {
@@ -726,58 +691,12 @@
       ]
     },
     {
-      "name": "Набор СО2-баллонов для аквакультуры",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "agriculture"
-      ]
-    },
-    {
-      "name": "Рыболовная сеть",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "food"
-      ]
-    },
-    {
       "name": "Сигнальные ракеты",
       "coef": 0.45,
       "hint": "",
       "tags": [
-        "communication"
-      ]
-    },
-    {
-      "name": "Сухпаёк",
-      "coef": 0.45,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Учебник по прикладной химии",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "science",
-        "chemistry"
-      ]
-    },
-    {
-      "name": "Ручная сирена",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "communication"
-      ]
-    },
-    {
-      "name": "Карточки кризисной психологической помощи",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "psychology"
+        "communication",
+        "rescue"
       ]
     },
     {
@@ -785,18 +704,14 @@
       "coef": 0.45,
       "hint": "",
       "tags": [
-        "biology"
+        "biology",
+        "food",
+        "survival"
       ]
     },
     {
-      "name": "Купюра в 100 рублей",
-      "coef": 0.1,
-      "hint": "",
-      "tags": []
-    },
-    {
       "name": "Армированный скотч",
-      "coef": 0.5,
+      "coef": 0.45,
       "hint": "",
       "tags": [
         "tools",
@@ -804,87 +719,124 @@
       ]
     },
     {
-      "name": "Бинокль",
-      "coef": 0.3,
+      "name": "Катушка медного провода",
+      "coef": 0.45,
       "hint": "",
       "tags": [
-        "navigation"
+        "tools",
+        "repair",
+        "power"
+      ]
+    },
+    {
+      "name": "Катушка троса 50 м",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "rescue",
+        "tools"
+      ]
+    },
+    {
+      "name": "Набор отвёрток прецизионных",
+      "coef": 0.45,
+      "hint": "",
+      "tags": [
+        "tools",
+        "repair"
+      ]
+    },
+    {
+      "name": "Канистра питьевой воды на 20 литров",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "water"
+      ]
+    },
+    {
+      "name": "Справочник по неотложной медицине",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
+      "name": "Атлас пород и устойчивых грунтов",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "geology"
+      ]
+    },
+    {
+      "name": "Мешок сахара",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Мультиварка",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Набор медицинских шин и гипсовых бинтов",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
+      "name": "Набор СО2-баллонов для аквакультуры",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "agriculture"
+      ]
+    },
+    {
+      "name": "Учебник по прикладной химии",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "chemistry",
+        "science"
+      ]
+    },
+    {
+      "name": "Бинокль",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "navigation",
+        "security"
       ]
     },
     {
       "name": "Веревка",
       "coef": 0.4,
       "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Гаечный ключ",
-      "coef": 0.4,
-      "hint": "",
       "tags": [
-        "tools",
-        "repair"
+        "rescue",
+        "tools"
       ]
-    },
-    {
-      "name": "Зажигалка",
-      "coef": 0.4,
-      "hint": "",
-      "tags": []
     },
     {
       "name": "Запас гвоздей и саморезов",
       "coef": 0.4,
       "hint": "",
       "tags": [
-        "construction"
-      ]
-    },
-    {
-      "name": "Запас свечей",
-      "coef": 0.1,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Запас эпоксидки",
-      "coef": 0.3,
-      "hint": "",
-      "tags": [
+        "construction",
         "repair"
       ]
-    },
-    {
-      "name": "Записная книжка и ручка",
-      "coef": 0.1,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Изолента (ящик)",
-      "coef": 0.3,
-      "hint": "",
-      "tags": [
-        "repair"
-      ]
-    },
-    {
-      "name": "Календарь на прошлый год",
-      "coef": 0,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Пустая канистра для топлива",
-      "coef": 0,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Канистра масла",
-      "coef": 0.1,
-      "hint": "",
-      "tags": []
     },
     {
       "name": "Капкан",
@@ -895,16 +847,83 @@
       ]
     },
     {
-      "name": "Кассеты с фильмами",
-      "coef": 0.45,
+      "name": "Радио",
+      "coef": 0.4,
       "hint": "",
       "tags": [
-        "culture"
+        "communication"
       ]
     },
     {
-      "name": "Катушка медного провода",
-      "coef": 0.45,
+      "name": "Турникет",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "medical",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Фонарик и запасные батарейки",
+      "coef": 0.4,
+      "hint": "",
+      "tags": [
+        "navigation",
+        "rescue"
+      ]
+    },
+    {
+      "name": "Обезболивающее",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
+      "name": "Запас йодного антисептика",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "medical",
+        "infectious"
+      ]
+    },
+    {
+      "name": "Запас соли крупной",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Мешок соли",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Аптечка стоматологическая",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "medical"
+      ]
+    },
+    {
+      "name": "Карточки кризисной психологической помощи",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "psychology"
+      ]
+    },
+    {
+      "name": "Гаечный ключ",
+      "coef": 0.35,
       "hint": "",
       "tags": [
         "tools",
@@ -912,7 +931,218 @@
       ]
     },
     {
-      "name": "Катушка троса 50 м",
+      "name": "Запас эпоксидки",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "repair"
+      ]
+    },
+    {
+      "name": "Изолента (ящик)",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "repair"
+      ]
+    },
+    {
+      "name": "Леска и крючки (запас)",
+      "coef": 0.35,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Солнечная зарядка USB-C",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "power"
+      ]
+    },
+    {
+      "name": "Аудиоплеер с музыкой",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "culture"
+      ]
+    },
+    {
+      "name": "Комплект прокладок",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "water",
+        "repair",
+        "plumbing"
+      ]
+    },
+    {
+      "name": "Набор для шитья",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "cold",
+        "tools",
+        "tailoring"
+      ]
+    },
+    {
+      "name": "Сухпаёк",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Ручная сирена",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "communication"
+      ]
+    },
+    {
+      "name": "Набор ножей для метания",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "weapon"
+      ]
+    },
+    {
+      "name": "Сухой спирт (коробка)",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "cold",
+        "food"
+      ]
+    },
+    {
+      "name": "Точильный камень",
+      "coef": 0.3,
+      "hint": "",
+      "tags": [
+        "tools"
+      ]
+    },
+    {
+      "name": "Зажигалка",
+      "coef": 0.25,
+      "hint": "",
+      "tags": [
+        "survival",
+        "cold"
+      ]
+    },
+    {
+      "name": "Кассеты с фильмами",
+      "coef": 0.2,
+      "hint": "",
+      "tags": [
+        "culture"
+      ]
+    },
+    {
+      "name": "Коробок спичек",
+      "coef": 0.2,
+      "hint": "",
+      "tags": [
+        "survival",
+        "cold"
+      ]
+    },
+    {
+      "name": "Рулоны туалетной бумаги",
+      "coef": 0.2,
+      "hint": "",
+      "tags": [
+        "ppe"
+      ]
+    },
+    {
+      "name": "Сворованные 10 упаковок пиццы из Папы Джонс",
+      "coef": 0.2,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Электрический чайник",
+      "coef": 0.2,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Запас свечей",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "survival"
+      ]
+    },
+    {
+      "name": "Кофемолка с мешком зерен",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Набор специй",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Презервативы",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "infectious"
+      ]
+    },
+    {
+      "name": "Термос",
+      "coef": 0.15,
+      "hint": "",
+      "tags": [
+        "cold"
+      ]
+    },
+    {
+      "name": "Бутылка водки",
+      "coef": 0.15,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Записная книжка и ручка",
+      "coef": 0.1,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Пустая канистра для топлива",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [
+        "logistics"
+      ]
+    },
+    {
+      "name": "Канистра масла",
       "coef": 0.1,
       "hint": "",
       "tags": []
@@ -930,86 +1160,102 @@
       "tags": []
     },
     {
-      "name": "Компас",
-      "coef": 0.35,
-      "hint": "",
-      "tags": [
-        "navigation"
-      ]
-    },
-    {
       "name": "Конопля",
-      "coef": 0.3,
+      "coef": 0.1,
       "hint": "",
       "tags": [
         "tools"
       ]
     },
     {
-      "name": "Коробка фантиков",
-      "coef": 0.4,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Коробок спичек",
+      "name": "Пачка Pringles",
       "coef": 0.1,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Кот",
-      "coef": 0.8,
-      "hint": "",
-      "tags": [
-        "bunker_assistance_small",
-        "animals"
-      ]
-    },
-    {
-      "name": "Кофемолка с мешком зерен",
-      "coef": 0.1,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Красный диплом",
-      "coef": 0.2,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Кукла барби",
-      "coef": 0,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Леска и крючки (запас)",
-      "coef": 0.35,
       "hint": "",
       "tags": [
         "food"
       ]
     },
     {
-      "name": "Лом",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "tools",
-        "repair"
-      ]
-    },
-    {
-      "name": "Лопата",
-      "coef": 0.2,
+      "name": "Резиновая секс-кукла",
+      "coef": 0.1,
       "hint": "",
       "tags": []
     },
     {
-      "name": "Мешок мокрой одежды",
-      "coef": -0.1,
+      "name": "Украденные рецепты тортов",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Ящик энергетиков",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "name": "Фотоаппарат",
+      "coef": 0.1,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Чемодан кирпичей",
+      "coef": 0.1,
+      "hint": "",
+      "tags": [
+        "construction"
+      ]
+    },
+    {
+      "name": "Красный диплом",
+      "coef": 0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Пачка сигарет",
+      "coef": 0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Порножурналы",
+      "coef": 0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Анальные шарики",
+      "coef": 0.05,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Купюра в 100 рублей",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Календарь на прошлый год",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Коробка фантиков",
+      "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Кукла барби",
+      "coef": 0,
       "hint": "",
       "tags": []
     },
@@ -1026,49 +1272,7 @@
       "tags": []
     },
     {
-      "name": "Набор ножей для метания",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "weapon"
-      ]
-    },
-    {
-      "name": "Набор отвёрток прецизионных",
-      "coef": 0.3,
-      "hint": "",
-      "tags": [
-        "tools"
-      ]
-    },
-    {
-      "name": "Набор специй",
-      "coef": 0.3,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Ноутбук",
-      "coef": 0.5,
-      "hint": "",
-      "tags": [
-        "computing"
-      ]
-    },
-    {
       "name": "Пачка вкладышей",
-      "coef": 0,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Пачка сигарет",
-      "coef": 0.2,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Пачка Pringles",
       "coef": 0,
       "hint": "",
       "tags": []
@@ -1080,46 +1284,8 @@
       "tags": []
     },
     {
-      "name": "Порножурналы",
-      "coef": 0.2,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Презервативы",
-      "coef": 0,
-      "hint": "",
-      "tags": []
-    },
-    {
       "name": "Пустая рамка для фото",
       "coef": 0,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Радио",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "communication"
-      ]
-    },
-    {
-      "name": "Резиновая секс-кукла",
-      "coef": 0.25,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Рулоны туалетной бумаги",
-      "coef": 0.2,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Сворованные 10 упаковок пиццы из Папы Джонс",
-      "coef": 0.1,
       "hint": "",
       "tags": []
     },
@@ -1154,91 +1320,7 @@
       "tags": []
     },
     {
-      "name": "Сухой спирт (коробка)",
-      "coef": 0.2,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Термос",
-      "coef": 0,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Топор",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "tools"
-      ]
-    },
-    {
-      "name": "Точильный камень",
-      "coef": 0.4,
-      "hint": "",
-      "tags": [
-        "tools"
-      ]
-    },
-    {
-      "name": "Турникет",
-      "coef": 0.45,
-      "hint": "",
-      "tags": [
-        "medical"
-      ]
-    },
-    {
-      "name": "Украденные рецепты тортов",
-      "coef": 0.2,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Ящик энергетиков",
-      "coef": 0.2,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Бутылка водки",
-      "coef": 0.3,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Фонарик и запасные батарейки",
-      "coef": 0.1,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Фотоаппарат",
-      "coef": 0.1,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Электрический чайник",
-      "coef": 0.1,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Анальные шарики",
-      "coef": 0.2,
-      "hint": "",
-      "tags": []
-    },
-    {
       "name": "Брелок без ключей",
-      "coef": 0.1,
-      "hint": "",
-      "tags": []
-    },
-    {
-      "name": "Чемодан кирпичей",
       "coef": 0,
       "hint": "",
       "tags": []
@@ -1246,6 +1328,12 @@
     {
       "name": "Чехол от телефона",
       "coef": 0,
+      "hint": "",
+      "tags": []
+    },
+    {
+      "name": "Мешок мокрой одежды",
+      "coef": -0.1,
       "hint": "",
       "tags": []
     },

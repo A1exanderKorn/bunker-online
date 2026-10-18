@@ -20,8 +20,7 @@ export { generateRareBiology } from './biology'
 
 const MAX_ATTEMPTS = 8000
 
-export function slotMinMax(category: string): { min: number; max: number } {
-  if (category === 'Багаж') return { min: -1, max: 1.15 }
+export function slotMinMax(_category: string): { min: number; max: number } {
   return { min: -1, max: 1 }
 }
 

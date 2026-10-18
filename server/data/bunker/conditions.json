@@ -6,7 +6,8 @@
       "text": "Шкаф с играми и правилами помогает организовать общий досуг.",
       "requirements": [],
       "grants": [
-        "culture"
+        "culture",
+        "psychology"
       ],
       "successDelta": 0,
       "failureDelta": 0
@@ -17,7 +18,8 @@
       "text": "Рабочий модуль с субстратом и инструкцией даёт возможность выращивать растения; полноценной научной лаборатории здесь нет.",
       "requirements": [],
       "grants": [
-        "agriculture"
+        "agriculture",
+        "food"
       ],
       "successDelta": 1,
       "failureDelta": 0
@@ -28,7 +30,8 @@
       "text": "В кладовке сохранился небольшой набор исправных ручных инструментов. Оружия и боеприпасов нет.",
       "requirements": [],
       "grants": [
-        "tools"
+        "tools",
+        "repair"
       ],
       "successDelta": 0,
       "failureDelta": 0
@@ -38,7 +41,10 @@
       "title": "Доска общего планирования",
       "text": "Маркеры, доска и журнал дежурств помогают не забывать договорённости, но не заменяют лидера.",
       "requirements": [],
-      "grants": [],
+      "grants": [
+        "logistics",
+        "leadership"
+      ],
       "successDelta": 1,
       "failureDelta": 0
     },
@@ -48,7 +54,8 @@
       "text": "Верстак с расходниками и типовыми инструкциями облегчает мелкий ремонт.",
       "requirements": [],
       "grants": [
-        "repair"
+        "repair",
+        "tools"
       ],
       "successDelta": 1,
       "failureDelta": 0
@@ -81,7 +88,8 @@
       "text": "Исправный учебный модуль с птицей, кормом и автоматическим уходом поддерживает разведение животных. Большого запаса готовой еды нет.",
       "requirements": [],
       "grants": [
-        "animals"
+        "animals",
+        "food"
       ],
       "successDelta": 1,
       "failureDelta": 0
@@ -102,7 +110,10 @@
       "title": "Небольшой запас белья",
       "text": "Чистое бельё и перегородки для уединения делают длительное проживание немного удобнее.",
       "requirements": [],
-      "grants": [],
+      "grants": [
+        "psychology",
+        "ppe"
+      ],
       "successDelta": 1,
       "failureDelta": 0
     },
@@ -145,7 +156,9 @@
       "text": "Отдельный бокс с фильтрацией и расходниками помогает изолировать загрязнённую зону. Не заменяет инфекциониста.",
       "requirements": [],
       "grants": [
-        "ppe"
+        "ppe",
+        "infectious",
+        "ventilation"
       ],
       "successDelta": 1,
       "failureDelta": 0
@@ -178,7 +191,8 @@
       "text": "Исправные огнетушители и противопожарные покрывала у жилого отсека.",
       "requirements": [],
       "grants": [
-        "fire"
+        "fire",
+        "protection"
       ],
       "successDelta": 0,
       "failureDelta": 0

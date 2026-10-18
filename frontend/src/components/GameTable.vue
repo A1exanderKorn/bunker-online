@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import InlineConfirm from '@/components/InlineConfirm.vue'
+import TraitRoulette from '@/components/TraitRoulette.vue'
 import { BIOLOGY_CATEGORY, fallbackCharLayout, formatBiology, formatCharacteristicValue, type CharSlot, type PublicPlayer } from '@shared/types'
 
 /**
@@ -27,6 +28,10 @@ function votersFor(p: PublicPlayer): string[] {
 const rows = computed<CharSlot[]>(() =>
   charLayout.value.length > 0 ? charLayout.value : fallbackCharLayout(settings.value),
 )
+
+// Per-slot effects run immediately and independently of the notification queue.
+const rerolls = computed(() => new Map(Object.entries(game.rerollSlots)))
+function rerollFor(p: PublicPlayer, slot: CharSlot) { return rerolls.value.get(revealKey(p,slot)) }
 
 function isMe(p: PublicPlayer) {
   return p.id === myId.value
@@ -111,6 +116,7 @@ function canReveal(p: PublicPlayer, slot: CharSlot): boolean {
     isMe(p) &&
     !isRevealed(p, slot) &&
     game.isMyTurn &&
+    !rerollFor(p, slot) &&
     (!game.forcedReveal || isForcedSlot(p, slot)) &&
     game.revealsLeftThisTurn > 0
   )
@@ -118,6 +124,7 @@ function canReveal(p: PublicPlayer, slot: CharSlot): boolean {
 
 const pendingReveal = ref<string | null>(null)
 watch(() => game.forcedReveal, () => { pendingReveal.value = null })
+watch(rerolls, () => { pendingReveal.value = null })
 function revealKey(p: PublicPlayer, slot: CharSlot): string {
   return `${p.id}:${slot.type}#${slot.occ}`
 }
@@ -177,8 +184,12 @@ function toggleVoters(id: string) {
         current: isCurrent(p) || isVoterTurn(p),
         offline: !p.connected,
         'random-turn': isForced(p),
+        'blood-hit': game.bloodPlayers[p.id] !== undefined,
       }"
     >
+      <div v-if="game.bloodPlayers[p.id] !== undefined" :key="game.bloodPlayers[p.id]" class="blood-skulls" aria-hidden="true">
+        <span v-for="n in 8" :key="n" :style="{ '--n': n }">☠</span>
+      </div>
       <div v-if="isForced(p)" class="random-sparks" aria-hidden="true">
         <span v-for="n in 8" :key="n" :style="{ '--n': n }">?</span>
       </div>
@@ -235,7 +246,15 @@ function toggleVoters(id: string) {
             <span v-if="isMe(p) && isRevealed(p, slot)" class="revealed-tick" title="Вы вскрыли эту характеристику">✓</span>
           </span>
           <span class="char-value">
-            <template v-if="isRevealed(p, slot) || isMe(p) || !amAlive">
+            <TraitRoulette
+              v-if="rerollFor(p, slot)?.spinning"
+              :key="rerollFor(p, slot)!.seq + ':' + revealKey(p, slot)"
+              :slot="rerollFor(p, slot)!.slot"
+              :index="rerollFor(p, slot)!.index"
+              @finish="game.finishRerollSlot(rerollFor(p, slot)!.seq, revealKey(p, slot))"
+            />
+            <span v-else-if="rerollFor(p, slot)" class="reroll-pending">{{ rerollFor(p, slot)!.slot.from }}</span>
+            <template v-else-if="isRevealed(p, slot) || isMe(p) || !amAlive">
               {{ getValue(p, slot) ?? '—' }}
               <small v-if="stage === 'end' && getCoef(p, slot) !== null" class="char-coef">
                 КФ {{ getCoef(p, slot)!.toFixed(2) }}
@@ -252,7 +271,7 @@ function toggleVoters(id: string) {
             />
           </span>
           <span
-            v-else-if="getHint(p, slot) && (isRevealed(p, slot) || isMe(p) || !amAlive)"
+            v-else-if="!rerollFor(p, slot) && getHint(p, slot) && (isRevealed(p, slot) || isMe(p) || !amAlive)"
             class="char-hint"
             tabindex="0"
             @click.stop
@@ -280,6 +299,13 @@ function toggleVoters(id: string) {
 </template>
 
 <style scoped>
+.player-card.blood-hit { animation: blood-pulse .8s ease-in-out infinite !important; }
+.blood-skulls { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.blood-skulls span { position: absolute; top: calc(var(--n) * 10%); left: 0; color: #ff3030; font-size: 24px; text-shadow: 0 0 8px #650000; animation: skull-flight 1.4s ease-out infinite; animation-delay: calc(var(--n) * -.17s); --dx: -45px; }
+.blood-skulls span:nth-child(odd) { left: 100%; --dx: 45px; }
+@keyframes skull-flight { from { opacity: 1; transform: translate(0, 0) rotate(0); } to { opacity: 0; transform: translate(var(--dx), -65px) rotate(30deg); } }
+@keyframes blood-pulse { 0%, 100% { background: #510c18; border-color: #b82030; box-shadow: 0 0 15px #b50030; } 50% { background: #830c21; border-color: #ff3149; box-shadow: 0 0 30px #fa123d; } }
+@media (prefers-reduced-motion: reduce) { .player-card.blood-hit { animation: none !important; outline: 3px solid #ef2341; } .blood-skulls { display: none; } }
 .card-foot { flex-wrap: wrap; gap: 8px; }
 .players-grid {
   display: grid;
@@ -526,6 +552,7 @@ function toggleVoters(id: string) {
   padding-top: 2px;
 }
 .char-value {
+  min-width: 0;
   color: var(--text);
   font-weight: 600;
   overflow-wrap: break-word;

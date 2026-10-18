@@ -1,11 +1,9 @@
 import { defineStore } from 'pinia'
 
-export type ThemeMode = 'system' | 'light' | 'dark'
+export type ThemeMode = 'light' | 'dark'
 export type ThemeSkin = 'last-light'
 
 const KEY = 'bunker-theme'
-// Temporary presentation lock; keep the saved preference for when themes return.
-const DARK_ONLY = true
 
 /**
  * Skin controls art direction; mode controls brightness independently.
@@ -15,26 +13,26 @@ export const useThemeStore = defineStore('theme', {
   state: () => ({
     mode: 'dark' as ThemeMode,
     skin: 'last-light' as ThemeSkin,
-    systemDark: window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false,
   }),
   getters: {
-    /** Фактически применённая тема (для иконки переключателя). */
-    effective(state): 'light' | 'dark' {
-      if (DARK_ONLY) return 'dark'
-      if (state.mode !== 'system') return state.mode
-      return state.systemDark ? 'dark' : 'light'
+    effective(state): ThemeMode {
+      return state.mode
     },
   },
   actions: {
     init() {
-      const saved = localStorage.getItem(KEY)
-      this.mode = saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'dark'
-      this.apply()
-      // Реагируем на смену системной темы, когда режим = system.
-      window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
-        this.systemDark = event.matches
-        if (this.mode === 'system') this.apply()
-      })
+      let saved: string | null = null
+      try {
+        saved = localStorage.getItem(KEY)
+      } catch {
+        // Theme selection still works when browser storage is unavailable.
+      }
+      // Migrate the old system setting to one of the two explicit choices.
+      let mode: ThemeMode = saved === 'light' ? 'light' : 'dark'
+      if (saved === 'system') {
+        mode = (window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? true) ? 'dark' : 'light'
+      }
+      this.set(mode)
     },
     apply() {
       const root = document.documentElement
@@ -43,14 +41,12 @@ export const useThemeStore = defineStore('theme', {
     },
     set(mode: ThemeMode) {
       this.mode = mode
-      localStorage.setItem(KEY, mode)
       this.apply()
-    },
-    /** Циклическое переключение system → light → dark → system. */
-    cycle() {
-      const order: ThemeMode[] = ['system', 'light', 'dark']
-      const next = order[(order.indexOf(this.mode) + 1) % order.length]
-      this.set(next)
+      try {
+        localStorage.setItem(KEY, mode)
+      } catch {
+        // Keep the selected theme for this session even without persistent storage.
+      }
     },
   },
 })

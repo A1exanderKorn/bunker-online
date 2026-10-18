@@ -42,7 +42,7 @@ function survivor(id, name, sex, professionTags, age = 30) {
     name,
     characteristics: [
       { type: 'Здоровье', value: 'Идеальное здоровье', coef: 1, hint: '', isVisible: true, occ: 0, tags: ['healthy'] },
-      { type: 'Профессия', value: 'Тестовая профессия', coef: 0.5, hint: '', isVisible: true, occ: 0, tags: professionTags },
+      { type: 'Профессия', value: professionTags.includes('food') ? 'Шеф-повар' : professionTags.includes('leadership') ? 'Президент' : professionTags.includes('geology') ? 'Геолог' : professionTags.includes('engineering') ? 'Строитель' : 'Тестовая профессия', coef: 0.5, hint: '', isVisible: true, occ: 0, tags: professionTags },
     ],
     biology: { sex, age, experience: 8, coef: 0.8, infertile: false, isVisible: true },
     isAlive: true,
@@ -66,11 +66,10 @@ test('базовые потребности не требуют воду, а с�
 
   const needs = shortStay.factors.find((item) => item.id === 'needs')
   assert.equal(needs.status, 'Удовлетворены')
-  assert.equal(needs.detail, '')
+  assert.match(needs.detail, /40%/)
 })
 
-// Реальная катастрофа cat_004 «Супервулканы»: 2 группы требований
-// [geology|navigation] и [engineering|construction], успех +6 / провал -16.
+// Реальная катастрофа cat_004: геология 100, строительство 65, спасение 40, защита 25.
 const SUPERVULCANO = loadBunkerData().challenges.find((item) => item.id === 'cat_004').text
 
 function challengeDelta(report, text) {
@@ -85,6 +84,8 @@ test('катастрофа: полностью закрытые требован
     survivor('g', 'Геолог', 'М', ['geology']),
     survivor('e', 'Инженер', 'Ж', ['engineering']),
   ]
+  players[0].characteristics.push({type:'Хобби',value:'Полевая минералогия',coef:.4,tags:[]})
+  players[1].characteristics.push({type:'Факт',value:'Служил в МЧС',coef:.8,tags:[]})
   const bunker = { catastrophe: SUPERVULCANO, years: 1, threats: [], conditions: [] }
   const item = challengeDelta(calculateSurvival(players, bunker), SUPERVULCANO)
   assert.equal(item.success, true)
@@ -92,7 +93,7 @@ test('катастрофа: полностью закрытые требован
 })
 
 test('катастрофа: частично закрытые требования дают промежуточную дельту, а не полный провал', () => {
-  // Закрыта только 1 из 2 групп (geology есть, engineering|construction нет).
+  // Геолог даёт 70% из требуемых 100%; прочие шкалы отсутствуют.
   const players = [
     survivor('g', 'Геолог', 'М', ['geology']),
     survivor('x', 'Пустой', 'Ж', []),
@@ -100,9 +101,7 @@ test('катастрофа: частично закрытые требовани
   const bunker = { catastrophe: SUPERVULCANO, years: 1, threats: [], conditions: [] }
   const item = challengeDelta(calculateSurvival(players, bunker), SUPERVULCANO)
   assert.equal(item.success, false)
-  // Максимальный штраф усилен до round(16*1.2)=19, одна из двух групп
-  // закрыта: остаётся половина штрафа, округлённая от нуля => -10.
-  assert.equal(item.delta, -10)
+  assert.equal(item.delta, -13.2) // 19 * (230 - 70) / 230, округление до десятых.
   // Полностью проваленный вариант должен быть строго хуже частичного.
   const noneClosed = calculateSurvival(
     [survivor('a', 'A', 'М', []), survivor('b', 'B', 'Ж', [])],

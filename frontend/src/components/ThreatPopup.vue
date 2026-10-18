@@ -15,7 +15,7 @@ const { threatPopup } = storeToRefs(game)
         <div class="threat-icon">⚠️</div>
         <p class="threat-kicker">Новая угроза</p>
         <h2>{{ threatPopup.flavor }}</h2>
-        <ChallengeRequirements :requirements="threatPopup.requirements" />
+        <ChallengeRequirements :requirements="threatPopup.requirements" :percentages="threatPopup.capabilityRequirements" />
         <p class="threat-hint">Нажмите за пределами окна, чтобы закрыть</p>
       </article>
     </div>

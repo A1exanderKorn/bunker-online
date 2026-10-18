@@ -100,7 +100,7 @@ function toggle(seq: number) {
 .history-strip h4 {
   margin: 0;
   font-size: 15px;
-  color: var(--info);
+  color: var(--text);
 }
 .history-toggle {
   display: flex;
@@ -143,19 +143,18 @@ function toggle(seq: number) {
 }
 .history-card {
   width: 100%;
-  min-height: 140px;
   box-sizing: border-box;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--surface);
-  padding: 8px 10px;
+  background: var(--surface-2);
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
   z-index: 1;
 }
 .hc-round {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 .hc-by {
@@ -165,19 +164,19 @@ function toggle(seq: number) {
 }
 .hc-title {
   font-size: 14px;
-  color: var(--accent);
-  font-weight: 700;
-  line-height: 1.3;
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.5;
 }
 .hc-summary {
   margin: 6px 0 0;
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--text-muted);
   overflow: hidden;
 }
 .hc-toggle {
-  margin-top: auto;
+  margin-top: 4px;
   align-self: flex-start;
   border: 1px solid var(--border-strong);
   background: color-mix(in srgb, var(--accent) 12%, var(--surface));

@@ -8,7 +8,7 @@ const { cardPopup } = storeToRefs(game)
 </script>
 
 <template>
-  <Transition name="pop">
+  <Transition name="pop" @after-leave="game.onCardPopupClosed()">
     <div v-if="cardPopup" class="popup-wrap" @click="game.dismissCardPopup()">
       <div class="popup card">
         <div class="pop-icon">🃏</div>

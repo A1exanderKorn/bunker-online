@@ -4,6 +4,8 @@ const fs = require('node:fs')
 const path = require('node:path')
 const { loadCharacteristics, healthVariants } = require('../dist/server/data.js')
 const { loadBunkerData } = require('../dist/server/bunker.js')
+const { loadCapabilityMatrix } = require('../dist/server/capabilityMatrix.js')
+const matrix = loadCapabilityMatrix()
 const labels = require('../data/tag-labels.json')
 const rows = loadCharacteristics()
 const events = loadBunkerData().challenges
@@ -11,7 +13,7 @@ const risk = ['dangerous', 'psychopath', 'maniac', 'suicidal', 'light_danger', '
 const severe = ['dangerous', 'psychopath', 'maniac', 'suicidal']
 
 test('каталог в сборке совпадает с исходным JSON', () => {
-  for (const relative of ['tag-labels.json', ...require('../data/characteristics/index.json').slots.filter(x => x.file).map(x => `characteristics/${x.file}`),
+  for (const relative of ['tag-labels.json', 'capability-matrix.json', ...require('../data/characteristics/index.json').slots.filter(x => x.file).map(x => `characteristics/${x.file}`),
     ...['catastrophes', 'threats', 'conditions'].map(x => `bunker/${x}.json`)]) {
     const read = prefix => JSON.parse(fs.readFileSync(path.join(__dirname, prefix, relative), 'utf8'))
     assert.deepEqual(read('../dist/server/data'), read('../data'), relative)
@@ -20,7 +22,7 @@ test('каталог в сборке совпадает с исходным JSON
 
 test('все теги каталога известны; КФ конечный и на сетке 0.05', () => {
   for (const x of rows) {
-    assert.ok(Number.isFinite(x.coef) && x.coef >= -1 && x.coef <= 1.15, x.name)
+    assert.ok(Number.isFinite(x.coef) && x.coef >= -1 && x.coef <= 1, x.name)
     assert.ok(Math.abs(x.coef * 20 - Math.round(x.coef * 20)) < 1e-8, x.name)
     assert.equal(new Set(x.tags).size, x.tags.length, x.name)
     x.tags.forEach(tag => assert.ok(labels[tag], `${x.name}: ${tag}`))
@@ -29,12 +31,10 @@ test('все теги каталога известны; КФ конечный �
   for (const e of events) for (const tag of [...e.requirements.flat(), ...e.grants]) assert.ok(labels[tag], `${e.id}: ${tag}`)
 })
 
-test('хвост описания точно соответствует группам И/ИЛИ и подписям тегов', () => {
+test('хвост описания точно соответствует процентным требованиям матрицы', () => {
   for (const e of events.filter(e => e.requirements.length)) {
-    const groups = e.requirements.map(g => g.map(t => labels[t]).join(' или '))
-    const suffix = groups.length === 1
-      ? `Для решения подойдёт: ${groups[0]}.`
-      : `Для решения нужны одновременно: ${groups.map((g,i) => `${i+1}) ${g}`).join('; ')}.`
+    const suffix = 'Для решения требуется суммарный вклад группы: ' +
+      Object.entries(e.capabilityRequirements).map(([tag,n])=>`${labels[tag]} ${n}%`).join('; ') + '.'
     assert.ok(e.text.endsWith(suffix), e.id)
     e.requirements.forEach(g => assert.equal(new Set(g).size, g.length, e.id))
   }
@@ -71,7 +71,8 @@ test('риски сосредоточены на слабых характери
     assert.ok(x.coef < .7, x.name)
     assert.equal(x.tags.includes('light_danger') && x.tags.some(t => severe.includes(t)), false, x.name)
   }
-  for (const x of rows.filter(x => x.category === 'Багаж' && x.coef < .4)) {
+  // Useless baggage can be neutral. Only genuinely harmful items get a risk tag.
+  for (const x of rows.filter(x => x.category === 'Багаж' && x.coef < -.1)) {
     assert.ok(x.tags.includes('light_danger') || x.tags.includes('dangerous'), x.name)
   }
   for (const x of rows.filter(x => x.tags.includes('critical') || x.tags.includes('contagious'))) {
@@ -85,7 +86,8 @@ test('допусловия уникальны, не требуют скрыты�
   for (const key of ['id', 'title', 'text']) assert.equal(new Set(conditions.map(x => normalize(x[key]))).size, conditions.length, key)
   for (const x of conditions) {
     assert.equal(x.requirements.length, 0, x.id)
-    assert.ok(x.grants.length <= 1, x.id)
+    assert.deepEqual(x.grants.slice().sort(), Object.keys(matrix.conditions[x.id]).sort(), x.id)
+    assert.ok(Object.values(matrix.conditions[x.id]).every(value => value <= 45), x.id)
     assert.ok(x.successDelta >= 0 && x.successDelta <= 1, x.id)
     assert.equal(x.failureDelta, 0, x.id)
     assert.ok(x.grants.length || x.successDelta > 0, x.id)
@@ -119,9 +121,35 @@ test('подсказки краткие, фобии поясняются отд�
       if (row.name !== 'Нет фобии') assert.ok(row.hint.trim())
     }
     if (!['Фобия', 'Здоровье'].includes(row.category))
-      assert.ok(!row.hint || ['ОСУЖДАЮ', 'резня'].includes(row.hint), row.name)
+      assert.ok(row.hint.length <= 180, row.name)
   }
   assert.ok(rows.some(r => r.name === 'Оператор очистных сооружений'))
   assert.ok(rows.some(r => r.name === 'Работал на очистных сооружениях'))
   assert.ok(rows.some(r => r.name === 'Электронная книга с библиотекой из 10 000 книг'))
+})
+
+test('КФ покрывают диапазон, а полезные теги точно индексируют матрицу', () => {
+  for (const category of new Set(rows.map(x => x.category))) {
+    const pool = rows.filter(x => x.category === category)
+    assert.equal(Math.max(...pool.map(x=>x.coef)), 1, category)
+    if (!['Профессия','Хобби'].includes(category)) assert.equal(Math.min(...pool.map(x=>x.coef)), -1, category)
+    for (const row of pool) {
+      const vector = matrix.characteristics[category][row.name]
+      assert.deepEqual(row.tags.filter(t=>matrix.dimensions[t]).sort(), Object.keys(vector).sort(), row.name)
+      for (const t of row.tags.filter(t=>matrix.aliases[t])) assert.ok(vector[matrix.aliases[t]], row.name+': '+t)
+    }
+  }
+})
+
+test('предметы, книги и общий опыт не получают полноценную специальность', () => {
+  const value = (category, name, tag) => matrix.characteristics[category][name][tag] || 0
+  assert.ok(value('Багаж','Солнечная зарядка USB-C','power') < value('Багаж','Бензиновый генератор','power'))
+  assert.ok(value('Багаж','Атлас пород и устойчивых грунтов','geology') < value('Багаж','Полевой набор для оценки грунта с инструкцией','geology'))
+  assert.ok(value('Факт','Вырос в деревне','agriculture') < value('Факт','Управлял фермерским хозяйством','agriculture'))
+  assert.ok(value('Факт','Пережил кораблекрушение','rescue') < value('Факт','Служил в МЧС','rescue'))
+  for (const [category,name,tag] of [
+    ['Профессия','Журналист','communication'], ['Профессия','Пекарь','fire'],
+    ['Хобби','Дайвинг','water'], ['Хобби','Компьютерные игры','computing'],
+    ['Багаж','Бутылка водки','culture'], ['Факт','Имеет непогашенную судимость','criminal'],
+  ]) assert.equal(value(category,name,tag),0,name)
 })

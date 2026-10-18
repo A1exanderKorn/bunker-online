@@ -2,6 +2,8 @@
 :root .app-shell {
   isolation: isolate;
   padding-bottom: 32px;
+  background: var(--bg);
+  color: var(--text);
 }
 :root .app-shell::before {
   content: '';
@@ -9,20 +11,10 @@
   inset: 0;
   z-index: -2;
   pointer-events: none;
-  filter: var(--scene-filter, none);
-  background:
-    linear-gradient(180deg, var(--scene-wash), var(--scene-bottom)),
-    var(--scene-image) center / cover;
-}
-:root .app-shell::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: repeating-linear-gradient(0deg, transparent 0 3px, var(--paper-grain) 3px 4px);
+  background: var(--bg);
 }
 :root .app-shell.scene--home::before {
+  filter: var(--scene-filter, none);
   background:
     linear-gradient(90deg, var(--hero-wash) 0%, var(--hero-wash-mid) 40%, var(--hero-wash-end) 75%),
     var(--scene-image) center / cover;
@@ -68,10 +60,10 @@
 }
 .brand-name {
   font-family: var(--font-display);
-  font-size: 27px;
+  font-size: 23px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
 }
 .brand-caption {
   display: block;
@@ -157,7 +149,7 @@
 }
 .btn--special {
   --btn-bg: var(--special);
-  --btn-fg: var(--bg);
+  --btn-fg: var(--on-special);
 }
 :where(button, a, input, select, [tabindex]):focus-visible {
   outline: 2px solid var(--info);
@@ -289,9 +281,12 @@ button:disabled {
 :root .app-shell .stage-timer {
   font-variant-numeric: tabular-nums;
   color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
 }
 :root .app-shell .turn-line {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-muted);
   text-align: left;
 }
@@ -328,7 +323,7 @@ button:disabled {
   padding: 14px;
   box-shadow: var(--shadow-md);
   background: var(--surface);
-  border-top: 3px solid color-mix(in srgb, var(--player-color) 55%, var(--border));
+  border-top: 1px solid var(--border);
 }
 :root .app-shell .player-card.self {
   border-color: var(--card-self-border);
@@ -342,18 +337,19 @@ button:disabled {
 }
 :root .app-shell .card-head {
   padding: 2px 0 12px;
-  border-bottom: 1px solid color-mix(in srgb, var(--player-color) 35%, var(--border));
+  border-bottom: 1px solid var(--border);
   margin-bottom: 3px;
 }
 :root .app-shell .char-row {
-  grid-template-columns: 86px minmax(0, 1fr) 18px;
-  background: color-mix(in srgb, var(--surface-2) 65%, transparent);
-  padding: 7px 6px;
+  grid-template-columns: 90px minmax(0, 1fr) 18px;
+  background: var(--surface-2);
+  padding: 9px 8px;
 }
 :root .app-shell .char-row.revealed {
-  background: color-mix(in srgb, var(--success) 10%, var(--surface));
+  background: var(--revealed-surface);
 }
 :root .app-shell .char-row.mine-revealed {
+  background: var(--revealed-surface);
   border-left: 2px solid var(--success);
 }
 :root .app-shell .char-row.clickable {
@@ -364,35 +360,11 @@ button:disabled {
   background: color-mix(in srgb, var(--warn) 22%, var(--surface));
 }
 :root .app-shell .char-type {
-  font-size: 11px;
-  letter-spacing: 0.02em;
-}
-.char-row {
-  --trait-tone: var(--text-muted);
-}
-.char-row[data-category='Профессия'] {
-  --trait-tone: var(--info);
-}
-.char-row[data-category='Здоровье'] {
-  --trait-tone: var(--success);
-}
-.char-row[data-category='Биология'] {
-  --trait-tone: var(--accent-copper);
-}
-.char-row[data-category='Хобби'] {
-  --trait-tone: var(--special);
-}
-.char-row[data-category='Фобия'] {
-  --trait-tone: var(--danger);
-}
-.char-row[data-category='Багаж'] {
-  --trait-tone: var(--accent);
-}
-.char-row[data-category='Факт'] {
-  --trait-tone: var(--accent-sage);
+  font-size: 12px;
+  letter-spacing: 0;
 }
 :root .app-shell .char-type {
-  color: color-mix(in srgb, var(--trait-tone) 70%, var(--text-muted));
+  color: var(--text-muted);
 }
 :root .app-shell .char-value {
   font-size: 15px;
@@ -400,7 +372,7 @@ button:disabled {
 }
 :root .app-shell .you-badge {
   background: var(--info);
-  color: var(--bg);
+  color: var(--on-info);
 }
 :root .app-shell .turn-badge {
   background: var(--warn);
@@ -433,10 +405,10 @@ button:disabled {
 :root .app-shell .info-block {
   border-top: 2px solid var(--tone, var(--info));
   padding: 16px;
-  background: color-mix(in srgb, var(--tone, var(--info)) 5%, var(--surface));
+  background: var(--surface);
 }
 :root .app-shell .info-block h4 {
-  color: var(--tone, var(--info));
+  color: var(--text);
 }
 :root .app-shell .catastrophe {
   --tone: var(--accent-copper);
@@ -448,18 +420,20 @@ button:disabled {
   --tone: var(--danger);
 }
 :root .app-shell .conditions {
-  --tone: var(--success);
+  --tone: var(--info);
 }
 :root .app-shell .action-cards {
   border-top: 2px solid var(--special);
-  background: color-mix(in srgb, var(--special) 7%, var(--surface));
+  background: var(--surface);
 }
-:root .app-shell .ac-head h4,
+:root .app-shell .ac-head h4 {
+  color: var(--text);
+}
 :root .app-shell .ac-play {
   color: var(--special);
 }
 :root .app-shell .ac-item.playable {
-  border-color: var(--special);
+  border-color: var(--border-strong);
 }
 :root .app-shell .host-controls {
   padding: 16px;
@@ -467,6 +441,11 @@ button:disabled {
   border-radius: var(--radius-md);
   background: var(--surface);
   justify-content: flex-start;
+}
+:root .app-shell .host-controls .btn--primary {
+  --btn-bg: var(--surface-2);
+  --btn-fg: var(--text);
+  box-shadow: none;
 }
 :root .app-shell .host-controls .btn--block {
   width: auto;
@@ -488,6 +467,67 @@ button:disabled {
 }
 :root .app-shell .profile-page .admitted {
   color: var(--success);
+}
+
+/* Reserve strong color for the active turn, meaningful state and primary actions. */
+:root .app-shell .round-step.future,
+:root .app-shell .round-step.past {
+  opacity: 1;
+  filter: none;
+  background: var(--surface);
+}
+:root .app-shell .round-step.current {
+  box-shadow: inset 0 -2px var(--accent);
+  transform: none;
+}
+:root .app-shell .round-step.past .round-step__number::before {
+  content: '✓';
+  display: block;
+  color: var(--success);
+}
+:root .app-shell .round-step__details {
+  font-size: 12px;
+}
+:root .app-shell .cat-text,
+:root .app-shell .threat-flavor,
+:root .app-shell .cond-text {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+}
+:root .app-shell .condition-item,
+:root .app-shell .threat-item {
+  background: var(--surface-2);
+}
+:root .app-shell .info-block h4,
+:root .app-shell .ac-head h4 {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+:root .app-shell .ac-item.playable:hover {
+  border-color: var(--special);
+  background: var(--surface-3);
+}
+:root .app-shell .ac-title {
+  font-size: 14px;
+  line-height: 1.5;
+}
+:root .app-shell .player-card.dead {
+  opacity: 1;
+  filter: none;
+  border-style: dashed;
+}
+:root .app-shell .player-card.dead .player-name {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+/* random-turn / random-sparks / forced-slot keep their GameTable animations. */
+:root .app-shell .char-row.final-danger {
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+}
+:root .app-shell .offline-badge,
+:root .app-shell .reveal-cue {
+  color: var(--accent);
 }
 @media (max-width: 1200px) {
   .game-workspace {
@@ -536,7 +576,7 @@ button:disabled {
     padding: 16px;
   }
   :root .app-shell .char-row {
-    grid-template-columns: 86px minmax(0, 1fr) 20px;
+    grid-template-columns: 90px minmax(0, 1fr) 20px;
   }
   :root .app-shell .char-value {
     font-size: 15px;

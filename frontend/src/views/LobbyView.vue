@@ -183,6 +183,13 @@ const survivalColor = computed(() => {
                 <h3>{{ item.kind === 'catastrophe' ? 'Катастрофа' : `Угроза ${index}` }} — {{ item.success ? 'справились' : 'не справились' }}</h3>
                 <p>{{ item.text }}</p>
                 <p class="challenge-detail">{{ item.detail }}</p>
+                <div v-if="item.coverage" class="coverage-scales">
+                  <div v-for="row in item.coverage" :key="row.tag" class="coverage-scale">
+                    <span>{{ row.label }}</span>
+                    <b>{{ row.available.toFixed(1) }} / {{ row.required }}%</b>
+                    <progress :value="row.coverage" max="1" :aria-label="`${row.label}: закрыто ${(row.coverage * 100).toFixed(1)}%`" />
+                  </div>
+                </div>
               </div>
               <b class="survival-delta" :class="item.delta >= 0 ? 'positive' : 'negative'">
                 {{ item.delta >= 0 ? '+' : '' }}{{ item.delta }}%
@@ -250,7 +257,7 @@ const survivalColor = computed(() => {
     </div>
 
     <!-- Мини-админка теста карт (только хост) -->
-    <!-- <CardAdminPanel v-if="isHost" /> -->
+    <CardAdminPanel v-if="isHost" />
 
     <!-- Управление хоста -->
     <div v-if="isHost" class="host-controls">
@@ -335,6 +342,9 @@ const survivalColor = computed(() => {
 </template>
 
 <style scoped>
+.coverage-scales { margin-top: 10px; }
+.coverage-scale { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 8px 0; font-size: 12px; }
+.coverage-scale progress { grid-column: 1 / -1; width: 100%; height: 8px; accent-color: var(--success); }
 .kick-player { margin-left: auto; flex-shrink: 0; padding: 4px 8px; border: 1px solid #a95555; border-radius: 6px; background: transparent; color: #c45a5a; cursor: pointer; }
 .main-block {
   display: flex;

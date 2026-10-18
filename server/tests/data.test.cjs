@@ -37,13 +37,20 @@ test('погранично опасные факты используют light_
   }
 })
 
-test('у характеристик с отрицательным КФ нет полезных тегов, кроме компенсирующего criminal', () => {
+test('полезные навыки отрицательных характеристик подтверждены матрицей и сопровождаются риском', () => {
+  const matrix = require('../dist/server/capabilityMatrix.js').loadCapabilityMatrix()
   const required = new Set(loadBunkerData().challenges.flatMap((challenge) => challenge.requirements.flat()))
-  required.delete('criminal')
   const usefulLow = loadCharacteristics().filter((row) =>
     Number(row.coef) < 0 && parseSurvivalTags(row.tags).some((tag) => required.has(tag)),
   )
-  assert.deepEqual(usefulLow.map((row) => row.name), [])
+  for (const row of usefulLow) {
+    assert.ok(row.tags.some(t=>['light_danger','dangerous','conflict'].includes(t)), row.name)
+    for (const tag of row.tags.filter(t=>required.has(t)))
+      assert.ok(matrix.characteristics[row.category][row.name][tag] > 0, row.name+': '+tag)
+  }
+  // A low coefficient is not amnesia: a dangerous chemist can still know chemistry.
+  const chemist = usefulLow.find(row=>row.name==='Нарколабораторщик')
+  assert.ok(chemist && chemist.tags.includes('chemistry') && chemist.tags.includes('dangerous'))
 })
 
 test('угроза криминальных группировок компенсирует light_danger', () => {

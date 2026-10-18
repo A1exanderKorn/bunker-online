@@ -1,6 +1,7 @@
 import type { BunkerState, GameMode, PublicBunkerChallenge } from '../shared/types'
 import { readJson } from './loadJson'
 import { labelTag, labelTagGroups } from './tagLabels'
+import { loadCapabilityMatrix, publicCapabilities, type CapabilityVector } from './capabilityMatrix'
 
 /**
  * Каталог бункера: катастрофы, угрозы и доп. условия из JSON.
@@ -23,6 +24,8 @@ export interface BunkerChallenge {
   grants: string[]
   successDelta: number
   failureDelta: number
+  capabilityRequirements: CapabilityVector
+  capabilityGrants: CapabilityVector
 }
 
 interface BunkerFile {
@@ -52,10 +55,15 @@ function loadKind(kind: BunkerChallenge['kind'], file: string): BunkerChallenge[
     .map((item) => {
       const text = String(item.text).trim()
       const title = String(item.title ?? '').trim() || deriveTitle(text)
+      const matrix = loadCapabilityMatrix()
+      const vector = kind === 'condition' ? matrix.conditions[item.id] : matrix.challenges[item.id]
+      if (!vector) throw Error(`В матрице отсутствует событие ${item.id}`)
       return {
         id: String(item.id ?? ''),
         kind,
         title,
+        capabilityRequirements: kind === 'condition' ? {} : vector,
+        capabilityGrants: kind === 'condition' ? vector : {},
         text,
         requirements: Array.isArray(item.requirements) ? item.requirements : [],
         grants: Array.isArray(item.grants) ? item.grants : [],
@@ -87,7 +95,7 @@ export function challengeByText(text: string, mode: GameMode = 'classic'): Bunke
   return loadBunkerData(mode).challenges.find((challenge) => challenge.text === text)
 }
 
-const FLAVOR_MARKERS = ['Для решения нужны одновременно:', 'Для решения подойдёт:']
+const FLAVOR_MARKERS = ['Для решения нужны одновременно:', 'Для решения подойдёт:', 'Для решения требуется суммарный вклад группы:']
 
 /** Сюжет без хвоста «Для решения…». */
 export function challengeFlavor(text: string): string {
@@ -119,6 +127,7 @@ export function toPublicChallenge(text: string, mode: GameMode = 'classic'): Pub
   return {
     flavor: challengeFlavor(text),
     requirements: labelTagGroups(challenge?.requirements ?? [], mode),
+    capabilityRequirements: publicCapabilities(challenge?.capabilityRequirements ?? {}),
   }
 }
 
@@ -132,6 +141,7 @@ export function toPublicBunker(bunker: StoredBunkerState, mode: GameMode = 'clas
       return {
         flavor: challengeFlavor(condition.text),
         grants: (challenge?.grants ?? []).map((tag) => labelTag(tag, mode)),
+        capabilityGrants: publicCapabilities(challenge?.capabilityGrants ?? {}),
         byPlayerId: condition.byPlayerId,
         byName: condition.byName,
       }

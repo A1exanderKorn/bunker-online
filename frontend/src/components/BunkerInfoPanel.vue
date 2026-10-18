@@ -7,7 +7,7 @@ import ChallengeRequirements from '@/components/ChallengeRequirements.vue'
 import ConditionGrants from '@/components/ConditionGrants.vue'
 
 /**
- * Информационное окно: катастрофа, срок в бункере, доп. условия,
+ * Информационное окно: катастрофа, доп. условия,
  * угрозы и карты действия.
  */
 const game = useGameStore()
@@ -23,7 +23,7 @@ const conditions = computed(() => bunker.value.conditions ?? [])
         <li v-for="(c, i) in conditions" :key="i" class="condition-item">
           <div class="cond-by">Добавил: <b>{{ c.byName }}</b></div>
           <div class="cond-text">{{ c.flavor }}</div>
-          <ConditionGrants :grants="c.grants" />
+          <ConditionGrants :grants="c.grants" :percentages="c.capabilityGrants" />
         </li>
       </ul>
     </div>
@@ -31,8 +31,7 @@ const conditions = computed(() => bunker.value.conditions ?? [])
     <div class="card info-block catastrophe">
       <h4>☢️ Катастрофа</h4>
       <p class="cat-text">{{ bunker.catastrophe.flavor || '—' }}</p>
-      <ChallengeRequirements v-if="bunker.catastrophe.flavor" :requirements="bunker.catastrophe.requirements" />
-      <div class="years">🏠 Пребывание в бункере: <b>{{ bunker.years }}</b> {{ bunker.years === 1 ? 'год' : bunker.years < 5 ? 'года' : 'лет' }}</div>
+      <ChallengeRequirements v-if="bunker.catastrophe.flavor" :requirements="bunker.catastrophe.requirements" :percentages="bunker.catastrophe.capabilityRequirements" />
     </div>
 
     <div class="card info-block threats" v-if="settings.threatsEnabled">
@@ -40,7 +39,7 @@ const conditions = computed(() => bunker.value.conditions ?? [])
       <TransitionGroup name="list" tag="ul" v-if="bunker.threats.length">
         <li v-for="(t, i) in bunker.threats" :key="i" class="threat-item">
           <div class="threat-flavor">{{ t.flavor }}</div>
-          <ChallengeRequirements :requirements="t.requirements" />
+          <ChallengeRequirements :requirements="t.requirements" :percentages="t.capabilityRequirements" />
         </li>
       </TransitionGroup>
       <p v-else class="no-threats">Пока угроз нет.</p>

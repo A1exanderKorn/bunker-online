@@ -33,7 +33,59 @@ function fixture() {
   return {l,events,play}
 }
 const char=(playerId,category='Багаж',occ=0)=>({playerId,category,occ})
+test('порча: три категории, андроид, приватность, стадии и случайный живой соперник',()=>{
+  const random=Math.random
+  try {
+    for(const category of ['Биология','Здоровье','Факт']) for(const visible of [false,true]) {
+      const {l,events,play}=fixture()
+      try {
+        l.players[1].isAlive=false
+        const victim=l.players[2]
+        victim.biology.sex='Андроид';victim.biology.isVisible=visible
+        victim.characteristics.forEach(c=>c.isVisible=visible)
+        const before=JSON.stringify(l.players.filter(p=>p!==victim))
+        Math.random=()=>0
+        assert.equal(play('ac_039',{categories:[category]}).used,true)
+        assert.equal(JSON.stringify(l.players.filter(p=>p!==victim)),before)
+        assert.equal(l.cardHistory[0].charChanges.length,1)
+        assert.equal(l.cardHistory[0].charChanges[0].playerId,'p2')
+        if(category==='Биология') {
+          assert.equal(victim.biology.age,95);assert.equal(victim.biology.sex,'М')
+          assert.equal(victim.biology.infertile,true);assert.equal(victim.biology.coef,biologyCoefficient(victim.biology))
+        } else {
+          const {rowsByCategory,expandForDeal}=require('../dist/server/data.js')
+          const value=victim.characteristics.find(c=>c.type===category)
+          if(category==='Факт') assert.equal(value.value,'Педофил')
+          else {
+            const worst=rowsByCategory(category).sort((a,b)=>a.coef-b.coef).slice(0,10)
+            assert.ok(worst.some(r=>r.name===value.value))
+            const variant=expandForDeal(worst.find(r=>r.name===value.value))[0]
+            assert.equal(value.coef,variant.coef);assert.equal(value.stageLabel,variant.stageLabel)
+            assert.equal(value.stageIndex,variant.stageIndex)
+          }
+        }
+        for(const e of events.filter(e=>e.event==='cardPlayed')) {
+          assert.deepEqual(e.payload.bloodPlayerIds,visible?['p2']:[])
+          assert.equal(e.payload.reroll.length,visible||['p1','p2'].includes(e.target)?1:0)
+        }
+      } finally {l.dispose()}
+    }
+  } finally {Math.random=random}
+})
+test('порча отклоняет поддельные категории, слоты, выбор игрока и отсутствие соперников',()=>{
+  const {l,play}=fixture()
+  try {
+    const before=JSON.stringify(l.players)
+    for(const targets of [{categories:['Профессия']},{categories:[{category:'Здоровье',occ:1}]},{categories:['Факт'],players:['p1']}]) {
+      assert.equal(play('ac_039',targets).used,false)
+      assert.equal(JSON.stringify(l.players),before)
+    }
+    l.players.slice(1).forEach(p=>p.isAlive=false)
+    assert.equal(play('ac_039',{categories:['Биология']}).used,false)
+  } finally {l.dispose()}
+})
 function targets(card) {
+  if(card.action==='spoilRandom')return {categories:['Биология']}
   if(card.action==='swap')return {players:['p1'],characteristics:[char('p0'),char('p1','Багаж',1)]}
   if(['shuffleRevealed','biasedReroll'].includes(card.action)||(card.action==='change'&&card.target==='any'&&card.scope==='all'))return {categories:[{category:'Профессия',occ:0}]}
   if(card.action==='change'&&card.scope==='self')return {characteristics:[char('p0')]}
@@ -49,6 +101,7 @@ for(const def of loadCards())test(`полный каталог: ${def.cardId} �
   try {
     l.stage=def.stage==='vote'?'vote1':'reveal'
     if(def.action==='healFertile')l.players[1].biology.infertile=true
+    if(def.action==='addMatchingThreat')l.players[0].biology.infertile=true
     if(def.action==='randomReveal')l.players.forEach(p=>{p.biology.isVisible=false;p.characteristics.forEach(c=>c.isVisible=false)})
     if(def.action==='replayLast')l.lastPlayedEffect={card:makeCardByCatalogId('ac_028','prev'),targets:{},byPlayerId:'p1'}
     if(def.action==='revote')l.votes.set('p1','p2')
@@ -172,8 +225,7 @@ test('угроза: все группы закрываются ОДНИМ ист
   const {l,play}=fixture(),oldRandom=Math.random
   try{
     l.players[0].characteristics.forEach(c=>c.tags=[])
-    l.players[0].biology={...l.players[0].biology,sex:'М',age:25,infertile:false}
-    l.players[0].characteristics[0].tags=['reproductive_edge']
+    l.players[0].biology={...l.players[0].biology,sex:'М',age:25,infertile:true}
     Math.random=()=>0
     const card=play('ac_033')
     assert.equal(card.used,true)
@@ -184,6 +236,21 @@ test('угроза: все группы закрываются ОДНИМ ист
     assert.equal(failed.used,false)
     assert.equal(new Set(l.bunker.threats).size,l.bunker.threats.length)
   }finally{Math.random=oldRandom;l.dispose()}
+})
+
+test('подходящая угроза использует матрицу одного источника и целевой размер бункера',()=>{
+  const {l,play}=fixture()
+  try {
+    l.players[0].biology={...l.players[0].biology,age:30,infertile:false}
+    l.players[0].characteristics=[
+      {type:'Багаж',value:'Аптечка',coef:.9,tags:['medical'],occ:0},
+      {type:'Хобби',value:'Первая помощь',coef:.6,tags:['medical'],occ:0},
+    ]
+    assert.equal(play('ac_033').used,false) // 20+30 >= 45, но ни одна карточка отдельно не решает.
+    l.players[0].characteristics.push({type:'Профессия',value:'Врач общей практики',coef:.8,tags:[],occ:0})
+    assert.equal(play('ac_033').used,true) // Теги пусты, реальные знания есть в матрице.
+    assert.match(l.bunker.threats.at(-1),/Часть лекарств испорчена/)
+  } finally {l.dispose()}
 })
 
 test('перемешивание: целиком переносит здоровье, не трогает скрытое и выбывших',()=>{
@@ -202,23 +269,82 @@ test('перемешивание: целиком переносит здоров
   }finally{Math.random=oldRandom;l.dispose()}
 })
 
-test('полная перераздача: без дублей, со стадиями и сохранением видимости/карт/начальной истории',()=>{
-  const {l,play}=fixture()
+test('треть слотов каждому: без дублей, остальные слоты и выбывшие неизменны, анимация приватна',()=>{
+  const {l,events,play}=fixture()
+  const random=Math.random
   try{
-    l.players[0].characteristics[0].isVisible=false;l.players[5].isAlive=false
+    Math.random=()=>0
+    l.players[0].characteristics[1].isVisible=false;l.players[5].isAlive=false
+    const before=structuredClone(l.players)
     const dead=JSON.stringify(l.players[5])
     play('ac_035')
-    assert.equal(l.players[0].characteristics[0].isVisible,false)
-    assert.equal(l.players[0].characteristics[1].isVisible,true)
+    assert.equal(l.players[0].characteristics[1].isVisible,false)
     assert.equal(JSON.stringify(l.players[5]),dead)
     for(const type of ['Профессия','Здоровье','Багаж','Факт']){
       const chars=l.players.filter(p=>p.isAlive).flatMap(p=>p.characteristics.filter(c=>c.type===type))
       assert.equal(new Set(chars.map(c=>c.value)).size,chars.length)
     }
     assert.equal(l.cards.get('p0')[0].cardId,'ac_035')
-    assert.equal(l.cardHistory[0].charChanges.length,40)
-    assert.ok(l.cardHistoryFor('p1')[0].charChanges.find(c=>c.playerId==='p0'&&c.slotType==='Профессия').newValue===null)
-  }finally{l.dispose()}
+    assert.equal(l.cardHistory[0].charChanges.length,15)
+    for (const p of l.players.filter(p=>p.isAlive)) {
+      const changes=l.cardHistory[0].charChanges.filter(c=>c.playerId===p.id)
+      assert.equal(changes.length,3)
+      const old=before.find(x=>x.id===p.id)
+      for (const c of p.characteristics) {
+        const prev=old.characteristics.find(x=>x.type===c.type&&x.occ===c.occ)
+        if (!changes.some(x=>x.slotType===c.type&&x.slotOcc===c.occ)) assert.deepEqual(c,prev)
+        assert.equal(c.isVisible,prev.isVisible)
+      }
+      if (!changes.some(x=>x.slotType==='Биология')) assert.deepEqual(p.biology,old.biology)
+    }
+    const popups=events.filter(e=>e.event==='cardPlayed')
+    assert.equal(popups.length,6)
+    for (const e of popups) assert.ok(e.payload.reroll.every(s=>s.playerId===e.target || e.target==='p5' || l.cardHistory[0].charChanges.some(c=>c.playerId===s.playerId&&c.slotType===s.category&&c.slotOcc===s.occ&&c.wasVisible)))
+    assert.ok(popups.find(e=>e.target==='p5').payload.reroll.length>0)
+    assert.ok(l.cardHistoryFor('p1')[0].charChanges.find(c=>c.playerId==='p0'&&c.slotType==='Здоровье').newValue===null)
+  }finally{Math.random=random;l.dispose()}
+})
+
+test('треть слотов: округление 6→2, 7→2, 8→3; биология участвует и имеет реальный КФ',()=>{
+  const random=Math.random
+  try {
+    for (const n of [6,7,8]) {
+      const {l,play}=fixture()
+      try {
+        l.players.forEach(p=>{p.characteristics=p.characteristics.slice(0,n-1)})
+        Math.random=()=>.999999 // No shuffle: first slots.
+        play('ac_035')
+        l.players.forEach(p=>assert.equal(l.cardHistory[0].charChanges.filter(c=>c.playerId===p.id).length,Math.round(n/3)))
+      } finally {l.dispose()}
+    }
+    const {l,play}=fixture()
+    try {
+      // Put only the biology slot into the selectable pool.
+      l.players.forEach(p=>{p.characteristics=[]})
+      play('ac_035')
+      l.players.forEach(p=>assert.equal(p.biology.coef,biologyCoefficient(p.biology)))
+      assert.equal(l.cardHistory[0].charChanges.length,6)
+    } finally {l.dispose()}
+  } finally {Math.random=random}
+})
+
+test('перераздача категории: анимацию своих скрытых и чужих открытых видят только нужные зрители',()=>{
+  const {l,events,play}=fixture()
+  try {
+    l.players[1].characteristics[0].isVisible=false
+    l.players[2].characteristics[0].isVisible=false
+    l.players[5].isAlive=false
+    l.settings.revealPreviousCharacteristics=true // Does not bypass animation privacy.
+    play('ac_005',{categories:['Профессия']})
+    const popups=events.filter(e=>e.event==='cardPlayed')
+    assert.equal(popups.length,6)
+    for (const e of popups) {
+      const expected=l.players.filter(p=>p.isAlive&&(e.target==='p5'||p.id===e.target||![1,2].includes(Number(p.id.slice(1))))).map(p=>p.id)
+      assert.deepEqual(e.payload.reroll.map(s=>s.playerId),expected)
+      assert.equal(e.payload.seq,1)
+      for (const slot of e.payload.reroll) assert.ok(slot.from&&slot.to&&slot.samples.length)
+    }
+  } finally {l.dispose()}
 })
 
 test('направленная перераздача: на границах оставляет карты, биология имеет реальный КФ',()=>{
@@ -231,25 +357,22 @@ test('направленная перераздача: на границах о�
     assert.equal(JSON.stringify(l.players),before)
     l.players.forEach(p=>{p.biology.coef=biologyCoefficient(p.biology)})
     const coefs=l.players.map(p=>p.biology.coef)
-    assert.equal(play('ac_038',{categories:['Биология']}).used,true)
+    assert.equal(play('ac_037',{categories:['Биология']}).used,true)
     l.players.forEach((p,i)=>{assert.equal(p.biology.coef,biologyCoefficient(p.biology));assert.ok(i===0?p.biology.coef>coefs[i]:p.biology.coef<coefs[i])})
   }finally{l.dispose()}
 })
 
-test('возраст, лечение и повторное бесплодие согласованы с финальным подсчётом',()=>{
+test('возраст и лечение согласованы с финальным подсчётом',()=>{
   const {l,play}=fixture()
   try{
     const bio=l.players[1].biology;bio.age=75;bio.infertile=true
     play('ac_011',{players:['p1']})
     assert.equal(isBiologyInfertile(bio),false)
     assert.ok(!biologyTags(bio).includes('reproductive_edge'))
-    play('ac_039',{players:['p1']})
+    bio.infertile=true;bio.fertilityRestored=false
     assert.equal(isBiologyInfertile(bio),true)
     play('ac_036',{players:['p1']})
     assert.equal(bio.age,25);assert.equal(bio.infertile,true);assert.ok(bio.coef<=0)
-    assert.equal(play('ac_039',{players:['p1']}).used,false)
-    bio.sex='Андроид';bio.infertile=false
-    assert.equal(play('ac_039',{players:['p1']}).used,false)
   }finally{l.dispose()}
 })
 

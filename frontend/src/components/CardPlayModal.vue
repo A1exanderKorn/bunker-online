@@ -83,7 +83,7 @@ const availableSlots = computed<CharSlot[]>(() => {
     slots = slots.filter((s, i, all) => all.findIndex(x => x.type === s.type) === i)
       .map(s => ({ ...s, occ: 0, label: s.type }))
   }
-  if (spec.kind === 'characteristic' && spec.categories?.length) {
+  if (spec.categories?.length) {
     slots = slots.filter((s) => spec.categories!.includes(s.type))
   }
   if (spec.kind === 'characteristic' && spec.matchPreviousCategory) {
@@ -267,7 +267,7 @@ function playerName(id: string | undefined) {
 }
 .opt:hover {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   transform: translateY(-1px);
 }
 .threat-opt {

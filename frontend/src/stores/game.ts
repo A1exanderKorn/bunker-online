@@ -4,6 +4,7 @@ import type {
   Biology,
   BunkerState,
   CardPlayedPayload,
+  RerollAnimationSlot,
   CardHistoryEntry,
   CardTargets,
   CatalogCard,
@@ -29,6 +30,7 @@ interface RosterPlayer {
 }
 
 let cardPopupTimer: number | null = null
+const effectTimers = new Map<string, number>()
 
 function clearCardPopupTimer() {
   if (cardPopupTimer === null) return
@@ -66,6 +68,10 @@ export const useGameStore = defineStore('game', {
     actionCards: [] as ActionCard[],
     myCards: [] as ActionCard[],
     cardPopup: null as CardPlayedPayload | null,
+    cardPopupQueue: [] as CardPlayedPayload[],
+    closingCardPopup: null as CardPlayedPayload | null,
+    rerollSlots: {} as Record<string, { seq: number; slot: RerollAnimationSlot; index: number; spinning: boolean }>,
+    bloodPlayers: {} as Record<string, number>,
     cardHistory: [] as CardHistoryEntry[],
     threatPopup: null as PublicBunkerChallenge | null,
     catalog: [] as CatalogCard[],
@@ -131,7 +137,7 @@ export const useGameStore = defineStore('game', {
     },
     /** Подключается к лобби и навешивает обработчики серверных событий. */
     connect(name: string, lobbyCode: string, mode: JoinMode) {
-      clearCardPopupTimer()
+      this.clearCardEffects()
       this.$reset()
       const socket = connectSocket(name, lobbyCode, mode)
 
@@ -150,7 +156,7 @@ export const useGameStore = defineStore('game', {
       })
 
       socket.on('kicked', (payload) => {
-        clearCardPopupTimer()
+        this.clearCardEffects()
         disconnectSocket()
         this.$reset()
         this.kicked = true
@@ -162,7 +168,7 @@ export const useGameStore = defineStore('game', {
       })
 
       socket.on('gameStarted', (payload) => {
-        clearCardPopupTimer()
+        this.clearCardEffects()
         this.started = true
         this.stage = payload.stage
         this.publicPlayers = payload.players
@@ -201,13 +207,9 @@ export const useGameStore = defineStore('game', {
       })
 
       socket.on('cardPlayed', (payload) => {
-        clearCardPopupTimer()
-        this.cardPopup = payload
-        // Попап автоматически скрывается через 8 секунд.
-        cardPopupTimer = window.setTimeout(() => {
-          this.cardPopup = null
-          cardPopupTimer = null
-        }, 8_000)
+        this.startCardEffects(payload)
+        this.cardPopupQueue.push(payload)
+        this.showNextCardPopup()
       })
 
       socket.on('cardHistoryUpdated', (payload) => {
@@ -215,7 +217,7 @@ export const useGameStore = defineStore('game', {
       })
 
       socket.on('newGameStarted', () => {
-        clearCardPopupTimer()
+        this.clearCardEffects()
         // Сброс к лобби, но сохраняем подключение/идентичность.
         this.started = false
         this.stage = 'lobby'
@@ -225,6 +227,7 @@ export const useGameStore = defineStore('game', {
         this.threatPopup = null
         this.myCharacteristics = []
         this.myBiology = null
+        this.forcedReveal = null
         this.turn = { currentPlayerId: null, stepIndex: 0, round: 0, revealsThisTurn: 0, revealedThisTurn: 0, currentVoterId: null }
         this.voteTally = {}
         this.votedIds = []
@@ -315,6 +318,7 @@ export const useGameStore = defineStore('game', {
       })
 
       socket.on('gameEnded', (payload) => {
+        this.clearCardEffects()
         this.stage = 'end'
         this.survivorIds = payload.survivorIds
         this.publicPlayers = payload.players
@@ -351,9 +355,59 @@ export const useGameStore = defineStore('game', {
     requestCatalog() {
       getSocket()?.emit('requestCatalog')
     },
-    dismissCardPopup() {
+    clearCardEffects() {
       clearCardPopupTimer()
+      effectTimers.forEach(timer => window.clearTimeout(timer))
+      effectTimers.clear()
       this.cardPopup = null
+      this.cardPopupQueue = []
+      this.closingCardPopup = null
+      this.rerollSlots = {}
+      this.bloodPlayers = {}
+    },
+    showNextCardPopup() {
+      if (this.cardPopup || this.closingCardPopup) return
+      this.cardPopup = this.cardPopupQueue.shift() ?? null
+      if (this.cardPopup) cardPopupTimer = window.setTimeout(() => this.dismissCardPopup(), 8_000)
+    },
+    dismissCardPopup() {
+      if (!this.cardPopup) return
+      clearCardPopupTimer()
+      this.closingCardPopup = this.cardPopup
+      this.cardPopup = null
+    },
+    /** Called after the popup's leave transition, for both a click and the 8-second timeout. */
+    onCardPopupClosed() {
+      const closed = this.closingCardPopup
+      if (!closed) return
+      this.closingCardPopup = null
+      this.showNextCardPopup()
+    },
+    startCardEffects(payload: CardPlayedPayload) {
+      payload.reroll?.forEach((slot, index) => {
+        const key = `${slot.playerId}:${slot.category}#${slot.occ}`
+        window.clearTimeout(effectTimers.get(key))
+        this.rerollSlots[key] = { seq: payload.seq, slot, index, spinning: true }
+        effectTimers.set(key, window.setTimeout(() => this.finishRerollSlot(payload.seq, key), 5_000))
+      })
+      payload.bloodPlayerIds?.forEach(id => {
+        const key = `blood:${id}`
+        window.clearTimeout(effectTimers.get(key))
+        this.bloodPlayers[id] = payload.seq
+        effectTimers.set(key, window.setTimeout(() => {
+          if (this.bloodPlayers[id] === payload.seq) delete this.bloodPlayers[id]
+          effectTimers.delete(key)
+        }, 7_000))
+      })
+    },
+    finishRerollSlot(seq: number, key: string) {
+      if (this.rerollSlots[key]?.seq !== seq) return
+      window.clearTimeout(effectTimers.get(key))
+      effectTimers.delete(key)
+      delete this.rerollSlots[key]
+    },
+    finishReroll(seq: number) {
+      Object.keys(this.rerollSlots).forEach(key => this.finishRerollSlot(seq, key))
     },
     dismissThreatPopup() {
       this.threatPopup = null

@@ -311,12 +311,14 @@ export function remainingPlayers(steps: RoundStep[], playerCount: number): numbe
 export interface PublicBunkerChallenge {
   flavor: string
   requirements: string[][]
+  capabilityRequirements?: { tag: string; label: string; percent: number }[]
 }
 
 /** Доп. условие на клиенте. */
 export interface BunkerCondition {
   flavor: string
   grants: string[]
+  capabilityGrants?: { tag: string; label: string; percent: number }[]
   byPlayerId: string
   byName: string
 }
@@ -422,11 +424,26 @@ export interface CardTargets {
 
 /** Событие о сыгранной карте (попап у всех). */
 export interface CardPlayedPayload {
+  seq: number
   byPlayerId: string
   byName: string
   title: string
   /** Человекочитаемое описание применения (с целями). */
   effectText: string
+  /** Уже отфильтровано сервером для конкретного зрителя, не общая рассылка. */
+  reroll?: RerollAnimationSlot[]
+  /** Только публично вскрытые пострадавшие слоты. */
+  bloodPlayerIds?: string[]
+}
+
+export interface RerollAnimationSlot {
+  playerId: string
+  category: string
+  occ: number
+  from: string
+  to: string
+  /** Декоративные варианты из каталога, не скрытые карты других игроков. */
+  samples: string[]
 }
 
 export type CardHistoryChangeKind = 'replace' | 'swap' | 'healFertile'
@@ -574,6 +591,17 @@ export interface SurvivalChallengeResult {
   success: boolean
   delta: number
   detail: string
+  coverage?: CapabilityCoverage[]
+  teamDivisor?: number
+}
+
+export interface CapabilityCoverage {
+  tag: string
+  label: string
+  required: number
+  available: number
+  coverage: number
+  missing: number
 }
 
 export interface SurvivalFactor {

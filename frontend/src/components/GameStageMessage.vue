@@ -82,7 +82,7 @@ const turnLine = computed(() => {
 .stage-timer {
   font-size: 18px;
   font-weight: bold;
-  color: #e74c3c;
+  color: var(--accent);
 }
 .stage-paused {
   font-size: 18px;
@@ -91,8 +91,7 @@ const turnLine = computed(() => {
 .time-expired-message {
   font-size: 20px;
   font-weight: bold;
-  color: #ff0000;
-  animation: pulse 1s infinite;
+  color: var(--danger);
 }
 .turn-line {
   font-size: 15px;

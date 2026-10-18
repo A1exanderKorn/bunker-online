@@ -179,6 +179,8 @@ export function pickSpecsFor(def: CardDef): CardPickSpec[] {
     return specs
   }
 
+  if (def.action === 'spoilRandom') return [{ kind: 'catCategory', label: 'Что испортить у случайного соперника?', categories: ['Биология', 'Здоровье', 'Факт'], wholeCategory: true }]
+
   if ((def.action === 'change' && def.target === 'any' && def.scope === 'all') ||
     def.action === 'shuffleRevealed' || def.action === 'biasedReroll') {
     specs.push({ kind: 'catCategory', label: 'Выберите категорию характеристики',

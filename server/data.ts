@@ -3,6 +3,7 @@ import { readJson } from './loadJson'
 import { DATA_DIR } from './config'
 import fs from 'fs'
 import path from 'path'
+import { loadCapabilityMatrix } from './capabilityMatrix'
 
 export type { GameMode }
 
@@ -59,6 +60,9 @@ export function loadCharacteristics(_mode: GameMode = 'classic'): Characteristic
     const category = file.category || slot.category
     for (const item of file.items) {
       if (!String(item.name ?? '').trim()) continue
+      if (!Object.hasOwnProperty.call(loadCapabilityMatrix().characteristics[category] ?? {}, String(item.name).trim())) {
+        throw new Error(`Добавьте строку матрицы для ${category}: ${item.name} (пустой объект означает 0%)`)
+      }
       items.push({
         category,
         name: String(item.name).trim(),

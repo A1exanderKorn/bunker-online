@@ -132,7 +132,12 @@ function generateLobbyCode() {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  width: min(360px, 100%);
+  width: min(400px, 100%);
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
   align-items: center;
   color: var(--hero-ink);
 }
@@ -168,9 +173,9 @@ function generateLobbyCode() {
   --on-accent: var(--hero-on-accent);
 }
 .home-hero :deep(.btn--secondary) {
-  --btn-bg: color-mix(in srgb, var(--hero-accent) 85%, var(--surface));
-  --btn-fg: var(--hero-on-accent);
-  border-color: var(--hero-accent);
+  --btn-bg: var(--surface-2);
+  --btn-fg: var(--text);
+  border-color: var(--border-strong);
 }
 
 .name-input {

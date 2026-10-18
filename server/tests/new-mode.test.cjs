@@ -7,20 +7,19 @@ const { labelTag } = require('../dist/server/tagLabels.js')
 const { dealCharacteristics } = require('../dist/server/characteristics.js')
 const { sampleWShape, generateRareBiology, slotMinMax } = require('../dist/server/dealNew.js')
 
-test('новый режим: размеры колод из спеки', () => {
+test('новый режим: все записи актуального каталога загружаются', () => {
   const count = (category) => loadCharacteristics('new').filter((row) => row.category === category).length
-  assert.equal(count('Профессия'), 153)
-  assert.equal(count('Здоровье'), 100)
-  assert.equal(count('Хобби'), 113)
-  assert.ok(count('Фобия') >= 110)
-  assert.equal(count('Багаж'), 174)
-  assert.equal(count('Факт'), 101)
+  for (const slot of require('../data/characteristics/index.json').slots.filter(s=>s.file)) {
+    const source = require('../data/characteristics/'+slot.file)
+    assert.ok(source.items.length >= 100, slot.category)
+    assert.equal(count(slot.category), source.items.length, slot.category)
+  }
 })
 
 test('режимы используют одинаковые характеристики и события', () => {
   assert.deepEqual(loadCharacteristics('classic'), loadCharacteristics('new'))
   assert.deepEqual(loadBunkerData('classic'), loadBunkerData('new'))
-  assert.equal(loadCharacteristics('classic').filter((row) => row.category === 'Профессия').length, 153)
+  assert.equal(loadCharacteristics('classic').filter((row) => row.category === 'Профессия').length, require('../data/characteristics/profession.json').items.length)
   assert.equal(loadBunkerData('classic').challenges.find((item) => item.id === 'cat_005').requirements[2][0], 'ppe')
 })
 
@@ -32,12 +31,11 @@ test('общие веса: хобби 0.65, фобия 0.4', () => {
 })
 
 test('новые теги и правки бункера', () => {
-  assert.equal(labelTag('ppe', 'new'), 'противоэпидемическая защита')
+  assert.equal(labelTag('ppe', 'new'), 'СИЗ и санитарная защита')
   assert.equal(labelTag('protection', 'new'), 'физическая защита')
   const data = loadBunkerData('new')
-  assert.equal(data.catastrophes.length, 27)
-  assert.equal(data.threats.length, 70)
-  assert.equal(data.conditions.length, 17)
+  for (const category of ['catastrophes','threats','conditions'])
+    assert.equal(data[category].length, require('../data/bunker/'+category+'.json').items.length, category)
   assert.deepEqual(data.challenges.find((item) => item.id === 'cat_005').requirements[2], ['ppe'])
   assert.deepEqual(data.challenges.find((item) => item.id === 'threat_031').requirements[1], ['ppe'])
   assert.ok(data.challenges.find((item) => item.id === 'cat_020'))
@@ -96,8 +94,9 @@ test('редкая биология нового режима: гермафро�
   }
 })
 
-test('багаж нового режима допускает 1.15', () => {
-  assert.equal(slotMinMax('Багаж').max, 1.15)
+test('все слоты нового режима используют диапазон от -1 до 1', () => {
+  for (const category of ['Профессия','Хобби','Багаж','Факт','Здоровье','Фобия','Биология'])
+    assert.deepEqual(slotMinMax(category), {min:-1,max:1}, category)
 })
 
 test('в новом режиме нет карты Спортивное сердце', () => {

@@ -5,6 +5,7 @@ const { Lobby } = require('../dist/server/lobby.js')
 const { loadCharacteristics } = require('../dist/server/data.js')
 const { loadBunkerData } = require('../dist/server/bunker.js')
 const { loadCards } = require('../dist/server/cards.js')
+const { formatCharacteristicValue } = require('../dist/shared/types.js')
 loadCharacteristics(); loadBunkerData(); loadCards()
 const io = {to:()=>({emit(){}}),sockets:{sockets:new Map()}}
 test('real lobby captures initial deal; disconnected account remains in history; a new game gets a new snapshot', () => {
@@ -14,7 +15,7 @@ test('real lobby captures initial deal; disconnected account remains in history;
   const recorder = lobby.matchRecorder
   assert.ok(recorder)
   const removed = lobby.players[1]
-  const startingName = removed.characteristics[0].value
+  const startingName = formatCharacteristicValue(removed.characteristics[0])
   removed.characteristics[0].value = 'Changed by action card'
   lobby.removePlayerNow(removed.id)
   const record = recorder.finish(lobby.players.filter(p=>p.isAlive).map(p=>p.id))

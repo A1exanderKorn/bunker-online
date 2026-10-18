@@ -13,6 +13,7 @@ import {
   type StoredBunkerState,
 } from './bunker'
 import { labelTag } from './tagLabels'
+import { buildCapabilityTeam, capabilityCoverage, capabilityDeficit, type CapabilityTeam } from './capabilityMatrix'
 
 interface TeamTags {
   tags: Set<string>
@@ -52,41 +53,28 @@ function buildTeamTags(players: Player[], bunker: StoredBunkerState, mode: GameM
   return { tags, sources }
 }
 
-function evaluateChallenge(challenge: BunkerChallenge, team: TeamTags, mode: GameMode = 'classic'): SurvivalChallengeResult {
-  const matched: string[] = []
-  const missing: string[] = []
-  for (const group of challenge.requirements) {
-    const tag = group.find((candidate) => team.tags.has(candidate))
-    if (tag) {
-      const source = [...(team.sources.get(tag) ?? [])][0]
-      matched.push(`${labelTag(tag, mode)}${source ? ` — ${source}` : ''}`)
-    } else {
-      missing.push(group.map((t) => labelTag(t, mode)).join(' или '))
-    }
-  }
-  const total = challenge.requirements.length
-  const closed = matched.length
-  const success = missing.length === 0
-  // Неполное решение всегда остаётся штрафом. Закрытые группы уменьшают его
-  // пропорционально, а положительный бонус выдаётся только за полное решение.
-  const ratio = total === 0 ? 1 : closed / total
+function evaluateChallenge(challenge: BunkerChallenge, team: CapabilityTeam): SurvivalChallengeResult {
+  const coverage = capabilityCoverage(challenge.capabilityRequirements, team.values)
+  const deficit = capabilityDeficit(coverage)
+  const success = coverage.every(item=>item.missing < 1e-9)
   const maximumPenalty = -Math.round(Math.abs(challenge.failureDelta) * 1.2)
   const delta = success
     ? challenge.successDelta
-    : -Math.max(1, Math.round(Math.abs(maximumPenalty) * (1 - ratio)))
-  const detail = total === 0
+    : -Math.max(0.1, Math.round(Math.abs(maximumPenalty) * deficit * 10) / 10)
+  const detail = coverage.length === 0
     ? 'Специальные ресурсы не требуются.'
-    : success
-      ? `Закрыто полностью: ${matched.join('; ')}.`
-      : closed > 0
-        ? `Закрыто ${closed} из ${total}: ${matched.join('; ')}. Не хватает: ${missing.join('; ')}.`
-        : `Не хватает: ${missing.join('; ')}.`
+    : `Делитель вклада игроков: ${team.divisor.toFixed(2)}. Дефицит: ${(deficit * 100).toFixed(1)}%. ` +
+      coverage.map(item=>`${item.label}: ${item.available.toFixed(1)}/${item.required}%` +
+        (item.missing > 1e-9 ? ` (не хватает ${item.missing.toFixed(1)}%)` : ' (закрыто)') +
+        (team.sources[item.tag]?.length ? ` — ${team.sources[item.tag].map(s=>`${s.source} +${s.amount.toFixed(1)}%`).join(', ')}` : '')).join('; ')
   return {
     kind: challenge.kind === 'catastrophe' ? 'catastrophe' : 'threat',
     text: challengeFlavor(challenge.text),
     success,
     delta,
     detail,
+    coverage,
+    teamDivisor: team.divisor,
   }
 }
 
@@ -116,6 +104,10 @@ export function calculateSurvival(
 ): SurvivalReport {
   const survivors = players.filter((player) => player.isAlive)
   const team = buildTeamTags(survivors, bunker, mode)
+  const capabilities = buildCapabilityTeam(survivors, bunker.conditions.flatMap(c=>{
+    const row = challengeByText(c.text, mode)
+    return row ? [{ id: row.id, title: row.title }] : []
+  }))
   const factors: SurvivalFactor[] = []
 
   const ages = survivors.flatMap((player) => player.biology ? [player.biology.age] : [])
@@ -129,8 +121,8 @@ export function calculateSurvival(
   const averageHealth = health.length ? health.reduce((sum, item) => sum + item.coef, 0) / health.length : 0
   const contagious = health.filter((item) => item.tags?.includes('contagious')).length
   const critical = health.filter((item) => item.tags?.includes('critical')).length
-  const hasMedicine = team.tags.has('medical')
-  const hasInfectious = team.tags.has('infectious')
+  const hasMedicine = capabilities.values.medical >= 35
+  const hasInfectious = capabilities.values.infectious >= 35
   let healthDelta = averageHealth >= 0.5 ? 6 : averageHealth >= 0 ? 2 : averageHealth >= -0.4 ? -6 : -14
   if (contagious > 0) healthDelta += hasMedicine && hasInfectious ? -3 : -13
   if (critical > 0) healthDelta -= Math.min(18, critical * (hasMedicine ? 2 : 6))
@@ -142,12 +134,13 @@ export function calculateSurvival(
   const needMedicine = averageHealth < 0.3 || contagious > 0 || critical > 0
   // Вода не входит в общий фактор: подходящих карт мало, а отдельные водные
   // угрозы по-прежнему честно проверяют тег water в своих требованиях.
-  const needs = [team.tags.has('food') || team.tags.has('agriculture')]
+  const needs = [capabilities.values.food >= 40 || capabilities.values.agriculture >= 40]
   if (needMedicine) needs.push(hasMedicine)
   const satisfiedNeeds = needs.filter(Boolean).length
   const needsStatus = satisfiedNeeds === needs.length ? 'Удовлетворены' : satisfiedNeeds === 0 ? 'Не удовлетворены' : 'Частично удовлетворены'
   const needsDelta = satisfiedNeeds === needs.length ? 8 : satisfiedNeeds === 0 ? -12 : -2
-  factors.push(factor('needs', 'Базовые потребности', needsStatus, needsDelta, ''))
+  factors.push(factor('needs', 'Базовые потребности', needsStatus, needsDelta,
+    `Нужно: пища или сельское хозяйство 40%${needMedicine ? ', медицина 35%' : ''}. Есть: пища ${capabilities.values.food.toFixed(1)}%, сельское хозяйство ${capabilities.values.agriculture.toFixed(1)}%, медицина ${capabilities.values.medical.toFixed(1)}%.`))
 
   const fertileMale = survivors.some((player) =>
     !isEffectivelyInfertile(player) &&
@@ -217,7 +210,7 @@ export function calculateSurvival(
       .map((item) => ({ player, item })),
   )
   const conflictPlayers = survivors.filter((player) => player.characteristics.some((item) => item.tags?.includes('conflict')))
-  const hasLeadership = team.tags.has('leadership')
+  const hasLeadership = capabilities.values.leadership >= 35
   const dangerousPenalty = dangerousPlayers.length * 6
   const lightDangerPenalty = lightDangerousCharacteristics.length * 2
   const conflictPenalty = conflictPlayers.length * (hasLeadership ? 1 : 2)
@@ -248,7 +241,7 @@ export function calculateSurvival(
         detail: 'Для события не настроены требования в данных бункера.',
       }
     }
-    return evaluateChallenge(challenge, team, mode)
+    return evaluateChallenge(challenge, capabilities)
   })
 
   const rawChance = BASE_SURVIVAL_CHANCE + factors.reduce((sum, item) => sum + item.delta, 0) + challenges.reduce((sum, item) => sum + item.delta, 0)
