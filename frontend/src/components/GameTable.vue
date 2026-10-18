@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import InlineConfirm from '@/components/InlineConfirm.vue'
@@ -28,6 +28,28 @@ function votersFor(p: PublicPlayer): string[] {
 const rows = computed<CharSlot[]>(() =>
   charLayout.value.length > 0 ? charLayout.value : fallbackCharLayout(settings.value),
 )
+
+const capabilityTip = ref<{ title: string; rows: { tag: string; label: string; percent: number }[]; x: number; y: number; above: boolean } | null>(null)
+let capabilityTipTimer: ReturnType<typeof setTimeout> | undefined
+function keepCapabilityTip() { clearTimeout(capabilityTipTimer) }
+function hideCapabilityTip() { keepCapabilityTip(); capabilityTip.value = null }
+function leaveCapabilityTip() { keepCapabilityTip(); capabilityTipTimer = setTimeout(hideCapabilityTip, 150) }
+function onTipScroll(event: Event) { if (!(event.target instanceof Element) || !event.target.closest('.capability-tip')) hideCapabilityTip() }
+function showCapabilityTip(event: Event, p: PublicPlayer, slot: CharSlot) {
+  if (stage.value !== 'end') return
+  keepCapabilityTip()
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  capabilityTip.value = {
+    title: getValue(p, slot) ?? slot.label,
+    rows: p.finalCapabilities?.[`${slot.type}#${slot.occ}`] ?? [],
+    x: Math.max(8, Math.min(rect.left, window.innerWidth - 328)),
+    y: rect.top > window.innerHeight / 2 ? rect.top - 8 : rect.bottom + 8,
+    above: rect.top > window.innerHeight / 2,
+  }
+}
+watch(stage, hideCapabilityTip)
+onMounted(() => { window.addEventListener('scroll', onTipScroll, true); window.addEventListener('resize', hideCapabilityTip) })
+onUnmounted(() => { keepCapabilityTip(); window.removeEventListener('scroll', onTipScroll, true); window.removeEventListener('resize', hideCapabilityTip) })
 
 // Per-slot effects run immediately and independently of the notification queue.
 const rerolls = computed(() => new Map(Object.entries(game.rerollSlots)))
@@ -229,6 +251,13 @@ function toggleVoters(id: string) {
           :key="slot.type + '#' + slot.occ"
           class="char-row"
           :data-category="slot.type"
+          :tabindex="stage === 'end' ? 0 : undefined"
+          :aria-describedby="stage === 'end' && capabilityTip ? 'final-capability-tip' : undefined"
+          @mouseenter="showCapabilityTip($event, p, slot)"
+          @mouseleave="leaveCapabilityTip"
+          @focus="showCapabilityTip($event, p, slot)"
+          @blur="hideCapabilityTip"
+          @keydown.esc="hideCapabilityTip"
           :class="{
             revealed: isRevealed(p, slot),
             'mine-revealed': isMe(p) && isRevealed(p, slot),
@@ -239,7 +268,7 @@ function toggleVoters(id: string) {
             'forced-slot': isForcedSlot(p, slot),
             confirming: pendingReveal === revealKey(p, slot),
           }"
-          @click="tryReveal(p, slot)"
+          @click="stage === 'end' ? showCapabilityTip($event, p, slot) : tryReveal(p, slot)"
         >
           <span class="char-type">
             {{ slot.label }}
@@ -296,9 +325,26 @@ function toggleVoters(id: string) {
       </footer>
     </article>
   </div>
+  <Teleport to="body">
+    <div v-if="capabilityTip && stage === 'end'" id="final-capability-tip" class="capability-tip" role="tooltip"
+      @mouseenter="keepCapabilityTip" @mouseleave="hideCapabilityTip"
+      :style="{ left: capabilityTip.x + 'px', top: capabilityTip.y + 'px', transform: capabilityTip.above ? 'translateY(-100%)' : undefined }">
+      <strong>{{ capabilityTip.title }}</strong>
+      <div v-for="row in capabilityTip.rows" :key="row.tag" class="capability-tip-row">
+        <span>{{ row.label }} <small>{{ row.tag }}</small></span><b>{{ row.percent }}%</b>
+      </div>
+      <p v-if="!capabilityTip.rows.length">Ничего не дает.</p>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
+.capability-tip { position: fixed; z-index: 10000; width: 320px; max-width: calc(100vw - 16px); max-height: 45vh; overflow: auto; box-sizing: border-box; padding: 14px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); color: var(--text); box-shadow: 0 8px 30px #0006; font-size: 13px; line-height: 1.45; }
+.capability-tip > strong { display: block; margin-bottom: 8px; }
+.capability-tip-row { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; }
+.capability-tip small { color: var(--text-muted); font-size: 11px; }
+.capability-tip-row small { display: block; }
+.capability-tip-row b { white-space: nowrap; color: var(--success); }
 .player-card.blood-hit { animation: blood-pulse .8s ease-in-out infinite !important; }
 .blood-skulls { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
 .blood-skulls span { position: absolute; top: calc(var(--n) * 10%); left: 0; color: #ff3030; font-size: 24px; text-shadow: 0 0 8px #650000; animation: skull-flight 1.4s ease-out infinite; animation-delay: calc(var(--n) * -.17s); --dx: -45px; }

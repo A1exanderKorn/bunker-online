@@ -57,7 +57,7 @@ import {
 } from './bunker'
 import { dealActionCards, makeCardByCatalogId, loadCards } from './cards'
 import { improvedOrWorseBiology, improvedOrWorseCharacteristic } from './cardEffects'
-import { characteristicCapabilities, biologyCapabilities, capabilityCoverage, teamDivisor, loadCapabilityMatrix } from './capabilityMatrix'
+import { characteristicCapabilities, biologyCapabilities, capabilityCoverage, teamDivisor, loadCapabilityMatrix, publicCapabilities } from './capabilityMatrix'
 import { calculateSurvival } from './survival'
 import { filterCardHistory } from './cardHistory'
 import { rerollAnimationFor } from './rerollAnimation'
@@ -2144,6 +2144,10 @@ export class Lobby {
       characteristics: revealAll ? p.characteristics : p.characteristics.filter((c) => c.isVisible),
       avatarUrl: p.avatarUrl,
       biology: revealAll ? p.biology : p.biology?.isVisible ? p.biology : null,
+      ...(this.stage === 'end' ? { finalCapabilities: Object.fromEntries([
+        ...p.characteristics.map(c => [`${c.type}#${c.occ ?? 0}`, publicCapabilities(characteristicCapabilities(c))] as const),
+        [`${BIOLOGY_CATEGORY}#0`, publicCapabilities(biologyCapabilities(p.biology))],
+      ]) } : {}),
     }))
   }
 

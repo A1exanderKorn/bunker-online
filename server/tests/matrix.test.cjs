@@ -9,6 +9,27 @@ const player=(id,chars=[])=>({id,name:id,clientId:id,isAlive:true,connected:true
 const event=id=>loadBunkerData().challenges.find(c=>c.id===id)
 const bunker=(id,conditions=[])=>({catastrophe:event(id)?.text||'',threats:[],conditions,years:3})
 
+test('итоговые подсказки содержат вклад каждого слота и не публикуются до конца игры',()=>{
+  const {Lobby}=require('../dist/server/lobby')
+  const lobby=new Lobby({to:()=>({emit(){}})},'TIPS')
+  try {
+    const p=player('p',[{...ch('Багаж','Аптечка'),occ:0},{...ch('Багаж','Запас антибиотиков'),occ:1},ch('Фобия','Неизвестная фобия')])
+    p.biology.sex='Андроид'
+    lobby.players=[p,{...player('dead'),isAlive:false}]
+    for(const stage of ['lobby','reveal','vote1']){
+      lobby.stage=stage
+      assert.equal(lobby.publicPlayers('dead')[0].finalCapabilities,undefined)
+    }
+    lobby.stage='end'
+    const tips=lobby.publicPlayers()[0].finalCapabilities
+    assert.equal(tips['Багаж#0'].find(x=>x.tag==='medical').percent,20)
+    assert.equal(tips['Багаж#1'].find(x=>x.tag==='medical').percent,30)
+    assert.deepEqual(tips['Фобия#0'],[])
+    assert.deepEqual(Object.fromEntries(tips['Биология#0'].map(x=>[x.tag,x.percent])),m.biology.android)
+    assert.ok(tips['Багаж#0'].every(x=>x.label))
+  } finally {lobby.dispose()}
+})
+
 test('полнота матрицы: все строки, события, условия, только известные шкалы 0–100',()=>{
   validateMatrix(m)
   for(const r of loadCharacteristics())assert.ok(Object.hasOwn(m.characteristics[r.category],r.name),r.name)

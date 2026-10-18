@@ -149,6 +149,8 @@ export interface PublicPlayer {
   connected: boolean
   characteristics: Characteristic[]
   biology: Biology | null
+  /** Вклады отдельных слотов до командного делителя; только после окончания игры. */
+  finalCapabilities?: Record<string, { tag: string; label: string; percent: number }[]>
 }
 
 // ─── Настройки лобби ──────────────────────────────────────────────────────

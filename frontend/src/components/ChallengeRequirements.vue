@@ -9,7 +9,6 @@ const view = computed(() => requirementsView(props.requirements))
 <template>
   <div class="req-block">
     <template v-if="percentages">
-      <p class="req-heading">{{ percentages.length ? 'Нужно набрать каждую шкалу. Вклад команды суммируется.' : 'Специальные ресурсы не требуются.' }}</p>
       <div v-for="row in percentages" :key="row.tag" class="capability-row">
         <span>{{ row.label }}</span><b>{{ row.percent }}%</b>
         <progress :value="row.percent" max="100" :aria-label="`${row.label}: требуется ${row.percent}%`" />
