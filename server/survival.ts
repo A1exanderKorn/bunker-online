@@ -95,7 +95,7 @@ function factor(
   return { id, label, status, delta, detail }
 }
 
-const BASE_SURVIVAL_CHANCE = 45
+const BASE_SURVIVAL_CHANCE = 55
 
 export function calculateSurvival(
   players: Player[],
