@@ -513,8 +513,8 @@ button:disabled {
   line-height: 1.5;
 }
 :root .app-shell .player-card.dead {
-  opacity: 1;
-  filter: none;
+  opacity: 0.5;
+  filter: grayscale(0.6);
   border-style: dashed;
 }
 :root .app-shell .player-card.dead .player-name {
